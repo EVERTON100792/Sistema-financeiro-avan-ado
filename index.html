@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Financeiro Avançado</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        /* CSS Reset e Configurações Globais */
+        :root {
+            --bg-color: #1a1a2e;
+            --primary-color: #16213e;
+            --secondary-color: #0f3460;
+            --accent-color: #e94560;
+            --text-color: #ffffff;
+            --text-muted-color: #a0a0b0;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --warning-color: #f1c40f;
+            --card-bg-color: #1e1e3f;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        body.light-mode {
+            --bg-color: #f4f7fc;
+            --primary-color: #ffffff;
+            --secondary-color: #eef2f9;
+            --accent-color: #3b82f6;
+            --text-color: #1f2937;
+            --text-muted-color: #6b7280;
+            --card-bg-color: #ffffff;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-family);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- Estrutura Geral --- */
+        .container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .card {
+            background-color: var(--card-bg-color);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: background-color 0.3s;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--secondary-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- Componentes UI --- */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-secondary { background-color: var(--secondary-color); color: var(--text-color); }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-danger { background-color: var(--error-color); color: white; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-muted-color); }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--secondary-color);
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* --- Tela de Login --- */
+        #login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%);
+        }
+
+        .login-box {
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+
+        #theme-toggle {
+            background: none; border: none; font-size: 1.5rem; cursor: pointer;
+            color: var(--text-muted-color);
+        }
+
+        /* --- Navegação por Abas --- */
+        nav.tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--secondary-color);
+            color: var(--text-muted-color);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* --- Painel Principal (Dashboard) --- */
+        .summary-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card .amount { font-size: 2rem; font-weight: 600; }
+        #balance.positive { color: var(--success-color); }
+        #balance.negative { color: var(--error-color); }
+        #total-income { color: var(--success-color); }
+        #total-expense { color: var(--error-color); }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        @media (min-width: 992px) {
+            .dashboard-layout { grid-template-columns: 380px 1fr; }
+        }
+
+        /* --- Histórico de Transações --- */
+        .filters-and-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .filters-and-actions .form-group { margin-bottom: 0; }
+        #transaction-list { list-style: none; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--primary-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            border-left: 5px solid;
+            flex-wrap: wrap; gap: 10px;
+            transition: opacity 0.3s;
+        }
+        .transaction-item.income { border-left-color: var(--success-color); }
+        .transaction-item.expense { border-left-color: var(--error-color); }
+        
+        .transaction-item.due-soon { border-left-color: var(--warning-color) !important; background-color: #3a3a4f; }
+        .transaction-item.overdue { border-left-color: var(--error-color) !important; background-color: #4a2a3f; }
+        body.light-mode .transaction-item.due-soon { background-color: #fffbe6; }
+        body.light-mode .transaction-item.overdue { background-color: #ffeef0; }
+        .transaction-item.paid { opacity: 0.6; }
+
+        .transaction-item .info .description { font-weight: 500; }
+        .transaction-item .info .details { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: var(--text-muted-color); margin-top: 5px; }
+        .transaction-item .info .details span { background-color: var(--secondary-color); padding: 2px 8px; border-radius: 5px; }
+        .transaction-item .info .details .paid-tag { background-color: var(--success-color); color: white; font-weight: bold; }
+        
+        .transaction-item .amount { font-weight: 600; }
+        .transaction-item .amount.income { color: var(--success-color); }
+        .transaction-item .amount.expense { color: var(--error-color); }
+        .transaction-item .actions { display: flex; align-items: center; gap: 10px; }
+
+
+        /* --- Orçamentos e Metas --- */
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--secondary-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-bar {
+            height: 15px;
+            background-color: var(--accent-color);
+            border-radius: var(--border-radius);
+            width: 0;
+            transition: width 0.5s;
+        }
+        .progress-bar.over { background-color: var(--error-color); }
+
+        /* --- Responsive Grid para Contas, Orçamentos, Metas --- */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--primary-color);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-container">
+        <div class="login-box card">
+            <h1>Acesso Seguro</h1>
+            <p>Entre com seu nome e senha.</p>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Digite seu nome">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Digite sua senha">
+            </div>
+            <button id="login-btn" class="btn btn-primary" style="width: 100%;">Entrar</button>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;" class="container">
+        <header>
+            <h1 id="welcome-message">Painel Financeiro</h1>
+            <div class="header-actions">
+                <button id="theme-toggle" title="Alterar Tema">☀️</button>
+                <button id="logout-btn" class="btn btn-secondary">Sair</button>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">Painel</button>
+            <button class="tab-btn" data-tab="accounts">Contas</button>
+            <button class="tab-btn" data-tab="budgets">Orçamentos</button>
+            <button class="tab-btn" data-tab="goals">Metas</button>
+        </nav>
+
+        <main>
+            <div id="tab-dashboard" class="tab-content active">
+                <section class="summary-section">
+                    <div class="summary-card card">
+                        <h3>Patrimônio Líquido</h3>
+                        <span id="balance" class="amount">R$ 0,00</span>
+                    </div>
+                    <div class="summary-card card">
+                        <h3>Receitas (Mês)</h3>
+                        <span id="total-income" class="amount">R$ 0,00</span>
+                    </div>
+                    <div class="summary-card card">
+                        <h3>Despesas (Mês)</h3>
+                        <span id="total-expense" class="amount">R$ 0,00</span>
+                    </div>
+                </section>
+                
+                <div class="dashboard-layout">
+                    <aside class="card">
+                        <h2>Nova Transação</h2>
+                        <form id="transaction-form">
+                             <div class="form-group">
+                                <label for="transaction-type">Tipo</label>
+                                <select id="transaction-type" required>
+                                    <option value="expense">Despesa</option>
+                                    <option value="income">Receita</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Descrição</label>
+                                <input type="text" id="description" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="amount">Valor (R$)</label>
+                                <input type="number" id="amount" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="date">Data da Transação</label>
+                                <input type="date" id="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="account-select">Conta / Cartão</label>
+                                <select id="account-select" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="category-select">Categoria</label>
+                                <select id="category-select"></select>
+                            </div>
+                            <div class="form-group" id="due-date-group">
+                                <label for="due-date">Data de Vencimento</label>
+                                <input type="date" id="due-date">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width:100%;">Adicionar</button>
+                        </form>
+                    </aside>
+                    <section class="card">
+                        <h2>Histórico de Transações</h2>
+                        <div class="filters-and-actions">
+                            <div class="form-group">
+                                <select id="date-filter">
+                                    <option value="all">Todo o Período</option>
+                                    <option value="7">Últimos 7 dias</option>
+                                    <option value="30">Últimos 30 dias</option>
+                                    <option value="month">Este Mês</option>
+                                </select>
+                            </div>
+                             <div class="form-group">
+                                <select id="category-filter"></select>
+                            </div>
+                            <div class="form-group">
+                                <select id="payment-status-filter">
+                                    <option value="all">Todos os Status</option>
+                                    <option value="paid">Pagas</option>
+                                    <option value="unpaid">A Pagar</option>
+                                </select>
+                            </div>
+                            <button id="export-csv" class="btn btn-secondary">CSV</button>
+                            <button id="export-pdf" class="btn btn-secondary">PDF</button>
+                        </div>
+                        <ul id="transaction-list"></ul>
+                    </section>
+                </div>
+                <section class="card" style="margin-top: 30px;">
+                    <h2>Evolução do Patrimônio</h2>
+                    <canvas id="evolution-chart"></canvas>
+                </section>
+            </div>
+
+            <div id="tab-accounts" class="tab-content">
+                <div class="grid-layout">
+                    <div class="card">
+                        <h2>Adicionar Conta/Cartão</h2>
+                        <form id="account-form">
+                            <div class="form-group">
+                                <label for="account-name">Nome</label>
+                                <input type="text" id="account-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="account-type">Tipo</label>
+                                <select id="account-type" required>
+                                    <option value="checking">Conta Corrente</option>
+                                    <option value="savings">Poupança</option>
+                                    <option value="cash">Dinheiro</option>
+                                    <option value="credit_card">Cartão de Crédito</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="initial-balance">Saldo Inicial / Limite do Cartão</label>
+                                <input type="number" id="initial-balance" step="0.01" value="0" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%">Salvar Conta</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2>Minhas Contas</h2>
+                        <div id="accounts-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-budgets" class="tab-content">
+                 <div class="grid-layout">
+                    <div class="card">
+                        <h2>Definir Orçamento</h2>
+                        <form id="budget-form">
+                            <div class="form-group">
+                                <label for="budget-category">Categoria</label>
+                                <select id="budget-category" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="budget-amount">Limite Mensal (R$)</label>
+                                <input type="number" id="budget-amount" step="0.01" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%">Salvar Orçamento</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2>Meus Orçamentos</h2>
+                        <div id="budgets-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-goals" class="tab-content">
+                <div class="grid-layout">
+                    <div class="card">
+                        <h2>Criar Meta</h2>
+                        <form id="goal-form">
+                            <div class="form-group">
+                                <label for="goal-name">Nome da Meta</label>
+                                <input type="text" id="goal-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="goal-target">Valor Alvo (R$)</label>
+                                <input type="number" id="goal-target" step="0.01" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="goal-initial">Valor Inicial (R$)</label>
+                                <input type="number" id="goal-initial" step="0.01" value="0" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%">Criar Meta</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2>Minhas Metas</h2>
+                        <div id="goals-list"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div id="toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: var(--accent-color); color: white; padding: 15px 30px; border-radius: var(--border-radius); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.5s;"></div>
+
+    <script>
+    // Polyfill for requestIdleCallback
+    window.requestIdleCallback = window.requestIdleCallback || function(cb) {
+        return setTimeout(function() {
+            var start = Date.now();
+            cb({
+                didTimeout: false,
+                timeRemaining: function() {
+                    return Math.max(0, 50 - (Date.now() - start));
+                }
+            });
+        }, 1);
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CÓDIGO JAVASCRIPT PRINCIPAL ---
+        const ui = {
+            loginContainer: document.getElementById('login-container'),
+            appContainer: document.getElementById('app-container'),
+            loginBtn: document.getElementById('login-btn'),
+            logoutBtn: document.getElementById('logout-btn'),
+            usernameInput: document.getElementById('username'),
+            passwordInput: document.getElementById('password'),
+            welcomeMessage: document.getElementById('welcome-message'),
+            themeToggle: document.getElementById('theme-toggle'),
+            tabs: document.querySelectorAll('.tab-btn'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            toast: document.getElementById('toast'),
+            balance: document.getElementById('balance'),
+            totalIncome: document.getElementById('total-income'),
+            totalExpense: document.getElementById('total-expense'),
+            transactionForm: document.getElementById('transaction-form'),
+            transactionType: document.getElementById('transaction-type'),
+            descriptionInput: document.getElementById('description'),
+            amountInput: document.getElementById('amount'),
+            dateInput: document.getElementById('date'),
+            accountSelect: document.getElementById('account-select'),
+            categorySelect: document.getElementById('category-select'),
+            dueDateGroup: document.getElementById('due-date-group'),
+            dueDateInput: document.getElementById('due-date'),
+            transactionList: document.getElementById('transaction-list'),
+            dateFilter: document.getElementById('date-filter'),
+            categoryFilter: document.getElementById('category-filter'),
+            paymentStatusFilter: document.getElementById('payment-status-filter'),
+            exportCsvBtn: document.getElementById('export-csv'),
+            exportPdfBtn: document.getElementById('export-pdf'),
+            evolutionChartCanvas: document.getElementById('evolution-chart'),
+            accountForm: document.getElementById('account-form'),
+            accountNameInput: document.getElementById('account-name'),
+            accountTypeInput: document.getElementById('account-type'),
+            initialBalanceInput: document.getElementById('initial-balance'),
+            accountsList: document.getElementById('accounts-list'),
+            budgetForm: document.getElementById('budget-form'),
+            budgetCategorySelect: document.getElementById('budget-category'),
+            budgetAmountInput: document.getElementById('budget-amount'),
+            budgetsList: document.getElementById('budgets-list'),
+            goalForm: document.getElementById('goal-form'),
+            goalNameInput: document.getElementById('goal-name'),
+            goalTargetInput: document.getElementById('goal-target'),
+            goalInitialInput: document.getElementById('goal-initial'),
+            goalsList: document.getElementById('goals-list'),
+        };
+
+        let state = {};
+        let evolutionChart = null;
+        const defaultCategories = ['Moradia', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Salário', 'Investimentos', 'Contas', 'Outros'];
+
+        const formatCurrency = (value) => `R$ ${value.toFixed(2).replace('.', ',')}`;
+        const showToast = (message, type = 'success') => {
+            ui.toast.textContent = message;
+            ui.toast.style.backgroundColor = type === 'error' ? 'var(--error-color)' : 'var(--accent-color)';
+            ui.toast.classList.add('show');
+            setTimeout(() => ui.toast.classList.remove('show'), 3000);
+        };
+        const generateId = () => `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const saveState = () => {
+            try {
+                localStorage.setItem('financialAppState', JSON.stringify(state));
+            } catch (e) {
+                console.error("Error saving state:", e);
+                showToast("Erro ao salvar dados.", "error");
+            }
+        };
+
+        const loadState = () => {
+            const savedState = localStorage.getItem('financialAppState');
+            const defaultState = {
+                user: null,
+                theme: 'dark',
+                transactions: [],
+                accounts: {},
+                budgets: {},
+                goals: {}
+            };
+            state = savedState ? JSON.parse(savedState) : defaultState;
+            if (Object.keys(state.accounts).length === 0) {
+                 const defaultAccountId = generateId();
+                 state.accounts[defaultAccountId] = { id: defaultAccountId, name: 'Carteira Principal', type: 'cash', balance: 0 };
+            }
+        };
+
+        const render = () => {
+            requestIdleCallback(() => {
+                renderTheme();
+                renderAccounts();
+                renderSummary();
+                renderTransactions();
+                renderBudgets();
+                renderGoals();
+                renderEvolutionChart();
+            });
+        };
+        
+        const renderTheme = () => {
+            document.body.className = state.theme === 'light' ? 'light-mode' : '';
+            ui.themeToggle.textContent = state.theme === 'light' ? '🌙' : '☀️';
+        };
+
+        const renderSummary = () => {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const transactionsThisMonth = state.transactions.filter(t => new Date(t.date) >= startOfMonth);
+            const income = transactionsThisMonth.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            const expense = transactionsThisMonth.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            let totalBalance = 0;
+            for(const accountId in state.accounts){
+                const acc = state.accounts[accountId];
+                if(acc.type !== 'credit_card'){
+                    totalBalance += acc.balance;
+                }
+            }
+            ui.balance.textContent = formatCurrency(totalBalance);
+            ui.balance.className = `amount ${totalBalance >= 0 ? 'positive' : 'negative'}`;
+            ui.totalIncome.textContent = formatCurrency(income);
+            ui.totalExpense.textContent = formatCurrency(Math.abs(expense));
+        };
+        
+        const renderTransactions = () => {
+            ui.transactionList.innerHTML = '';
+            const dateFilter = ui.dateFilter.value;
+            const categoryFilter = ui.categoryFilter.value;
+            const paymentStatusFilter = ui.paymentStatusFilter.value;
+            const now = new Date();
+            let filteredTransactions = state.transactions;
+
+            if (dateFilter !== 'all') {
+                const days = parseInt(dateFilter, 10);
+                let filterDate;
+                if(dateFilter === 'month') {
+                    filterDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                } else {
+                    const pastDate = new Date();
+                    pastDate.setDate(now.getDate() - days);
+                    filterDate = pastDate;
+                }
+                filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= filterDate);
+            }
+            if (categoryFilter !== 'all') {
+                filteredTransactions = filteredTransactions.filter(t => t.category === categoryFilter);
+            }
+            if (paymentStatusFilter !== 'all') {
+                filteredTransactions = filteredTransactions.filter(t => {
+                    if(t.type === 'income') return true; // Always show income
+                    return paymentStatusFilter === 'paid' ? t.paid : !t.paid;
+                });
+            }
+
+            filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const fragment = document.createDocumentFragment();
+            filteredTransactions.forEach(t => {
+                const item = document.createElement('li');
+                item.className = `transaction-item ${t.type}`;
+                const account = state.accounts[t.accountId];
+                
+                if (t.paid) {
+                    item.classList.add('paid');
+                }
+
+                // Lógica de Vencimento
+                if (t.type === 'expense' && t.dueDate && !t.paid) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const dueDate = new Date(t.dueDate);
+                    const timeZoneOffset = dueDate.getTimezoneOffset() * 60000;
+                    const adjustedDueDate = new Date(dueDate.getTime() + timeZoneOffset);
+                    adjustedDueDate.setHours(0,0,0,0);
+
+                    const diffTime = adjustedDueDate.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays < 0) item.classList.add('overdue');
+                    else if (diffDays <= 3) item.classList.add('due-soon');
+                }
+
+                let detailsHtml = `
+                    ${t.category ? `<span>${t.category}</span>` : ''}
+                    ${account ? `<span>${account.name}</span>` : ''}
+                    <span>${new Date(t.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
+                `;
+
+                if (t.type === 'expense' && t.dueDate) {
+                    detailsHtml += `<span>Vence: ${new Date(t.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>`;
+                }
+                
+                let actionsHtml = `<button class="btn-danger" style="padding: 2px 8px; font-size: 0.8rem;" onclick="deleteTransaction('${t.id}')">X</button>`;
+                if (t.type === 'expense' && !t.paid) {
+                    actionsHtml = `<button class="btn btn-success" style="padding: 2px 8px; font-size: 0.8rem;" onclick="payBill('${t.id}')">Pagar</button>` + actionsHtml;
+                } else if (t.type === 'expense' && t.paid) {
+                    detailsHtml += `<span class="paid-tag">Pago</span>`;
+                }
+
+                item.innerHTML = `
+                    <div class="info">
+                        <span class="description">${t.description}</span>
+                        <div class="details">${detailsHtml}</div>
+                    </div>
+                    <div class="actions">
+                        <span class="amount ${t.type}">${formatCurrency(t.amount)}</span>
+                        ${actionsHtml}
+                    </div>
+                `;
+                fragment.appendChild(item);
+            });
+            ui.transactionList.appendChild(fragment);
+        };
+        
+        const renderAccounts = () => {
+            ui.accountsList.innerHTML = '';
+            ui.accountSelect.innerHTML = '';
+            for (const id in state.accounts) {
+                const account = state.accounts[id];
+                const accountItem = document.createElement('div');
+                accountItem.className = 'list-item';
+                let balanceLabel = account.type === 'credit_card' ? 'Fatura Atual' : 'Saldo';
+                let balanceValue = account.type === 'credit_card' ? -account.balance : account.balance;
+                accountItem.innerHTML = `
+                    <div>
+                        <strong>${account.name}</strong> <small>(${account.type})</small>
+                        <p>${balanceLabel}: <span class="${balanceValue >= 0 ? 'positive' : 'negative'}">${formatCurrency(balanceValue)}</span></p>
+                    </div>
+                     <button class="btn btn-danger" onclick="deleteAccount('${id}')">Excluir</button>
+                `;
+                ui.accountsList.appendChild(accountItem);
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = account.name;
+                ui.accountSelect.appendChild(option);
+            }
+        };
+
+        const renderBudgets = () => {
+            ui.budgetsList.innerHTML = '';
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            for(const category in state.budgets) {
+                const budgetAmount = state.budgets[category];
+                const spent = state.transactions
+                    .filter(t => t.category === category && new Date(t.date) >= startOfMonth && t.type === 'expense')
+                    .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+                const percentage = (spent / budgetAmount) * 100;
+                const budgetItem = document.createElement('div');
+                budgetItem.className = 'list-item';
+                budgetItem.innerHTML = `
+                    <div>
+                        <strong>${category}</strong>
+                        <p>${formatCurrency(spent)} / ${formatCurrency(budgetAmount)}</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteBudget('${category}')">Excluir</button>
+                `;
+                ui.budgetsList.appendChild(budgetItem);
+            }
+        };
+
+        const renderGoals = () => {
+            ui.goalsList.innerHTML = '';
+            for(const name in state.goals) {
+                const goal = state.goals[name];
+                const percentage = (goal.current / goal.target) * 100;
+                const goalItem = document.createElement('div');
+                goalItem.className = 'list-item';
+                goalItem.innerHTML = `
+                     <div>
+                        <strong>${name}</strong>
+                        <p>${formatCurrency(goal.current)} / ${formatCurrency(goal.target)}</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteGoal('${name}')">Excluir</button>
+                `;
+                ui.goalsList.appendChild(goalItem);
+            }
+        };
+
+        const renderEvolutionChart = () => {
+            let patrimonyByDate = {};
+            const sortedTransactions = [...state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
+            let initialBalance = 0;
+            for (const accId in state.accounts) {
+                if (state.accounts[accId].type !== 'credit_card') {
+                    // This is a simplification; a more robust way would be to track initial balances per account
+                }
+            }
+
+            let cumulativeBalance = initialBalance;
+            sortedTransactions.forEach(t => {
+                 const account = state.accounts[t.accountId];
+                 if(account && account.type !== 'credit_card' && t.paid !== false) { // Only count paid expenses and income
+                    const dateStr = new Date(t.date).toISOString().split('T')[0];
+                    if (!patrimonyByDate[dateStr]) patrimonyByDate[dateStr] = 0;
+                    patrimonyByDate[dateStr] += t.amount;
+                 }
+            });
+            
+            let runningTotal = 0;
+            const dataPoints = Object.keys(patrimonyByDate).sort().map(date => {
+                runningTotal += patrimonyByDate[date];
+                return { x: new Date(date), y: runningTotal };
+            });
+
+            if(evolutionChart) evolutionChart.destroy();
+            evolutionChart = new Chart(ui.evolutionChartCanvas, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Evolução do Patrimônio',
+                        data: dataPoints,
+                        borderColor: 'var(--accent-color)',
+                        backgroundColor: 'rgba(233, 69, 96, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: { scales: { x: { type: 'time', time: { unit: 'day' } }, y: { beginAtZero: false } } }
+            });
+        };
+
+        const populateCategorySelects = () => {
+             const selects = [ui.categorySelect, ui.budgetCategorySelect, ui.categoryFilter];
+             selects.forEach(select => {
+                select.innerHTML = '';
+                if(select === ui.categoryFilter) {
+                    select.appendChild(new Option('Todas as Categorias', 'all'));
+                }
+                defaultCategories.forEach(cat => select.appendChild(new Option(cat, cat)));
+             });
+        };
+        
+        const handleTransaction = (e) => {
+            e.preventDefault();
+            const type = ui.transactionType.value;
+            const accountId = ui.accountSelect.value;
+            const account = state.accounts[accountId];
+            const rawAmount = parseFloat(ui.amountInput.value);
+            const finalAmount = type === 'income' ? rawAmount : -rawAmount;
+
+            const newTransaction = {
+                id: generateId(),
+                type: type,
+                description: ui.descriptionInput.value,
+                amount: finalAmount,
+                date: ui.dateInput.value,
+                accountId: accountId,
+                category: ui.categorySelect.value,
+                dueDate: type === 'expense' && ui.dueDateInput.value ? ui.dueDateInput.value : null,
+                paid: type === 'income' // Income is considered 'paid' immediately. Expenses are not.
+            };
+
+            // For expenses, we just register them. Balance changes upon payment.
+            // For income, we update balance immediately.
+            if (type === 'income') {
+                 if (account.type !== 'credit_card') {
+                    account.balance += finalAmount;
+                }
+            }
+            
+            state.transactions.push(newTransaction);
+            saveState();
+            render();
+            ui.transactionForm.reset();
+            ui.dateInput.valueAsDate = new Date();
+            toggleDueDateField();
+            showToast("Transação adicionada!");
+        };
+
+        window.payBill = (id) => {
+            const transaction = state.transactions.find(t => t.id === id);
+            if(transaction && !transaction.paid) {
+                const account = state.accounts[transaction.accountId];
+                if(!account) {
+                    showToast('Conta não encontrada para esta despesa!', 'error');
+                    return;
+                }
+
+                // Deduct from balance
+                if(account.type === 'credit_card') {
+                    // Paying a credit card bill is a transfer, not implemented yet.
+                    // This logic assumes paying an expense FROM a card.
+                    // Let's assume for now paying deducts from a checking/savings account.
+                    // This part needs more complex logic for "paying the credit card bill"
+                    showToast('Pagamento de fatura de cartão ainda não implementado.', 'warning');
+                    return; 
+                } else {
+                    account.balance += transaction.amount; // amount is negative for expense
+                }
+
+                transaction.paid = true;
+                saveState();
+                render();
+                showToast('Conta paga com sucesso!');
+            }
+        };
+
+        window.deleteTransaction = (id) => {
+            const transaction = state.transactions.find(t => t.id === id);
+            if(transaction) {
+                // If the transaction was paid, revert the balance change
+                if(transaction.paid && transaction.type === 'expense') {
+                    const account = state.accounts[transaction.accountId];
+                    if (account && account.type !== 'credit_card') {
+                         account.balance -= transaction.amount; // Add back the deducted amount
+                    }
+                } else if(transaction.type === 'income') {
+                     const account = state.accounts[transaction.accountId];
+                     if (account) account.balance -= transaction.amount;
+                }
+                
+                state.transactions = state.transactions.filter(t => t.id !== id);
+                saveState();
+                render();
+                showToast("Transação excluída.");
+            }
+        };
+        
+        const handleAccount = (e) => {
+            e.preventDefault();
+            const id = generateId();
+            state.accounts[id] = {
+                id: id,
+                name: ui.accountNameInput.value,
+                type: ui.accountTypeInput.value,
+                balance: parseFloat(ui.initialBalanceInput.value)
+            };
+            saveState();
+            renderAccounts();
+            ui.accountForm.reset();
+            showToast("Conta criada!");
+        };
+        
+        window.deleteAccount = (id) => {
+            if(Object.keys(state.accounts).length <= 1) {
+                showToast("Você deve ter pelo menos uma conta.", "error");
+                return;
+            }
+            if(confirm("Excluir esta conta também excluirá todas as suas transações. Deseja continuar?")) {
+                delete state.accounts[id];
+                state.transactions = state.transactions.filter(t => t.accountId !== id);
+                saveState();
+                render();
+                showToast("Conta excluída.");
+            }
+        };
+
+        const handleBudget = (e) => {
+            e.preventDefault();
+            state.budgets[ui.budgetCategorySelect.value] = parseFloat(ui.budgetAmountInput.value);
+            saveState();
+            renderBudgets();
+            ui.budgetForm.reset();
+            showToast("Orçamento salvo!");
+        };
+
+        window.deleteBudget = (category) => {
+            delete state.budgets[category];
+            saveState();
+            renderBudgets();
+        };
+
+        const handleGoal = (e) => {
+            e.preventDefault();
+            state.goals[ui.goalNameInput.value] = {
+                target: parseFloat(ui.goalTargetInput.value),
+                current: parseFloat(ui.goalInitialInput.value)
+            };
+            saveState();
+            renderGoals();
+            ui.goalForm.reset();
+            showToast("Meta criada!");
+        };
+
+        window.deleteGoal = (name) => {
+            delete state.goals[name];
+            saveState();
+            renderGoals();
+        };
+
+        const toggleDueDateField = () => {
+            ui.dueDateGroup.style.display = ui.transactionType.value === 'expense' ? 'block' : 'none';
+        };
+
+        const init = () => {
+            loadState();
+            const loggedInUser = localStorage.getItem('financialAppUser');
+            if (loggedInUser) {
+                state.user = loggedInUser;
+                ui.appContainer.style.display = 'block';
+                ui.loginContainer.style.display = 'none';
+                ui.welcomeMessage.textContent = `Painel de ${state.user}`;
+                populateCategorySelects();
+                toggleDueDateField();
+                render();
+            } else {
+                ui.appContainer.style.display = 'none';
+                ui.loginContainer.style.display = 'flex';
+            }
+        };
+
+        ui.loginBtn.addEventListener('click', () => {
+            const username = ui.usernameInput.value.trim();
+            if (username && ui.passwordInput.value) {
+                localStorage.setItem('financialAppUser', username);
+                init();
+            } else {
+                showToast("Preencha nome e senha.", "error");
+            }
+        });
+
+        ui.logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('financialAppUser');
+            localStorage.removeItem('financialAppState');
+            state = {};
+            ui.loginContainer.style.display = 'flex';
+            ui.appContainer.style.display = 'none';
+        });
+
+        ui.themeToggle.addEventListener('click', () => {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            saveState();
+            renderTheme();
+        });
+
+        ui.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                ui.tabs.forEach(t => t.classList.remove('active'));
+                ui.tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        ui.transactionForm.addEventListener('submit', handleTransaction);
+        ui.accountForm.addEventListener('submit', handleAccount);
+        ui.budgetForm.addEventListener('submit', handleBudget);
+        ui.goalForm.addEventListener('submit', handleGoal);
+        ui.dateFilter.addEventListener('change', renderTransactions);
+        ui.categoryFilter.addEventListener('change', renderTransactions);
+        ui.paymentStatusFilter.addEventListener('change', renderTransactions);
+        ui.transactionType.addEventListener('change', toggleDueDateField);
+
+        ui.exportCsvBtn.addEventListener('click', () => {
+            let csvContent = "data:text/csv;charset=utf-8,Data,Descrição,Categoria,Conta,Valor,Vencimento,Status\n";
+            state.transactions.forEach(t => {
+                const row = [t.date, t.description, t.category, state.accounts[t.accountId]?.name || 'N/A', t.amount, t.dueDate || '', t.paid ? 'Pago' : 'A Pagar'].join(',');
+                csvContent += row + "\n";
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "transacoes.csv");
+            link.click();
+        });
+
+        ui.exportPdfBtn.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.autoTable({
+                head: [['Data', 'Descrição', 'Categoria', 'Conta', 'Valor', 'Vencimento', 'Status']],
+                body: state.transactions.map(t => [
+                    new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'}),
+                    t.description,
+                    t.category,
+                    state.accounts[t.accountId]?.name || 'N/A',
+                    formatCurrency(t.amount),
+                    t.dueDate ? new Date(t.dueDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '',
+                    t.paid ? 'Pago' : 'A Pagar'
+                ]),
+            });
+            doc.save('transacoes.pdf');
+        });
+        
+        init();
+    });
+    </script>
+</body>
+</html>
