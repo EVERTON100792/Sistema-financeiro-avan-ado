@@ -198,6 +198,11 @@
         @media (min-width: 992px) {
             .dashboard-layout { grid-template-columns: 380px 1fr; }
         }
+        
+        #main-overview-chart-container {
+             height: 400px;
+             position: relative;
+        }
 
         /* --- Histórico de Transações --- */
         .filters-and-actions {
@@ -319,8 +324,15 @@
                         <span id="total-income" class="amount">R$ 0,00</span>
                     </div>
                     <div class="summary-card card">
-                        <h3>Despesas (Mês)</h3>
+                        <h3>Despesas Pagas (Mês)</h3>
                         <span id="total-expense" class="amount">R$ 0,00</span>
+                    </div>
+                </section>
+                
+                <section class="card" style="margin-bottom: 30px;">
+                    <h2>Visão Geral do Mês</h2>
+                    <div id="main-overview-chart-container">
+                        <canvas id="main-overview-chart"></canvas>
                     </div>
                 </section>
                 
@@ -527,6 +539,7 @@
             paymentStatusFilter: document.getElementById('payment-status-filter'),
             exportCsvBtn: document.getElementById('export-csv'),
             exportPdfBtn: document.getElementById('export-pdf'),
+            mainOverviewChartCanvas: document.getElementById('main-overview-chart'),
             evolutionChartCanvas: document.getElementById('evolution-chart'),
             accountForm: document.getElementById('account-form'),
             accountNameInput: document.getElementById('account-name'),
@@ -546,6 +559,7 @@
 
         let state = {};
         let evolutionChart = null;
+        let mainOverviewChart = null;
         const defaultCategories = ['Moradia', 'Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Educação', 'Salário', 'Investimentos', 'Contas', 'Outros'];
 
         const formatCurrency = (value) => `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -592,6 +606,7 @@
                 renderBudgets();
                 renderGoals();
                 renderEvolutionChart();
+                renderMainOverviewChart();
             });
         };
         
@@ -605,7 +620,7 @@
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const transactionsThisMonth = state.transactions.filter(t => new Date(t.date) >= startOfMonth);
             const income = transactionsThisMonth.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-            const expense = transactionsThisMonth.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            const expense = transactionsThisMonth.filter(t => t.type === 'expense' && t.paid).reduce((acc, t) => acc + t.amount, 0); // Only count paid expenses
             let totalBalance = 0;
             for(const accountId in state.accounts){
                 const acc = state.accounts[accountId];
@@ -624,10 +639,10 @@
             const dateFilter = ui.dateFilter.value;
             const categoryFilter = ui.categoryFilter.value;
             const paymentStatusFilter = ui.paymentStatusFilter.value;
-            const now = new Date();
             let filteredTransactions = state.transactions;
 
             if (dateFilter !== 'all') {
+                const now = new Date();
                 const days = parseInt(dateFilter, 10);
                 let filterDate;
                 if(dateFilter === 'month') {
@@ -644,7 +659,8 @@
             }
             if (paymentStatusFilter !== 'all') {
                 filteredTransactions = filteredTransactions.filter(t => {
-                    if(t.type === 'income') return true; // Always show income
+                    if(t.type === 'income') return true;
+                    if(paymentStatusFilter === 'unpaid' && t.type === 'income') return false;
                     return paymentStatusFilter === 'paid' ? t.paid : !t.paid;
                 });
             }
@@ -660,7 +676,6 @@
                     item.classList.add('paid');
                 }
 
-                // Lógica de Vencimento
                 if (t.type === 'expense' && t.dueDate && !t.paid) {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -668,20 +683,13 @@
                     const timeZoneOffset = dueDate.getTimezoneOffset() * 60000;
                     const adjustedDueDate = new Date(dueDate.getTime() + timeZoneOffset);
                     adjustedDueDate.setHours(0,0,0,0);
-
                     const diffTime = adjustedDueDate.getTime() - today.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
                     if (diffDays < 0) item.classList.add('overdue');
                     else if (diffDays <= 3) item.classList.add('due-soon');
                 }
 
-                let detailsHtml = `
-                    ${t.category ? `<span>${t.category}</span>` : ''}
-                    ${account ? `<span>${account.name}</span>` : ''}
-                    <span>${new Date(t.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
-                `;
-
+                let detailsHtml = `${t.category ? `<span>${t.category}</span>` : ''} ${account ? `<span>${account.name}</span>` : ''} <span>${new Date(t.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>`;
                 if (t.type === 'expense' && t.dueDate) {
                     detailsHtml += `<span>Vence: ${new Date(t.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>`;
                 }
@@ -693,16 +701,7 @@
                     detailsHtml += `<span class="paid-tag">Pago</span>`;
                 }
 
-                item.innerHTML = `
-                    <div class="info">
-                        <span class="description">${t.description}</span>
-                        <div class="details">${detailsHtml}</div>
-                    </div>
-                    <div class="actions">
-                        <span class="amount ${t.type}">${formatCurrency(t.amount)}</span>
-                        ${actionsHtml}
-                    </div>
-                `;
+                item.innerHTML = `<div class="info"><span class="description">${t.description}</span><div class="details">${detailsHtml}</div></div> <div class="actions"><span class="amount ${t.type}">${formatCurrency(t.amount)}</span>${actionsHtml}</div>`;
                 fragment.appendChild(item);
             });
             ui.transactionList.appendChild(fragment);
@@ -717,13 +716,7 @@
                 accountItem.className = 'list-item';
                 let balanceLabel = account.type === 'credit_card' ? 'Fatura Atual' : 'Saldo';
                 let balanceValue = account.type === 'credit_card' ? -account.balance : account.balance;
-                accountItem.innerHTML = `
-                    <div>
-                        <strong>${account.name}</strong> <small>(${account.type})</small>
-                        <p>${balanceLabel}: <span class="${balanceValue >= 0 ? 'positive' : 'negative'}">${formatCurrency(balanceValue)}</span></p>
-                    </div>
-                     <button class="btn btn-danger" onclick="deleteAccount('${id}')">Excluir</button>
-                `;
+                accountItem.innerHTML = `<div><strong>${account.name}</strong> <small>(${account.type})</small><p>${balanceLabel}: <span class="${balanceValue >= 0 ? 'positive' : 'negative'}">${formatCurrency(balanceValue)}</span></p></div> <button class="btn btn-danger" onclick="deleteAccount('${id}')">Excluir</button>`;
                 ui.accountsList.appendChild(accountItem);
                 const option = document.createElement('option');
                 option.value = id;
@@ -739,21 +732,12 @@
             for(const category in state.budgets) {
                 const budgetAmount = state.budgets[category];
                 const spent = state.transactions
-                    .filter(t => t.category === category && new Date(t.date) >= startOfMonth && t.type === 'expense')
+                    .filter(t => t.category === category && new Date(t.date) >= startOfMonth && t.type === 'expense' && t.paid)
                     .reduce((acc, t) => acc + Math.abs(t.amount), 0);
                 const percentage = (spent / budgetAmount) * 100;
                 const budgetItem = document.createElement('div');
                 budgetItem.className = 'list-item';
-                budgetItem.innerHTML = `
-                    <div>
-                        <strong>${category}</strong>
-                        <p>${formatCurrency(spent)} / ${formatCurrency(budgetAmount)}</p>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;"></div>
-                        </div>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteBudget('${category}')">Excluir</button>
-                `;
+                budgetItem.innerHTML = `<div><strong>${category}</strong><p>${formatCurrency(spent)} / ${formatCurrency(budgetAmount)}</p><div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;"></div></div></div><button class="btn btn-danger" onclick="deleteBudget('${category}')">Excluir</button>`;
                 ui.budgetsList.appendChild(budgetItem);
             }
         };
@@ -765,45 +749,118 @@
                 const percentage = (goal.current / goal.target) * 100;
                 const goalItem = document.createElement('div');
                 goalItem.className = 'list-item';
-                goalItem.innerHTML = `
-                     <div>
-                        <strong>${name}</strong>
-                        <p>${formatCurrency(goal.current)} / ${formatCurrency(goal.target)}</p>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;"></div>
-                        </div>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteGoal('${name}')">Excluir</button>
-                `;
+                goalItem.innerHTML = `<div><strong>${name}</strong><p>${formatCurrency(goal.current)} / ${formatCurrency(goal.target)}</p><div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;"></div></div></div><button class="btn btn-danger" onclick="deleteGoal('${name}')">Excluir</button>`;
                 ui.goalsList.appendChild(goalItem);
             }
+        };
+        
+        const renderMainOverviewChart = () => {
+            if(mainOverviewChart) mainOverviewChart.destroy();
+            
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const transactionsThisMonth = state.transactions.filter(t => new Date(t.date) >= startOfMonth);
+            
+            const monthlyIncome = transactionsThisMonth.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            
+            const paidExpensesByCategory = transactionsThisMonth
+                .filter(t => t.type === 'expense' && t.paid)
+                .reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
+                    return acc;
+                }, {});
+            
+            const totalPaidExpenses = Object.values(paidExpensesByCategory).reduce((sum, amount) => sum + amount, 0);
+            const remainingBalance = monthlyIncome - totalPaidExpenses;
+
+            const labels = Object.keys(paidExpensesByCategory);
+            const data = Object.values(paidExpensesByCategory);
+            
+            const centerTextPlugin = {
+                id: 'centerText',
+                beforeDraw: (chart) => {
+                    const {ctx, width, height} = chart;
+                    ctx.restore();
+                    const fontSize = (height / 150).toFixed(2);
+                    ctx.font = `bold ${fontSize}em sans-serif`;
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-color').trim();
+
+                    const text1 = "Sobra:";
+                    const text2 = formatCurrency(remainingBalance);
+                    const text1X = Math.round((width - ctx.measureText(text1).width) / 2);
+                    const text2X = Math.round((width - ctx.measureText(text2).width) / 2);
+                    const text1Y = height / 2 - (fontSize * 12);
+                    const text2Y = height / 2 + (fontSize * 12);
+                    
+                    ctx.fillText(text1, text1X, text1Y);
+                    ctx.fillText(text2, text2X, text2Y);
+                    ctx.save();
+                }
+            };
+
+            mainOverviewChart = new Chart(ui.mainOverviewChartCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#e94560', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40', '#c9cbcf', '#f1c40f'],
+                        borderColor: getComputedStyle(document.body).getPropertyValue('--card-bg-color').trim(),
+                        borderWidth: 4,
+                        hoverOffset: 10
+                    }]
+                },
+                plugins: [centerTextPlugin],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: getComputedStyle(document.body).getPropertyValue('--text-muted-color').trim(),
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = monthlyIncome > 0 ? ((value / monthlyIncome) * 100).toFixed(2) : 0;
+                                    return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         };
 
         const renderEvolutionChart = () => {
             let patrimonyByDate = {};
             const sortedTransactions = [...state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
-            let initialBalance = 0;
-            for (const accId in state.accounts) {
-                if (state.accounts[accId].type !== 'credit_card') {
-                    // This is a simplification; a more robust way would be to track initial balances per account
-                }
-            }
+            
+            let dataPoints = [];
+            let runningTotal = 0;
+            const processedDates = {};
 
-            let cumulativeBalance = initialBalance;
             sortedTransactions.forEach(t => {
                  const account = state.accounts[t.accountId];
-                 if(account && account.type !== 'credit_card' && t.paid !== false) { // Only count paid expenses and income
+                 if(account && account.type !== 'credit_card' && (t.type === 'income' || t.paid)) {
                     const dateStr = new Date(t.date).toISOString().split('T')[0];
-                    if (!patrimonyByDate[dateStr]) patrimonyByDate[dateStr] = 0;
-                    patrimonyByDate[dateStr] += t.amount;
+                    if (!processedDates[dateStr]) processedDates[dateStr] = 0;
+                    processedDates[dateStr] += t.amount;
                  }
             });
             
-            let runningTotal = 0;
-            const dataPoints = Object.keys(patrimonyByDate).sort().map(date => {
-                runningTotal += patrimonyByDate[date];
-                return { x: new Date(date), y: runningTotal };
+            Object.keys(processedDates).sort().forEach(date => {
+                runningTotal += processedDates[date];
+                dataPoints.push({ x: new Date(date), y: runningTotal });
             });
+
 
             if(evolutionChart) evolutionChart.destroy();
             evolutionChart = new Chart(ui.evolutionChartCanvas, {
@@ -818,7 +875,7 @@
                         tension: 0.1
                     }]
                 },
-                options: { scales: { x: { type: 'time', time: { unit: 'day' } }, y: { beginAtZero: false } } }
+                options: { scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: false } } }
             });
         };
 
@@ -836,28 +893,24 @@
         const handleTransaction = (e) => {
             e.preventDefault();
             const type = ui.transactionType.value;
-            const accountId = ui.accountSelect.value;
-            const account = state.accounts[accountId];
             const rawAmount = parseFloat(ui.amountInput.value);
-            const finalAmount = type === 'income' ? rawAmount : -rawAmount;
-
+            
             const newTransaction = {
                 id: generateId(),
                 type: type,
                 description: ui.descriptionInput.value,
-                amount: finalAmount,
+                amount: type === 'income' ? rawAmount : -rawAmount,
                 date: ui.dateInput.value,
-                accountId: accountId,
+                accountId: ui.accountSelect.value,
                 category: ui.categorySelect.value,
                 dueDate: type === 'expense' && ui.dueDateInput.value ? ui.dueDateInput.value : null,
-                paid: type === 'income' // Income is considered 'paid' immediately. Expenses are not.
+                paid: type === 'income'
             };
 
-            // For expenses, we just register them. Balance changes upon payment.
-            // For income, we update balance immediately.
             if (type === 'income') {
-                 if (account.type !== 'credit_card') {
-                    account.balance += finalAmount;
+                 const account = state.accounts[newTransaction.accountId];
+                 if (account && account.type !== 'credit_card') {
+                    account.balance += newTransaction.amount;
                 }
             }
             
@@ -869,29 +922,22 @@
             toggleDueDateField();
             showToast("Transação adicionada!");
         };
-
+        
         window.payBill = (id) => {
             const transaction = state.transactions.find(t => t.id === id);
             if(transaction && !transaction.paid) {
                 const account = state.accounts[transaction.accountId];
                 if(!account) {
-                    showToast('Conta não encontrada para esta despesa!', 'error');
+                    showToast('Conta de origem não encontrada!', 'error');
                     return;
                 }
-
-                // Deduct from balance
                 if(account.type === 'credit_card') {
-                    // Paying a credit card bill is a transfer, not implemented yet.
-                    // This logic assumes paying an expense FROM a card.
-                    // Let's assume for now paying deducts from a checking/savings account.
-                    // This part needs more complex logic for "paying the credit card bill"
-                    showToast('Pagamento de fatura de cartão ainda não implementado.', 'warning');
+                    showToast('Despesas de cartão de crédito são pagas na fatura.', 'warning');
                     return; 
-                } else {
-                    account.balance += transaction.amount; // amount is negative for expense
                 }
-
+                account.balance += transaction.amount;
                 transaction.paid = true;
+                transaction.date = new Date().toISOString().split('T')[0];
                 saveState();
                 render();
                 showToast('Conta paga com sucesso!');
@@ -901,17 +947,15 @@
         window.deleteTransaction = (id) => {
             const transaction = state.transactions.find(t => t.id === id);
             if(transaction) {
-                // If the transaction was paid, revert the balance change
                 if(transaction.paid && transaction.type === 'expense') {
                     const account = state.accounts[transaction.accountId];
                     if (account && account.type !== 'credit_card') {
-                         account.balance -= transaction.amount; // Add back the deducted amount
+                         account.balance -= transaction.amount;
                     }
                 } else if(transaction.type === 'income') {
                      const account = state.accounts[transaction.accountId];
                      if (account) account.balance -= transaction.amount;
                 }
-                
                 state.transactions = state.transactions.filter(t => t.id !== id);
                 saveState();
                 render();
@@ -1004,26 +1048,31 @@
 
         ui.loginBtn.addEventListener('click', () => {
             const username = ui.usernameInput.value.trim();
-            if (username && ui.passwordInput.value) {
+            const password = ui.passwordInput.value;
+            if (!username) {
+                 showToast("Por favor, digite seu nome.", "error");
+                 return;
+            }
+            if (password === '050166') {
                 localStorage.setItem('financialAppUser', username);
                 init();
             } else {
-                showToast("Preencha nome e senha.", "error");
+                showToast("Senha incorreta.", "error");
             }
         });
 
         ui.logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('financialAppUser');
-            localStorage.removeItem('financialAppState');
-            state = {};
-            ui.loginContainer.style.display = 'flex';
             ui.appContainer.style.display = 'none';
+            ui.loginContainer.style.display = 'flex';
+            ui.usernameInput.value = '';
+            ui.passwordInput.value = '';
         });
 
         ui.themeToggle.addEventListener('click', () => {
             state.theme = state.theme === 'dark' ? 'light' : 'dark';
             saveState();
-            renderTheme();
+            render();
         });
 
         ui.tabs.forEach(tab => {
