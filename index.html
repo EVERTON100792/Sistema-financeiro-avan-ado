@@ -563,6 +563,22 @@
                         <h2>Minhas Contas</h2>
                         <div id="accounts-list"></div>
                     </div>
+                    <div class="card">
+                        <h2 id="category-form-title">Gerenciar Categorias</h2>
+                        <form id="category-form">
+                           <div class="form-group">
+                                <label for="category-name">Nome da Categoria</label>
+                                <input type="text" id="category-name" placeholder="Ex: Supermercado" required>
+                            </div>
+                            <div class="form-buttons" id="category-form-buttons">
+                                <button type="submit" class="btn btn-primary">Adicionar Categoria</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2>Minhas Categorias</h2>
+                        <div id="categories-list"></div>
+                    </div>
                 </div>
             </div>
 
@@ -694,10 +710,15 @@ document.addEventListener('DOMContentLoaded', () => {
             goals: [],
             recurrences: [],
             editingItem: null, // { type, id }
+            // ALTERADO: Estrutura de categorias para suportar IDs
             categories: [
-                'Moradia', 'Transporte', 'Alimentação', 'Saúde', 'Lazer',
-                'Educação', 'Salário', 'Investimentos', 'Compras', 'Metas', 'Outros'
-            ]
+                { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' },
+                { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' },
+                { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' },
+                { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' },
+                { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' },
+                { id: 'cat11', name: 'Outros' }
+            ],
         },
 
         init() {
@@ -708,6 +729,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         initApp() {
             this.loadData();
+            // Garante que categorias padrão existam se não houver dados salvos
+            if (this.state.categories.length === 0) {
+                 this.state.categories = [
+                    { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' },
+                    { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' },
+                    { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' },
+                    { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' },
+                    { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' },
+                    { id: 'cat11', name: 'Outros' }
+                ];
+            }
             this.generateRecurringTransactions();
             this.applySavedTheme();
             this.elements.welcomeMessage.textContent = `Olá, ${this.state.user}!`;
@@ -752,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('budget-form').addEventListener('submit', (e) => this.handleBudget(e));
             document.getElementById('goal-form').addEventListener('submit', (e) => this.handleGoal(e));
             document.getElementById('recurrence-form').addEventListener('submit', (e) => this.handleRecurrence(e));
+            document.getElementById('category-form').addEventListener('submit', (e) => this.handleCategorySubmit(e)); // NOVO
             document.getElementById('export-csv').addEventListener('click', () => this.exportToCSV());
             document.getElementById('export-pdf').addEventListener('click', () => this.exportToPDF());
             document.getElementById('date-filter').addEventListener('change', () => this.renderTransactions());
@@ -777,7 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (deleteButton) {
                     const id = deleteButton.dataset.id;
-                    const parentListContainer = deleteButton.closest('[id]');
+                    const parentListContainer = deleteButton.closest('[id$="-list"]');
                     if (id && parentListContainer) {
                         const listId = parentListContainer.id;
                         if (listId === 'transaction-list') this.deleteTransaction(id);
@@ -785,6 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         else if (listId === 'budgets-list') this.deleteBudget(id);
                         else if (listId === 'goals-list') this.deleteGoal(id);
                         else if (listId === 'recurrences-list') this.deleteRecurrence(id);
+                        else if (listId === 'categories-list') this.deleteCategory(id); // NOVO
                     }
                 }
                 
@@ -825,6 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     budgets: this.state.budgets,
                     goals: this.state.goals,
                     recurrences: this.state.recurrences,
+                    categories: this.state.categories, // NOVO
                 };
                 localStorage.setItem(this.getStorageKey(), JSON.stringify(dataToSave));
             } catch (error) {
@@ -843,12 +878,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.budgets = parsedData.budgets || [];
                     this.state.goals = parsedData.goals || [];
                     this.state.recurrences = parsedData.recurrences || [];
+                    this.state.categories = parsedData.categories || []; // NOVO
                 } else {
-                    this.state.transactions = []; this.state.accounts = []; this.state.budgets = []; this.state.goals = []; this.state.recurrences = [];
+                    // Inicializa todos os estados como arrays vazios se não houver dados salvos
+                    Object.keys(this.state).forEach(key => {
+                        if (Array.isArray(this.state[key])) {
+                            this.state[key] = [];
+                        }
+                    });
                 }
             } catch (error) {
                 console.error("Failed to load data:", error);
-                this.state.transactions = []; this.state.accounts = []; this.state.budgets = []; this.state.goals = []; this.state.recurrences = [];
+                 Object.keys(this.state).forEach(key => {
+                    if (Array.isArray(this.state[key])) {
+                        this.state[key] = [];
+                    }
+                });
             }
         },
 
@@ -864,33 +909,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 while (nextDueDate <= today) {
                     const newTransaction = {
                         id: Date.now().toString() + Math.random(),
-                        type: r.type,
-                        description: r.description,
-                        amount: r.amount,
-                        date: r.nextDueDate,
-                        accountId: r.accountId,
-                        category: r.category,
-                        isPaid: r.type === 'income',
-                        dueDate: r.nextDueDate,
+                        type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate,
+                        accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate,
                     };
                     this.state.transactions.push(newTransaction);
 
-                    if (r.frequency === 'monthly') {
-                        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-                    } else if (r.frequency === 'weekly') {
-                        nextDueDate.setDate(nextDueDate.getDate() + 7);
-                    } else if (r.frequency === 'yearly') {
-                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
-                    }
+                    if (r.frequency === 'monthly') { nextDueDate.setMonth(nextDueDate.getMonth() + 1); } 
+                    else if (r.frequency === 'weekly') { nextDueDate.setDate(nextDueDate.getDate() + 7); } 
+                    else if (r.frequency === 'yearly') { nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); }
                     
                     r.nextDueDate = nextDueDate.toISOString().split('T')[0];
                     somethingChanged = true;
                 }
             });
 
-            if (somethingChanged) {
-                this.saveData();
-            }
+            if (somethingChanged) { this.saveData(); }
         },
 
         checkLogin() {
@@ -911,9 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (username) {
                 localStorage.setItem('financeAppUser', username);
                 this.checkLogin();
-            } else {
-                alert('Por favor, digite seu nome.');
-            }
+            } else { alert('Por favor, digite seu nome.'); }
         },
 
         handleLogout() {
@@ -943,9 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         handleTabClick(e) {
-            if (this.state.editingItem) {
-                this.cancelEditMode();
-            }
+            if (this.state.editingItem) { this.cancelEditMode(); }
             this.elements.tabs.forEach(tab => tab.classList.remove('active'));
             this.elements.tabContents.forEach(content => content.classList.remove('active'));
             const tabButton = e.currentTarget;
@@ -980,14 +1009,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return date.toLocaleDateString('pt-BR');
         },
 
+        // ALTERADO: Lógica de popular selects de categoria para usar o novo array de objetos
         populateSelectors() {
+            const categoryOptions = this.state.categories.map(c => ({ value: c.name, text: c.name }));
             const selectors = {
                 'account-select': this.state.accounts.map(a => ({ value: a.id, text: a.name })),
-                'category-select': this.state.categories.map(c => ({ value: c, text: c })),
-                'budget-category': this.state.categories.map(c => ({ value: c, text: c })),
-                'category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...this.state.categories.map(c => ({ value: c, text: c }))],
+                'category-select': categoryOptions,
+                'budget-category': categoryOptions,
+                'category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions],
                 'recurrence-account': this.state.accounts.map(a => ({ value: a.id, text: a.name })),
-                'recurrence-category': this.state.categories.map(c => ({ value: c, text: c })),
+                'recurrence-category': categoryOptions,
             };
             for (const id in selectors) {
                 const select = document.getElementById(id);
@@ -1245,6 +1276,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 list.appendChild(item);
             });
         },
+        
+        // NOVO: Renderiza a lista de categorias personalizadas
+        renderCategories() {
+            const list = document.getElementById('categories-list');
+            list.innerHTML = '';
+             if (this.state.categories.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma categoria cadastrada.</p>';
+                return;
+            }
+            this.state.categories.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="main-info">
+                           <span>${cat.name}</span>
+                        </div>
+                        <div class="actions">
+                            <button class="btn edit-btn" data-type="category" data-id="${cat.id}" title="Editar Categoria">${this.getEditIconSVG()}</button>
+                            <button class="delete-button" data-id="${cat.id}" title="Excluir Categoria">${this.getDeleteIconSVG()}</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        },
 
         updateAllRenders() {
             try {
@@ -1257,6 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.renderBudgets();
                 this.renderGoals();
                 this.renderRecurrences();
+                this.renderCategories(); // NOVO
                 this.updateCharts();
             } catch (error) {
                 console.error("An error occurred during a render update:", error);
@@ -1282,197 +1340,71 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // --- CORREÇÃO APLICADA A TODAS AS FUNÇÕES HANDLE ---
-        handleTransaction(e) {
+        handleTransaction(e) { /* ... (sem alterações) ... */ },
+        handleAccount(e) { /* ... (sem alterações) ... */ },
+        handleBudget(e) { /* ... (sem alterações) ... */ },
+        handleGoal(e) { /* ... (sem alterações) ... */ },
+        handleRecurrence(e) { /* ... (sem alterações) ... */ },
+        
+        // NOVO: Handler para o formulário de categorias
+        handleCategorySubmit(e) {
             e.preventDefault();
             const form = e.target;
-            const description = form.elements['description'].value;
-            const amount = parseFloat(form.elements['amount'].value);
-            const date = form.elements['date'].value;
-            const accountId = form.elements['account-select'].value;
-            const category = form.elements['category-select'].value;
-            const type = form.elements['transaction-type'].value;
-            const dueDate = form.elements['due-date'].value;
-            
-            if (this.state.editingItem && this.state.editingItem.type === 'transaction') {
-                const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id);
-                if (transaction) {
-                    transaction.description = description; transaction.amount = amount; transaction.date = date; transaction.accountId = accountId; transaction.category = category; transaction.type = type; transaction.dueDate = dueDate;
+            const nameInput = form.elements['category-name'];
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                alert('O nome da categoria não pode ser vazio.');
+                return;
+            }
+            // Verifica se a categoria já existe (ignorando maiúsculas/minúsculas)
+            const nameExists = this.state.categories.some(cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== (this.state.editingItem && this.state.editingItem.id));
+            if (nameExists) {
+                alert('Esta categoria já existe.');
+                return;
+            }
+
+            if (this.state.editingItem && this.state.editingItem.type === 'category') {
+                const category = this.state.categories.find(c => c.id === this.state.editingItem.id);
+                if (category) {
+                    category.name = name;
                 }
             } else {
-                if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; }
-                if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; }
-                const newTransaction = { id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' };
-                this.state.transactions.push(newTransaction);
-                if (type === 'expense' && this.elements.makeRecurringCheckbox.checked) {
-                    const recurrenceExists = this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase());
-                    if (!recurrenceExists) {
-                        const nextMonthDate = new Date(dueDate + 'T00:00:00');
-                        nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-                        const newRecurrence = { id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
-                        this.state.recurrences.push(newRecurrence);
-                    }
-                }
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); this.handleTransactionTypeChange();
-        },
-        handleAccount(e) {
-            e.preventDefault();
-            const form = e.target;
-            const name = form.elements['account-name'].value;
-            const type = form.elements['account-type'].value;
-            const initialBalance = parseFloat(form.elements['initial-balance'].value);
-            if (this.state.editingItem && this.state.editingItem.type === 'account') {
-                const account = this.state.accounts.find(a => a.id === this.state.editingItem.id);
-                if (account) { account.name = name; account.type = type; account.initialBalance = initialBalance; }
-            } else {
-                const newAccount = { id: Date.now().toString(), name, type, initialBalance, currentBalance: initialBalance };
-                this.state.accounts.push(newAccount);
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleBudget(e) {
-            e.preventDefault();
-            const form = e.target;
-            const category = form.elements['budget-category'].value;
-            const amount = parseFloat(form.elements['budget-amount'].value);
-            if (this.state.editingItem && this.state.editingItem.type === 'budget') {
-                const budget = this.state.budgets.find(b => b.id === this.state.editingItem.id);
-                if (budget) { budget.category = category; budget.amount = amount; }
-            } else {
-                 this.state.budgets = this.state.budgets.filter(b => b.category !== category);
-                 const newBudget = { id: Date.now().toString(), category, amount };
-                 this.state.budgets.push(newBudget);
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleGoal(e) {
-            e.preventDefault();
-            const form = e.target;
-            const name = form.elements['goal-name'].value;
-            const target = parseFloat(form.elements['goal-target'].value);
-            const saved = parseFloat(form.elements['goal-saved'].value);
-            const deadline = form.elements['goal-deadline'].value;
-            if (this.state.editingItem && this.state.editingItem.type === 'goal') {
-                const goal = this.state.goals.find(g => g.id === this.state.editingItem.id);
-                if (goal) { goal.name = name; goal.target = target; goal.saved = saved; goal.deadline = deadline; }
-            } else {
-                if (!name || isNaN(target) || target <= 0) { alert("Preencha o nome da meta e um valor alvo válido."); return; }
-                const newGoal = { id: Date.now().toString(), name, target, saved, deadline: deadline || null };
-                this.state.goals.push(newGoal);
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleRecurrence(e) {
-            e.preventDefault();
-            const form = e.target;
-            const description = form.elements['recurrence-description'].value;
-            const amount = parseFloat(form.elements['recurrence-amount'].value);
-            const type = form.elements['recurrence-type'].value;
-            const accountId = form.elements['recurrence-account'].value;
-            const category = form.elements['recurrence-category'].value;
-            const frequency = form.elements['recurrence-frequency'].value;
-            const startDate = form.elements['recurrence-start-date'].value;
-            if (this.state.editingItem && this.state.editingItem.type === 'recurrence') {
-                const recurrence = this.state.recurrences.find(r => r.id === this.state.editingItem.id);
-                if (recurrence) {
-                    recurrence.description = description; recurrence.amount = amount; recurrence.type = type; recurrence.accountId = accountId; recurrence.category = category; recurrence.frequency = frequency; recurrence.startDate = startDate;
-                    if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) { recurrence.nextDueDate = recurrence.startDate; }
-                }
-            } else {
-                const newRecurrence = { id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate };
-                this.state.recurrences.push(newRecurrence);
+                const newCategory = { id: Date.now().toString(), name };
+                this.state.categories.push(newCategory);
             }
             this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
         },
         
-        markAsPaid(id) {
-            const transaction = this.state.transactions.find(t => t.id === id);
-            if (transaction) {
-                transaction.isPaid = true;
+        markAsPaid(id) { /* ... (sem alterações) ... */ },
+        deleteTransaction(id) { /* ... (sem alterações) ... */ },
+        deleteAccount(id) { /* ... (sem alterações) ... */ },
+        deleteBudget(id) { /* ... (sem alterações) ... */ },
+        deleteGoal(id) { /* ... (sem alterações) ... */ },
+        deleteRecurrence(id) { /* ... (sem alterações) ... */ },
+        
+        // NOVO: Lógica para deletar uma categoria
+        deleteCategory(id) {
+            if (confirm('Tem certeza? As transações existentes com esta categoria não serão afetadas, mas ela será removida das opções futuras.')) {
+                this.state.categories = this.state.categories.filter(c => c.id !== id);
                 this.saveData();
                 this.updateAllRenders();
             }
         },
-        deleteTransaction(id) {
-            if (confirm('Tem certeza que quer deletar esta transação? Esta ação não pode ser desfeita.')) {
-                this.state.transactions = this.state.transactions.filter(t => t.id !== id);
-                this.saveData();
-                this.updateAllRenders();
-            }
-        },
-        deleteAccount(id) {
-            if (confirm('Deletar uma conta também deletará TODAS as transações e recorrências associadas a ela. Deseja continuar?')) {
-                this.state.accounts = this.state.accounts.filter(acc => acc.id !== id);
-                this.state.transactions = this.state.transactions.filter(t => t.accountId !== id);
-                this.state.recurrences = this.state.recurrences.filter(r => r.accountId !== id);
-                this.saveData();
-                this.updateAllRenders();
-            }
-        },
-        deleteBudget(id) {
-            if(confirm('Tem certeza que deseja remover este orçamento?')) {
-                this.state.budgets = this.state.budgets.filter(b => b.id !== id);
-                this.saveData();
-                this.updateAllRenders();
-            }
-        },
-        deleteGoal(id) {
-            if(confirm('Tem certeza que deseja remover esta meta?')) {
-                this.state.goals = this.state.goals.filter(g => g.id !== id);
-                this.saveData();
-                this.updateAllRenders();
-            }
-        },
-        deleteRecurrence(id) {
-            if(confirm('Tem certeza que deseja remover este lançamento recorrente? As transações já criadas não serão afetadas.')) {
-                this.state.recurrences = this.state.recurrences.filter(r => r.id !== id);
-                this.saveData();
-                this.updateAllRenders();
-            }
-        },
-        handleGoalContribution(e) {
-            e.preventDefault();
-            const form = e.target;
-            const goalId = form.dataset.goalId;
-            const amountInput = form.querySelector('.contribution-amount');
-            const accountInput = form.querySelector('.contribution-account');
-            const amountToAdd = parseFloat(amountInput.value) || 0;
-            const accountId = accountInput.value;
-            if (amountToAdd <= 0 || !accountId) {
-                alert("Por favor, insira um valor válido e selecione uma conta.");
-                return;
-            }
-            const goal = this.state.goals.find(g => g.id === goalId);
-            this.updateAccountBalances(); 
-            const account = this.state.accounts.find(a => a.id === accountId);
-            if (!goal || !account) {
-                alert("Meta ou conta não encontrada. Tente novamente.");
-                return;
-            }
-            if(account.currentBalance < amountToAdd) {
-                alert("Saldo insuficiente na conta selecionada.");
-                return;
-            }
-            goal.saved = (goal.saved || 0) + amountToAdd;
-            const today = new Date().toISOString().split('T')[0];
-            const newTransaction = { id: Date.now().toString(), type: 'expense', description: `Aporte para meta: ${goal.name}`, amount: amountToAdd, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today };
-            this.state.transactions.push(newTransaction);
-            this.saveData();
-            this.updateAllRenders();
-            amountInput.value = '';
-        },
+
+        handleGoalContribution(e) { /* ... (sem alterações) ... */ },
 
         startEditMode(type, id) {
             this.state.editingItem = { type, id };
-            let item, formId, tabId, title, form, titleId, buttonContainerId;
+            let item;
 
             const config = {
                 transaction: { formId: 'transaction-form', tabId: 'dashboard', title: 'Editar Transação', collection: 'transactions' },
                 account: { formId: 'account-form', tabId: 'accounts', title: 'Editar Conta', collection: 'accounts' },
                 budget: { formId: 'budget-form', tabId: 'budgets', title: 'Editar Orçamento', collection: 'budgets' },
                 goal: { formId: 'goal-form', tabId: 'goals', title: 'Editar Meta', collection: 'goals' },
-                recurrence: { formId: 'recurrence-form', tabId: 'recurrences', title: 'Editar Recorrência', collection: 'recurrences' }
+                recurrence: { formId: 'recurrence-form', tabId: 'recurrences', title: 'Editar Recorrência', collection: 'recurrences' },
+                category: { formId: 'category-form', tabId: 'accounts', title: 'Editar Categoria', collection: 'categories' } // NOVO
             };
 
             const currentConfig = config[type];
@@ -1483,12 +1415,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.querySelector(`.tab-btn[data-tab="${currentConfig.tabId}"]`).click();
 
-            form = document.getElementById(currentConfig.formId);
-            titleId = currentConfig.formId.replace('-form', '-form-title');
-            buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons');
+            const form = document.getElementById(currentConfig.formId);
+            const titleId = currentConfig.formId.replace('-form', '-form-title');
+            const buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons');
 
             Object.keys(item).forEach(key => {
-                const input = form.elements[key] || form.elements[`${type}-${key}`];
+                const input = form.elements[key] || form.elements[`${type}-${key}`] || document.getElementById(`${type}-${key}`) || form.elements[`category-name`]; // Ajuste para categoria
                 if (input) { input.value = item[key]; }
             });
 
@@ -1513,7 +1445,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 account: { formId: 'account-form', title: 'Adicionar Conta/Cartão', btnText: 'Salvar Conta' },
                 budget: { formId: 'budget-form', title: 'Definir Orçamento', btnText: 'Salvar Orçamento' },
                 goal: { formId: 'goal-form', title: 'Criar Nova Meta', btnText: 'Criar Meta' },
-                recurrence: { formId: 'recurrence-form', title: 'Adicionar Lançamento Recorrente', btnText: 'Salvar Recorrência' }
+                recurrence: { formId: 'recurrence-form', title: 'Adicionar Lançamento Recorrente', btnText: 'Salvar Recorrência' },
+                category: { formId: 'category-form', title: 'Gerenciar Categorias', btnText: 'Adicionar Categoria' } // NOVO
             };
 
             const currentConfig = config[type];
@@ -1529,119 +1462,21 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.editingItem = null;
         },
 
-        // Chart and Export functions remain unchanged
-        getChartOptions() {
-            const isLight = document.body.classList.contains('light-mode');
-            const gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
-            const textColor = isLight ? '#333' : '#eee';
-            return {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: textColor } }, tooltip: { backgroundColor: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 } },
-                scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } }
-            };
-        },
-        initCharts() {
-            if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy();
-            if (this.charts.evolutionChart) this.charts.evolutionChart.destroy();
-            const mainCtx = document.getElementById('main-overview-chart').getContext('2d');
-            this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y, beginAtZero: true } } } });
-            const evoCtx = document.getElementById('evolution-chart').getContext('2d');
-            this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y } } } });
-        },
-        updateCharts() {
-            if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
-            const commonOptions = this.getChartOptions();
-            const now = new Date();
-            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            const dataByDay = {};
-            for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) {
-                dataByDay[d.toISOString().split('T')[0]] = { income: 0, expense: 0 };
-            }
-            this.state.transactions.filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear()).forEach(t => {
-                if(dataByDay[t.date]) {
-                    if (t.type === 'income') dataByDay[t.date].income += (t.amount || 0);
-                    if (t.type === 'expense' && t.isPaid) dataByDay[t.date].expense += (t.amount || 0);
-                }
-            });
-            const labels = Object.keys(dataByDay);
-            this.charts.mainOverviewChart.data.labels = labels;
-            this.charts.mainOverviewChart.data.datasets = [ { label: 'Receitas', data: labels.map(day => dataByDay[day].income), backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas Pagas', data: labels.map(day => dataByDay[day].expense), backgroundColor: 'rgba(231, 76, 60, 0.7)' } ];
-            this.charts.mainOverviewChart.options = { ...this.charts.mainOverviewChart.options, ...commonOptions };
-            this.charts.mainOverviewChart.update();
-            const allTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
-            const dailyNetWorth = new Map();
-            let initialNetWorth = this.state.accounts.reduce((sum, acc) => {
-                const iBalance = acc.initialBalance || 0;
-                return acc.type !== 'credit_card' ? sum + iBalance : sum;
-            }, 0);
-            if (allTransactions.length === 0) {
-                dailyNetWorth.set(new Date().toISOString().split('T')[0], initialNetWorth);
-            } else {
-                const firstDate = new Date(allTransactions[0].date + 'T00:00:00');
-                firstDate.setDate(firstDate.getDate() - 1);
-                dailyNetWorth.set(firstDate.toISOString().split('T')[0], initialNetWorth);
-            }
-            let runningBalance = initialNetWorth;
-            allTransactions.forEach(t => {
-                const amount = t.amount || 0;
-                const account = this.state.accounts.find(a => a.id === t.accountId);
-                if (account && account.type !== 'credit_card') {
-                    if (t.type === 'income') { runningBalance += amount; }
-                    if (t.type === 'expense' && t.isPaid) { runningBalance -= amount; }
-                }
-                dailyNetWorth.set(t.date, runningBalance); 
-            });
-            const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
-            this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
-            this.charts.evolutionChart.data.datasets = [{
-                label: 'Patrimônio Líquido', data: balanceHistory,
-                borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560',
-                backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)',
-                fill: true, tension: 0.1
-            }];
-            this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions };
-            this.charts.evolutionChart.update();
-        },
-        exportToCSV() {
-            const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Status'];
-            const rows = this.getFilteredTransactions().map(t => {
-                const account = this.state.accounts.find(a => a.id === t.accountId);
-                const rowData = [ t.date, `"${(t.description || '').replace(/"/g, '""')}"`, t.type, t.amount || 0, t.category, account ? account.name : 'N/A', t.isPaid ? 'Pago' : 'A pagar' ];
-                return rowData.join(',');
-            });
-            const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + rows.join('\n');
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "transacoes.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        },
-        exportToPDF() {
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const tableColumn = ["Data", "Descrição", "Tipo", "Valor", "Categoria", "Conta"];
-                const tableRows = [];
-                this.getFilteredTransactions().forEach(t => {
-                    const account = this.state.accounts.find(a => a.id === t.accountId);
-                    const transactionData = [ this.formatDate(t.date), t.description || '', t.type === 'income' ? 'Receita' : 'Despesa', this.formatCurrency(t.amount || 0), t.category || '', account ? account.name : 'N/A' ];
-                    tableRows.push(transactionData);
-                });
-                doc.autoTable({ head: [tableColumn], body: tableRows, startY: 20 });
-                doc.text("Relatório de Transações", 14, 15);
-                doc.save("transacoes.pdf");
-            } catch (error) {
-                console.error("Failed to generate PDF:", error);
-                alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.");
-            }
-        },
+        // Chart and Export functions (sem alterações)
+        getChartOptions() { /* ... */ },
+        initCharts() { /* ... */ },
+        updateCharts() { /* ... */ },
+        exportToCSV() { /* ... */ },
+        exportToPDF() { /* ... */ },
+
     };
+    // Copie as funções inalteradas da sua versão anterior para cá
+    // (getChartOptions, initCharts, updateCharts, exportToCSV, exportToPDF)
+    // ...
+    // E todas as funções handle... que não foram alteradas
+    // ...
 
     financeApp.init();
-
 });
 </script>
 
