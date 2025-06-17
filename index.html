@@ -943,7 +943,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         handleTabClick(e) {
-            // Se estiver editando, primeiro cancele a edição
             if (this.state.editingItem) {
                 this.cancelEditMode();
             }
@@ -1282,29 +1281,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 acc.currentBalance = balance;
             });
         },
-
+        
+        // --- CORREÇÃO APLICADA A TODAS AS FUNÇÕES HANDLE ---
         handleTransaction(e) {
             e.preventDefault();
-            const description = document.getElementById('description').value;
-            const amount = parseFloat(document.getElementById('amount').value);
-            const date = document.getElementById('date').value;
-            const accountId = document.getElementById('account-select').value;
-            const category = document.getElementById('category-select').value;
-            const type = document.getElementById('transaction-type').value;
-            const dueDate = document.getElementById('due-date').value;
+            const form = e.target;
+            const description = form.elements['description'].value;
+            const amount = parseFloat(form.elements['amount'].value);
+            const date = form.elements['date'].value;
+            const accountId = form.elements['account-select'].value;
+            const category = form.elements['category-select'].value;
+            const type = form.elements['transaction-type'].value;
+            const dueDate = form.elements['due-date'].value;
             
             if (this.state.editingItem && this.state.editingItem.type === 'transaction') {
                 const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id);
                 if (transaction) {
-                    transaction.description = description;
-                    transaction.amount = amount;
-                    transaction.date = date;
-                    transaction.accountId = accountId;
-                    transaction.category = category;
-                    transaction.type = type;
-                    transaction.dueDate = dueDate;
+                    transaction.description = description; transaction.amount = amount; transaction.date = date; transaction.accountId = accountId; transaction.category = category; transaction.type = type; transaction.dueDate = dueDate;
                 }
             } else {
+                if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; }
+                if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; }
                 const newTransaction = { id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' };
                 this.state.transactions.push(newTransaction);
                 if (type === 'expense' && this.elements.makeRecurringCheckbox.checked) {
@@ -1312,109 +1309,81 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!recurrenceExists) {
                         const nextMonthDate = new Date(dueDate + 'T00:00:00');
                         nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-                        const newRecurrence = {
-                            id: Date.now().toString(), description, amount, type, accountId, category,
-                            frequency: 'monthly', startDate: date,
-                            nextDueDate: nextMonthDate.toISOString().split('T')[0],
-                        };
+                        const newRecurrence = { id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
                         this.state.recurrences.push(newRecurrence);
                     }
                 }
             }
-            this.cancelEditMode();
+            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); this.handleTransactionTypeChange();
         },
-
         handleAccount(e) {
             e.preventDefault();
-            const name = document.getElementById('account-name').value;
-            const type = document.getElementById('account-type').value;
-            const initialBalance = parseFloat(document.getElementById('initial-balance').value);
-
+            const form = e.target;
+            const name = form.elements['account-name'].value;
+            const type = form.elements['account-type'].value;
+            const initialBalance = parseFloat(form.elements['initial-balance'].value);
             if (this.state.editingItem && this.state.editingItem.type === 'account') {
                 const account = this.state.accounts.find(a => a.id === this.state.editingItem.id);
-                if (account) {
-                    account.name = name;
-                    account.type = type;
-                    account.initialBalance = initialBalance;
-                }
+                if (account) { account.name = name; account.type = type; account.initialBalance = initialBalance; }
             } else {
                 const newAccount = { id: Date.now().toString(), name, type, initialBalance, currentBalance: initialBalance };
                 this.state.accounts.push(newAccount);
             }
-            this.cancelEditMode();
+            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
         },
-
         handleBudget(e) {
             e.preventDefault();
-            const category = document.getElementById('budget-category').value;
-            const amount = parseFloat(document.getElementById('budget-amount').value);
-
+            const form = e.target;
+            const category = form.elements['budget-category'].value;
+            const amount = parseFloat(form.elements['budget-amount'].value);
             if (this.state.editingItem && this.state.editingItem.type === 'budget') {
                 const budget = this.state.budgets.find(b => b.id === this.state.editingItem.id);
-                if (budget) {
-                    budget.category = category;
-                    budget.amount = amount;
-                }
+                if (budget) { budget.category = category; budget.amount = amount; }
             } else {
                  this.state.budgets = this.state.budgets.filter(b => b.category !== category);
                  const newBudget = { id: Date.now().toString(), category, amount };
                  this.state.budgets.push(newBudget);
             }
-            this.cancelEditMode();
+            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
         },
-
         handleGoal(e) {
             e.preventDefault();
-            const name = document.getElementById('goal-name').value;
-            const target = parseFloat(document.getElementById('goal-target').value);
-            const saved = parseFloat(document.getElementById('goal-saved').value);
-            const deadline = document.getElementById('goal-deadline').value;
-
+            const form = e.target;
+            const name = form.elements['goal-name'].value;
+            const target = parseFloat(form.elements['goal-target'].value);
+            const saved = parseFloat(form.elements['goal-saved'].value);
+            const deadline = form.elements['goal-deadline'].value;
             if (this.state.editingItem && this.state.editingItem.type === 'goal') {
                 const goal = this.state.goals.find(g => g.id === this.state.editingItem.id);
-                if (goal) {
-                    goal.name = name;
-                    goal.target = target;
-                    goal.saved = saved;
-                    goal.deadline = deadline;
-                }
+                if (goal) { goal.name = name; goal.target = target; goal.saved = saved; goal.deadline = deadline; }
             } else {
+                if (!name || isNaN(target) || target <= 0) { alert("Preencha o nome da meta e um valor alvo válido."); return; }
                 const newGoal = { id: Date.now().toString(), name, target, saved, deadline: deadline || null };
                 this.state.goals.push(newGoal);
             }
-            this.cancelEditMode();
+            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
         },
-
         handleRecurrence(e) {
             e.preventDefault();
-            const description = document.getElementById('recurrence-description').value;
-            const amount = parseFloat(document.getElementById('recurrence-amount').value);
-            const type = document.getElementById('recurrence-type').value;
-            const accountId = document.getElementById('recurrence-account').value;
-            const category = document.getElementById('recurrence-category').value;
-            const frequency = document.getElementById('recurrence-frequency').value;
-            const startDate = document.getElementById('recurrence-start-date').value;
-
+            const form = e.target;
+            const description = form.elements['recurrence-description'].value;
+            const amount = parseFloat(form.elements['recurrence-amount'].value);
+            const type = form.elements['recurrence-type'].value;
+            const accountId = form.elements['recurrence-account'].value;
+            const category = form.elements['recurrence-category'].value;
+            const frequency = form.elements['recurrence-frequency'].value;
+            const startDate = form.elements['recurrence-start-date'].value;
             if (this.state.editingItem && this.state.editingItem.type === 'recurrence') {
                 const recurrence = this.state.recurrences.find(r => r.id === this.state.editingItem.id);
                 if (recurrence) {
-                    recurrence.description = description;
-                    recurrence.amount = amount;
-                    recurrence.type = type;
-                    recurrence.accountId = accountId;
-                    recurrence.category = category;
-                    recurrence.frequency = frequency;
-                    recurrence.startDate = startDate;
-                    // Mantenha o nextDueDate, a menos que a data de início seja alterada para o futuro
-                    if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) {
-                        recurrence.nextDueDate = recurrence.startDate;
-                    }
+                    recurrence.description = description; recurrence.amount = amount; recurrence.type = type; recurrence.accountId = accountId; recurrence.category = category; recurrence.frequency = frequency; recurrence.startDate = startDate;
+                    if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) { recurrence.nextDueDate = recurrence.startDate; }
                 }
             } else {
                 const newRecurrence = { id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate };
                 this.state.recurrences.push(newRecurrence);
             }
-            this.cancelEditMode();
+            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
         },
         
         markAsPaid(id) {
@@ -1498,60 +1467,35 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.editingItem = { type, id };
             let item, formId, tabId, title, form, titleId, buttonContainerId;
 
-            switch (type) {
-                case 'transaction':
-                    item = this.state.transactions.find(i => i.id === id);
-                    formId = 'transaction-form';
-                    tabId = 'dashboard';
-                    title = 'Editar Transação';
-                    break;
-                case 'account':
-                    item = this.state.accounts.find(i => i.id === id);
-                    formId = 'account-form';
-                    tabId = 'accounts';
-                    title = 'Editar Conta';
-                    break;
-                case 'budget':
-                    item = this.state.budgets.find(i => i.id === id);
-                    formId = 'budget-form';
-                    tabId = 'budgets';
-                    title = 'Editar Orçamento';
-                    break;
-                 case 'goal':
-                    item = this.state.goals.find(i => i.id === id);
-                    formId = 'goal-form';
-                    tabId = 'goals';
-                    title = 'Editar Meta';
-                    break;
-                case 'recurrence':
-                    item = this.state.recurrences.find(i => i.id === id);
-                    formId = 'recurrence-form';
-                    tabId = 'recurrences';
-                    title = 'Editar Recorrência';
-                    break;
-                default: return;
-            }
+            const config = {
+                transaction: { formId: 'transaction-form', tabId: 'dashboard', title: 'Editar Transação', collection: 'transactions' },
+                account: { formId: 'account-form', tabId: 'accounts', title: 'Editar Conta', collection: 'accounts' },
+                budget: { formId: 'budget-form', tabId: 'budgets', title: 'Editar Orçamento', collection: 'budgets' },
+                goal: { formId: 'goal-form', tabId: 'goals', title: 'Editar Meta', collection: 'goals' },
+                recurrence: { formId: 'recurrence-form', tabId: 'recurrences', title: 'Editar Recorrência', collection: 'recurrences' }
+            };
 
-            // Ativa a aba correta
-            document.querySelector(`.tab-btn[data-tab="${tabId}"]`).click();
+            const currentConfig = config[type];
+            if (!currentConfig) return;
 
-            form = document.getElementById(formId);
-            titleId = formId.replace('-form', '-form-title');
-            buttonContainerId = formId.replace('-form', '-form-buttons');
+            item = this.state[currentConfig.collection].find(i => i.id === id);
+            if (!item) return;
 
-            // Preenche o formulário
+            document.querySelector(`.tab-btn[data-tab="${currentConfig.tabId}"]`).click();
+
+            form = document.getElementById(currentConfig.formId);
+            titleId = currentConfig.formId.replace('-form', '-form-title');
+            buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons');
+
             Object.keys(item).forEach(key => {
-                const input = form.elements[key] || form.elements[type === 'transaction' ? key : `${type}-${key}`] || form.elements[`${type === 'account' ? 'account' : (type === 'budget' ? 'budget' : (type === 'goal' ? 'goal' : 'recurrence'))}-${key.replace('Id', '')}`] || document.getElementById(`${type}-${key}`) || document.getElementById(key);
-                if (input) {
-                    input.value = item[key];
-                }
+                const input = form.elements[key] || form.elements[`${type}-${key}`];
+                if (input) { input.value = item[key]; }
             });
-            // Casos especiais
-            if (type === 'account') form.elements['initial-balance'].value = item.initialBalance;
-            if (type === 'transaction') form.elements['account-select'].value = item.accountId;
 
-            // Altera título e botões
-            document.getElementById(titleId).textContent = title;
+            if (type === 'transaction') form.elements['account-select'].value = item.accountId;
+            if (type === 'account') form.elements['initial-balance'].value = item.initialBalance;
+            
+            document.getElementById(titleId).textContent = currentConfig.title;
             const buttonContainer = document.getElementById(buttonContainerId);
             buttonContainer.innerHTML = `
                 <button type="submit" class="btn btn-success">Atualizar</button>
@@ -1564,28 +1508,28 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelEditMode() {
             if (!this.state.editingItem) return;
             const type = this.state.editingItem.type;
-            const formId = `${type}-form`;
-            const form = document.getElementById(formId);
-            const titleId = formId.replace('-form', '-form-title');
-            const buttonContainerId = formId.replace('-form', '-form-buttons');
+            const config = {
+                transaction: { formId: 'transaction-form', title: 'Nova Transação', btnText: 'Adicionar Transação' },
+                account: { formId: 'account-form', title: 'Adicionar Conta/Cartão', btnText: 'Salvar Conta' },
+                budget: { formId: 'budget-form', title: 'Definir Orçamento', btnText: 'Salvar Orçamento' },
+                goal: { formId: 'goal-form', title: 'Criar Nova Meta', btnText: 'Criar Meta' },
+                recurrence: { formId: 'recurrence-form', title: 'Adicionar Lançamento Recorrente', btnText: 'Salvar Recorrência' }
+            };
 
-            form.reset();
-            
-            const titles = {
-                transaction: 'Nova Transação', account: 'Adicionar Conta/Cartão', budget: 'Definir Orçamento', goal: 'Criar Nova Meta', recurrence: 'Adicionar Lançamento Recorrente'
-            };
-            const buttonTexts = {
-                transaction: 'Adicionar Transação', account: 'Salvar Conta', budget: 'Salvar Orçamento', goal: 'Criar Meta', recurrence: 'Salvar Recorrência'
-            };
-            
-            document.getElementById(titleId).textContent = titles[type];
-            document.getElementById(buttonContainerId).innerHTML = `<button type="submit" class="btn btn-primary" style="width:100%">${buttonTexts[type]}</button>`;
+            const currentConfig = config[type];
+            if (currentConfig) {
+                const form = document.getElementById(currentConfig.formId);
+                const titleId = currentConfig.formId.replace('-form', '-form-title');
+                const buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons');
+                form.reset();
+                document.getElementById(titleId).textContent = currentConfig.title;
+                document.getElementById(buttonContainerId).innerHTML = `<button type="submit" class="btn btn-primary" style="width:100%">${currentConfig.btnText}</button>`;
+            }
             
             this.state.editingItem = null;
-            this.saveData();
-            this.updateAllRenders();
         },
 
+        // Chart and Export functions remain unchanged
         getChartOptions() {
             const isLight = document.body.classList.contains('light-mode');
             const gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
