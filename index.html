@@ -184,6 +184,25 @@
                 transform: translateX(0);
             }
         }
+        
+        /* === ADICIONADO: ESTILOS PARA O OVERLAY DO MENU === */
+        #menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Fundo semi-transparente */
+            z-index: 999; /* Abaixo do menu (1000), acima do resto */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            backdrop-filter: blur(2px); /* Efeito de desfoque (opcional, mas elegante) */
+        }
+        #menu-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body>
@@ -211,6 +230,8 @@
                 <button id="logout-btn" class="btn btn-secondary">Sair</button>
             </div>
         </header>
+
+        <div id="menu-overlay"></div>
 
         <div class="app-layout">
             <aside class="sidebar-nav card">
@@ -342,7 +363,7 @@
                         <div class="card">
                             <h2 id="category-form-title">Adicionar Categoria</h2>
                             <form id="category-form">
-                               <div class="form-group"> <label for="category-name">Nome da Categoria</label> <input type="text" id="category-name" placeholder="Ex: Supermercado" required> </div>
+                                <div class="form-group"> <label for="category-name">Nome da Categoria</label> <input type="text" id="category-name" placeholder="Ex: Supermercado" required> </div>
                                 <div class="form-buttons" id="category-form-buttons"> <button type="submit" class="btn btn-primary">Adicionar Categoria</button> </div>
                             </form>
                         </div>
@@ -461,12 +482,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.loadData();
             if (!this.state.categories || this.state.categories.length === 0 || typeof this.state.categories[0] === 'string') {
                  this.state.categories = [
-                    { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, 
-                    { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
-                    { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, 
-                    { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, { id: 'cat11', name: 'Outros' }
-                ];
-                this.saveData();
+                     { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, 
+                     { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
+                     { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, 
+                     { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, { id: 'cat11', name: 'Outros' }
+                 ];
+                 this.saveData();
             }
             this.generateRecurringTransactions();
             this.applySavedTheme();
@@ -499,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 makeRecurringCheckbox: document.getElementById('make-recurring-checkbox'),
                 menuToggle: document.getElementById('menu-toggle'),
                 sidebarNav: document.querySelector('.sidebar-nav'),
+                menuOverlay: document.getElementById('menu-overlay'), // ADICIONADO
             };
         },
 
@@ -507,7 +529,18 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.usernameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') this.handleLogin(); });
             this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
             this.elements.tabButtons.forEach(tab => tab.addEventListener('click', (e) => this.handleTabClick(e)));
-            this.elements.menuToggle.addEventListener('click', () => this.elements.sidebarNav.classList.toggle('visible'));
+            
+            // MODIFICADO: Listener do menu para controlar o overlay
+            this.elements.menuToggle.addEventListener('click', () => {
+                this.elements.sidebarNav.classList.toggle('visible');
+                this.elements.menuOverlay.classList.toggle('visible');
+            });
+
+            // ADICIONADO: Listener para fechar o menu ao clicar no overlay
+            this.elements.menuOverlay.addEventListener('click', () => {
+                this.elements.sidebarNav.classList.remove('visible');
+                this.elements.menuOverlay.classList.remove('visible');
+            });
 
             document.getElementById('transaction-form').addEventListener('submit', (e) => this.handleTransaction(e));
             document.getElementById('account-form').addEventListener('submit', (e) => this.handleAccount(e));
@@ -574,9 +607,10 @@ document.addEventListener('DOMContentLoaded', () => {
             tabButton.classList.add('active');
             document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active');
 
-            // --- CORREÇÃO PARA FECHAR O MENU NO CELULAR ---
+            // --- MODIFICADO: CORREÇÃO PARA FECHAR O MENU E O OVERLAY NO CELULAR ---
             if (this.elements.sidebarNav.classList.contains('visible')) {
                 this.elements.sidebarNav.classList.remove('visible');
+                this.elements.menuOverlay.classList.remove('visible');
             }
         },
 
