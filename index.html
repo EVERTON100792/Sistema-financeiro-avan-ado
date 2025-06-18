@@ -565,7 +565,21 @@ document.addEventListener('DOMContentLoaded', () => {
         handleLogout() { if (confirm('Você tem certeza que deseja sair?')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
         toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
         applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); },
+        
+        handleTabClick(e) {
+            if (this.state.editingItem) { this.cancelEditMode(); }
+            this.elements.tabButtons.forEach(tab => tab.classList.remove('active'));
+            this.elements.tabContents.forEach(content => content.classList.remove('active'));
+            const tabButton = e.currentTarget;
+            tabButton.classList.add('active');
+            document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active');
+
+            // --- CORREÇÃO PARA FECHAR O MENU NO CELULAR ---
+            if (this.elements.sidebarNav.classList.contains('visible')) {
+                this.elements.sidebarNav.classList.remove('visible');
+            }
+        },
+
         toggleTransactionFormLock() { const hasAccounts = this.state.accounts.length > 0; this.elements.transactionFormBlocker.classList.toggle('hidden', hasAccounts); const formElements = this.elements.transactionForm.elements; for (let i = 0; i < formElements.length; i++) { formElements[i].disabled = !hasAccounts; } },
         handleTransactionTypeChange() { const type = this.elements.transactionTypeSelect.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDateInput.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense ? 'block' : 'none'; },
         formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
