@@ -140,7 +140,8 @@
             <button class="tab-btn active" data-tab="dashboard">Painel</button>
             <button class="tab-btn" data-tab="accounts">Contas</button>
             <button class="tab-btn" data-tab="categories">Categorias</button>
-            <button class="tab-btn" data-tab="transfers">Transferências</button> <button class="tab-btn" data-tab="budgets">Orçamentos</button>
+            <button class="tab-btn" data-tab="transfers">Transferências</button>
+            <button class="tab-btn" data-tab="budgets">Orçamentos</button>
             <button class="tab-btn" data-tab="goals">Metas</button>
             <button class="tab-btn" data-tab="recurrences">Recorrências</button>
         </nav>
@@ -293,20 +294,20 @@
             </div>
 
             <div id="tab-budgets" class="tab-content">
-                 <div class="grid-layout">
-                    <div class="card">
-                        <h2 id="budget-form-title">Definir Orçamento</h2>
-                        <form id="budget-form">
-                            <div class="form-group"> <label for="budget-category">Categoria</label> <select id="budget-category" required></select> </div>
-                            <div class="form-group"> <label for="budget-amount">Limite Mensal (R$)</label> <input type="number" id="budget-amount" step="0.01" placeholder="500.00" required> </div>
-                            <div class="form-buttons" id="budget-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Orçamento</button> </div>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h2>Acompanhamento dos Orçamentos</h2>
-                        <div id="budgets-list"></div>
-                    </div>
-                </div>
+                   <div class="grid-layout">
+                     <div class="card">
+                         <h2 id="budget-form-title">Definir Orçamento</h2>
+                         <form id="budget-form">
+                             <div class="form-group"> <label for="budget-category">Categoria</label> <select id="budget-category" required></select> </div>
+                             <div class="form-group"> <label for="budget-amount">Limite Mensal (R$)</label> <input type="number" id="budget-amount" step="0.01" placeholder="500.00" required> </div>
+                             <div class="form-buttons" id="budget-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Orçamento</button> </div>
+                         </form>
+                     </div>
+                     <div class="card">
+                         <h2>Acompanhamento dos Orçamentos</h2>
+                         <div id="budgets-list"></div>
+                     </div>
+                 </div>
             </div>
 
             <div id="tab-goals" class="tab-content">
@@ -356,12 +357,20 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
-        // ... (state e outras propriedades inalteradas)
         elements: {},
-        charts: {},
+        charts: {
+            mainOverviewChart: null,
+            evolutionChart: null
+        },
         state: {
-            user: null, transactions: [], accounts: [], budgets: [],
-            goals: [], recurrences: [], editingItem: null, categories: [],
+            user: null, 
+            transactions: [], 
+            accounts: [], 
+            budgets: [],
+            goals: [], 
+            recurrences: [], 
+            editingItem: null, 
+            categories: [],
         },
 
         init() {
@@ -372,20 +381,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         initApp() {
             this.loadData();
+            // Inicializa categorias padrão se não houver ou se o formato for antigo
             if (!this.state.categories || this.state.categories.length === 0 || typeof this.state.categories[0] === 'string') {
-                 this.state.categories = [
-                    { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, 
-                    { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
-                    { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, 
-                    { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, { id: 'cat11', name: 'Outros' }
+                   this.state.categories = [
+                       { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, 
+                       { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
+                       { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, 
+                       { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, { id: 'cat11', name: 'Outros' }
                 ];
-                this.saveData();
+                this.saveData(); // Salva as categorias padrão
             }
             this.generateRecurringTransactions();
             this.applySavedTheme();
             this.elements.welcomeMessage.textContent = `Olá, ${this.state.user}!`;
             document.getElementById('date').valueAsDate = new Date();
-            this.initCharts();
+            this.initCharts(); // Garante que os gráficos sejam inicializados
             this.handleTransactionTypeChange();
             this.updateAllRenders();
         },
@@ -415,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('goal-form').addEventListener('submit', (e) => this.handleGoal(e));
             document.getElementById('recurrence-form').addEventListener('submit', (e) => this.handleRecurrence(e));
             document.getElementById('category-form').addEventListener('submit', (e) => this.handleCategorySubmit(e));
-            document.getElementById('transfer-form').addEventListener('submit', (e) => this.handleTransfer(e)); // NOVO
+            document.getElementById('transfer-form').addEventListener('submit', (e) => this.handleTransfer(e)); 
             document.getElementById('export-csv').addEventListener('click', () => this.exportToCSV());
             document.getElementById('export-pdf').addEventListener('click', () => this.exportToPDF());
             document.getElementById('date-filter').addEventListener('change', () => this.renderTransactions());
@@ -451,56 +461,802 @@ document.addEventListener('DOMContentLoaded', () => {
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         getStorageKey() { return `financeApp_${this.state.user}`; },
-        saveData() { if (!this.state.user) return; try { const dataToSave = { transactions: this.state.transactions, accounts: this.state.accounts, budgets: this.state.budgets, goals: this.state.goals, recurrences: this.state.recurrences, categories: this.state.categories, }; localStorage.setItem(this.getStorageKey(), JSON.stringify(dataToSave)); } catch (error) { console.error("Failed to save data:", error); } },
-        loadData() { if (!this.state.user) return; try { const data = localStorage.getItem(this.getStorageKey()); if (data) { const parsedData = JSON.parse(data); this.state.transactions = parsedData.transactions || []; this.state.accounts = parsedData.accounts || []; this.state.budgets = parsedData.budgets || []; this.state.goals = parsedData.goals || []; this.state.recurrences = parsedData.recurrences || []; this.state.categories = parsedData.categories || []; } else { Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } }); } } catch (error) { console.error("Failed to load data:", error); Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } }); } },
-        generateRecurringTransactions() { const today = new Date(); today.setHours(0, 0, 0, 0); let somethingChanged = false; this.state.recurrences.forEach(r => { if (!r.nextDueDate) return; let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); while (nextDueDate <= today) { const newTransaction = { id: Date.now().toString() + Math.random(), type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; this.state.transactions.push(newTransaction); if (r.frequency === 'monthly') { nextDueDate.setMonth(nextDueDate.getMonth() + 1); } else if (r.frequency === 'weekly') { nextDueDate.setDate(nextDueDate.getDate() + 7); } else if (r.frequency === 'yearly') { nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); } r.nextDueDate = nextDueDate.toISOString().split('T')[0]; somethingChanged = true; } }); if (somethingChanged) { this.saveData(); } },
-        checkLogin() { const user = localStorage.getItem('financeAppUser'); if (user) { this.state.user = user; this.elements.loginContainer.style.display = 'none'; this.elements.appContainer.style.display = 'block'; this.initApp(); } else { this.elements.loginContainer.style.display = 'flex'; this.elements.appContainer.style.display = 'none'; } },
-        handleLogin() { const username = this.elements.usernameInput.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
-        handleLogout() { if (confirm('Você tem certeza que deseja sair?')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
-        toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
-        applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabs.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); },
-        toggleTransactionFormLock() { const hasAccounts = this.state.accounts.length > 0; this.elements.transactionFormBlocker.classList.toggle('hidden', hasAccounts); const formElements = this.elements.transactionForm.elements; for (let i = 0; i < formElements.length; i++) { formElements[i].disabled = !hasAccounts; } },
-        handleTransactionTypeChange() { const type = this.elements.transactionTypeSelect.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDateInput.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense ? 'block' : 'none'; },
+        saveData() { 
+            if (!this.state.user) return; 
+            try { 
+                const dataToSave = { 
+                    transactions: this.state.transactions, 
+                    accounts: this.state.accounts, 
+                    budgets: this.state.budgets, 
+                    goals: this.state.goals, 
+                    recurrences: this.state.recurrences, 
+                    categories: this.state.categories, 
+                }; 
+                localStorage.setItem(this.getStorageKey(), JSON.stringify(dataToSave)); 
+            } catch (error) { 
+                console.error("Failed to save data:", error); 
+            } 
+        },
+        loadData() { 
+            if (!this.state.user) return; 
+            try { 
+                const data = localStorage.getItem(this.getStorageKey()); 
+                if (data) { 
+                    const parsedData = JSON.parse(data); 
+                    this.state.transactions = parsedData.transactions || []; 
+                    this.state.accounts = parsedData.accounts || []; 
+                    this.state.budgets = parsedData.budgets || []; 
+                    this.state.goals = parsedData.goals || []; 
+                    this.state.recurrences = parsedData.recurrences || []; 
+                    this.state.categories = parsedData.categories || []; 
+                } else { 
+                    // Se não houver dados salvos, inicializa arrays vazios
+                    Object.keys(this.state).forEach(key => { 
+                        if (Array.isArray(this.state[key]) && key !== 'categories') { // Não sobrescreve as categorias padrão
+                            this.state[key] = []; 
+                        } 
+                    }); 
+                } 
+            } catch (error) { 
+                console.error("Failed to load data:", error); 
+                // Em caso de erro, garante que os arrays estejam vazios para evitar falhas
+                Object.keys(this.state).forEach(key => { 
+                    if (Array.isArray(this.state[key]) && key !== 'categories') { 
+                        this.state[key] = []; 
+                    } 
+                }); 
+            } 
+        },
+        generateRecurringTransactions() { 
+            const today = new Date(); 
+            today.setHours(0, 0, 0, 0); 
+            let somethingChanged = false; 
+            
+            this.state.recurrences.forEach(r => { 
+                if (!r.nextDueDate) { // Se nextDueDate não existe, usa startDate para a primeira geração
+                    r.nextDueDate = r.startDate;
+                }
+                let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); 
+
+                while (nextDueDate <= today) { 
+                    // Verifica se já existe uma transação gerada para esta recorrência nesta data
+                    const alreadyGenerated = this.state.transactions.some(t => 
+                        t.recurrenceId === r.id && 
+                        t.date === r.nextDueDate && 
+                        t.description === r.description && 
+                        t.amount === r.amount
+                    );
+
+                    if (!alreadyGenerated) {
+                        const newTransaction = { 
+                            id: Date.now().toString() + Math.random(), 
+                            type: r.type, 
+                            description: r.description, 
+                            amount: r.amount, 
+                            date: r.nextDueDate, 
+                            accountId: r.accountId, 
+                            category: r.category, 
+                            isPaid: r.type === 'income', // Receitas são marcadas como pagas automaticamente
+                            dueDate: r.nextDueDate, // Despesas recorrentes tem a data de vencimento igual à data da transação
+                            recurrenceId: r.id // Link para a recorrência original
+                        }; 
+                        this.state.transactions.push(newTransaction); 
+                        somethingChanged = true; 
+                    }
+                   
+                    // Avança para a próxima data de vencimento
+                    if (r.frequency === 'monthly') { 
+                        nextDueDate.setMonth(nextDueDate.getMonth() + 1); 
+                    } else if (r.frequency === 'weekly') { 
+                        nextDueDate.setDate(nextDueDate.getDate() + 7); 
+                    } else if (r.frequency === 'yearly') { 
+                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
+                    } 
+                    r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
+                } 
+            }); 
+            if (somethingChanged) { 
+                this.saveData(); 
+            } 
+        },
+        checkLogin() { 
+            const user = localStorage.getItem('financeAppUser'); 
+            if (user) { 
+                this.state.user = user; 
+                this.elements.loginContainer.style.display = 'none'; 
+                this.elements.appContainer.style.display = 'block'; 
+                this.initApp(); 
+            } else { 
+                this.elements.loginContainer.style.display = 'flex'; 
+                this.elements.appContainer.style.display = 'none'; 
+            } 
+        },
+        handleLogin() { 
+            const username = this.elements.usernameInput.value.trim(); 
+            if (username) { 
+                localStorage.setItem('financeAppUser', username); 
+                this.checkLogin(); 
+            } else { 
+                alert('Por favor, digite seu nome.'); 
+            } 
+        },
+        handleLogout() { 
+            if (confirm('Você tem certeza que deseja sair?')) { 
+                localStorage.removeItem('financeAppUser'); 
+                window.location.reload(); 
+            } 
+        },
+        toggleTheme() { 
+            document.body.classList.toggle('light-mode'); 
+            const isLight = document.body.classList.contains('light-mode'); 
+            this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; 
+            localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); 
+            this.updateCharts(); // Atualiza os gráficos para refletir o tema
+        },
+        applySavedTheme() { 
+            const savedTheme = localStorage.getItem('financeTheme'); 
+            if (savedTheme === 'light') { 
+                document.body.classList.add('light-mode'); 
+                this.elements.themeToggle.textContent = '🌙'; 
+            } else { 
+                document.body.classList.remove('light-mode'); 
+                this.elements.themeToggle.textContent = '☀️'; 
+            } 
+        },
+        handleTabClick(e) { 
+            if (this.state.editingItem) { this.cancelEditMode(); } 
+            this.elements.tabs.forEach(tab => tab.classList.remove('active')); 
+            this.elements.tabContents.forEach(content => content.classList.remove('active')); 
+            const tabButton = e.currentTarget; 
+            tabButton.classList.add('active'); 
+            document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); 
+            this.updateAllRenders(); // Garante que a tab ativa sempre renderize corretamente
+        },
+        toggleTransactionFormLock() { 
+            const hasAccounts = this.state.accounts.length > 0; 
+            this.elements.transactionFormBlocker.classList.toggle('hidden', hasAccounts); 
+            const formElements = this.elements.transactionForm.elements; 
+            for (let i = 0; i < formElements.length; i++) { 
+                formElements[i].disabled = !hasAccounts; 
+            } 
+        },
+        handleTransactionTypeChange() { 
+            const type = this.elements.transactionTypeSelect.value; 
+            const isExpense = type === 'expense'; 
+            this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; 
+            this.elements.dueDateInput.required = isExpense; 
+            this.elements.makeRecurringGroup.style.display = isExpense ? 'block' : 'none'; 
+        },
         formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
         formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
         populateSelectors() {
             const categoryOptions = this.state.categories.map(c => ({ value: c.name, text: c.name }));
-            const nonCreditAccounts = this.state.accounts.filter(a => a.type !== 'credit_card').map(a => ({ value: a.id, text: a.name }));
-            const allAccounts = this.state.accounts.map(a => ({ value: a.id, text: a.name }));
+            const allAccounts = this.state.accounts.map(a => ({ value: a.id, text: `${a.name} (${a.type === 'credit_card' ? 'Crédito' : a.type === 'checking' ? 'Corrente' : a.type === 'savings' ? 'Poupança' : 'Dinheiro'})` }));
+            const nonCreditAccounts = this.state.accounts.filter(a => a.type !== 'credit_card').map(a => ({ value: a.id, text: `${a.name} (${a.type === 'checking' ? 'Corrente' : a.type === 'savings' ? 'Poupança' : 'Dinheiro'})` }));
+            
             const selectors = {
-                'account-select': allAccounts, 'transfer-from-account': allAccounts, 'transfer-to-account': nonCreditAccounts,
-                'category-select': categoryOptions, 'budget-category': categoryOptions,
+                'account-select': allAccounts, 
+                'transfer-from-account': allAccounts, 
+                'transfer-to-account': nonCreditAccounts,
+                'category-select': categoryOptions, 
+                'budget-category': categoryOptions,
                 'category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions],
-                'recurrence-account': allAccounts, 'recurrence-category': categoryOptions,
+                'recurrence-account': allAccounts, 
+                'recurrence-category': categoryOptions,
             };
             for (const id in selectors) {
                 const select = document.getElementById(id);
                 if(select) {
-                    const currentValue = select.value; select.innerHTML = '';
-                    selectors[id].forEach(opt => { const option = document.createElement('option'); option.value = opt.value; option.textContent = opt.text; select.appendChild(option); });
-                    if (Array.from(select.options).some(opt => opt.value === currentValue)) { select.value = currentValue; }
+                    const currentValue = select.value; 
+                    select.innerHTML = '';
+                    selectors[id].forEach(opt => { 
+                        const option = document.createElement('option'); 
+                        option.value = opt.value; 
+                        option.textContent = opt.text; 
+                        select.appendChild(option); 
+                    });
+                    // Tenta restaurar o valor selecionado
+                    if (Array.from(select.options).some(opt => opt.value === currentValue)) { 
+                        select.value = currentValue; 
+                    } else if (selectors[id].length > 0) {
+                        select.value = selectors[id][0].value; // Seleciona o primeiro se o valor atual não existe
+                    }
                 }
             }
         },
-        renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const balance = this.state.accounts.reduce((sum, acc) => { const currentVal = acc.currentBalance || 0; return acc.type === 'credit_card' ? sum - currentVal : sum + currentVal; }, 0); const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(balance); balanceEl.className = `amount ${balance >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
-        getFilteredTransactions() { /* ... (código inalterado) ... */ },
-        renderTransactions() { /* ... (código inalterado) ... */ },
-        renderAccounts() { /* ... (código inalterado) ... */ },
-        renderBudgets() { /* ... (código inalterado) ... */ },
-        renderGoals() { /* ... (código inalterado) ... */ },
-        renderRecurrences() { /* ... (código inalterado) ... */ },
-        renderCategories() { /* ... (código inalterado) ... */ },
-        updateAllRenders() { try { this.toggleTransactionFormLock(); this.updateAccountBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactions(); this.renderAccounts(); this.renderBudgets(); this.renderGoals(); this.renderRecurrences(); this.renderCategories(); this.updateCharts(); } catch (error) { console.error("An error occurred during a render update:", error); } },
-        updateAccountBalances() { this.state.accounts.forEach(acc => { let balance = acc.initialBalance || 0; this.state.transactions.forEach(t => { if (t.accountId === acc.id) { const amount = t.amount || 0; if (acc.type === 'credit_card') { if (t.type === 'expense') balance += amount; if (t.type === 'income') balance -= amount; } else { if (t.type === 'income') balance += amount; if (t.type === 'expense' && t.isPaid) balance -= amount; } } }); acc.currentBalance = balance; }); },
-        handleTransaction(e) { /* ... (código da versão anterior) ... */ },
-        handleAccount(e) { /* ... (código da versão anterior) ... */ },
-        handleBudget(e) { /* ... (código da versão anterior) ... */ },
-        handleGoal(e) { /* ... (código da versão anterior) ... */ },
-        handleRecurrence(e) { /* ... (código da versão anterior) ... */ },
-        handleCategorySubmit(e) { /* ... (código da versão anterior) ... */ },
+        renderSummary() { 
+            const now = new Date(); 
+            const currentMonth = now.getMonth(); 
+            const currentYear = now.getFullYear(); 
+            
+            const monthlyIncome = this.state.transactions.filter(t => 
+                new Date(t.date).getMonth() === currentMonth && 
+                new Date(t.date).getFullYear() === currentYear && 
+                t.type === 'income' && 
+                t.category !== 'Transferência'
+            ).reduce((sum, t) => sum + (t.amount || 0), 0); 
+            
+            const monthlyExpense = this.state.transactions.filter(t => 
+                new Date(t.date).getMonth() === currentMonth && 
+                new Date(t.date).getFullYear() === currentYear && 
+                t.type === 'expense' && 
+                t.isPaid && 
+                t.category !== 'Transferência'
+            ).reduce((sum, t) => sum + (t.amount || 0), 0); 
+            
+            const balance = this.state.accounts.reduce((sum, acc) => { 
+                const currentVal = acc.currentBalance || 0; 
+                return acc.type === 'credit_card' ? sum - currentVal : sum + currentVal; 
+            }, 0); 
+            
+            const balanceEl = document.getElementById('balance'); 
+            balanceEl.textContent = this.formatCurrency(balance); 
+            balanceEl.className = `amount ${balance >= 0 ? 'positive' : 'negative'}`; 
+            document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); 
+            document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); 
+        },
+        getFilteredTransactions() {
+            const dateFilter = document.getElementById('date-filter').value;
+            const categoryFilter = document.getElementById('category-filter').value;
+            const paymentStatusFilter = document.getElementById('payment-status-filter').value;
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            return this.state.transactions.filter(t => {
+                const transactionDate = new Date(t.date + 'T00:00:00');
+                const transactionDueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+                
+                // Filter by date
+                if (dateFilter === '7') {
+                    const sevenDaysAgo = new Date(now);
+                    sevenDaysAgo.setDate(now.getDate() - 7);
+                    if (transactionDate < sevenDaysAgo) return false;
+                } else if (dateFilter === '30') {
+                    const thirtyDaysAgo = new Date(now);
+                    thirtyDaysAgo.setDate(now.getDate() - 30);
+                    if (transactionDate < thirtyDaysAgo) return false;
+                } else if (dateFilter === 'month') {
+                    if (transactionDate.getMonth() !== now.getMonth() || transactionDate.getFullYear() !== now.getFullYear()) return false;
+                }
+
+                // Filter by category
+                if (categoryFilter !== 'all' && t.category !== categoryFilter) {
+                    return false;
+                }
+
+                // Filter by payment status
+                if (paymentStatusFilter === 'paid' && !t.isPaid) {
+                    return false;
+                }
+                if (paymentStatusFilter === 'unpaid' && t.isPaid) {
+                    return false;
+                }
+
+                return true;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+        },
+        renderTransactions() { 
+            const transactionList = document.getElementById('transaction-list');
+            transactionList.innerHTML = '';
+            const filteredTransactions = this.getFilteredTransactions();
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (filteredTransactions.length === 0) {
+                transactionList.innerHTML = `<p style="text-align: center; color: var(--text-muted-color);">Nenhuma transação encontrada para os filtros selecionados.</p>`;
+                return;
+            }
+
+            filteredTransactions.forEach(t => {
+                const account = this.state.accounts.find(acc => acc.id === t.accountId);
+                const category = this.state.categories.find(cat => cat.name === t.category); // Busca a categoria pelo nome
+                const isCreditCard = account && account.type === 'credit_card';
+
+                let itemClass = t.type;
+                let statusTag = '';
+                let dueDateTag = '';
+
+                if (t.type === 'expense') {
+                    if (t.isPaid) {
+                        itemClass += ' paid';
+                        statusTag = `<span class="details-tag paid-tag">Paga</span>`;
+                    } else {
+                        const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+                        if (dueDate) {
+                            const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            if (diffDays >= 0 && diffDays <= 7) {
+                                itemClass += ' due-soon';
+                                dueDateTag = `<span class="details-tag due-date-tag">Vence em ${diffDays} dias</span>`;
+                            } else if (diffDays < 0) {
+                                itemClass += ' overdue';
+                                dueDateTag = `<span class="details-tag due-date-tag">Vencida (${Math.abs(diffDays)} dias)</span>`;
+                            }
+                        }
+                        statusTag = `<span class="details-tag">A Pagar</span>`;
+                    }
+                } else if (t.type === 'income') {
+                    if (t.isPaid) {
+                        itemClass += ' paid';
+                        statusTag = `<span class="details-tag paid-tag">Recebida</span>`;
+                    } else {
+                         statusTag = `<span class="details-tag">A Receber</span>`;
+                    }
+                }
+                
+                const deleteButtonHtml = `<button class="delete-button" data-id="${t.id}">${this.getDeleteIconSVG()}</button>`;
+                const editButtonHtml = `<button class="edit-btn" data-id="${t.id}" data-type="transaction">${this.getEditIconSVG()}</button>`;
+                const payButtonHtml = (!t.isPaid && t.type === 'expense') ? `<button class="btn btn-success btn-sm pay-btn" data-id="${t.id}" style="font-size: 0.8rem; padding: 5px 10px;">Pagar</button>` : '';
+
+
+                const li = document.createElement('li');
+                li.className = `transaction-item ${itemClass}`;
+                li.innerHTML = `
+                    <div class="info">
+                        <div class="description">${t.description}</div>
+                        <div class="details">
+                            <span class="details-tag">${account ? account.name : 'N/A'}</span>
+                            <span class="details-tag">${category ? category.name : 'N/A'}</span>
+                            <span class="details-tag">${this.formatDate(t.date)}</span>
+                            ${t.type === 'expense' ? `<span class="details-tag">${this.formatDate(t.dueDate)}</span>` : ''}
+                            ${statusTag}
+                            ${dueDateTag}
+                        </div>
+                    </div>
+                    <div class="amount ${t.type}">${this.formatCurrency(t.amount)}</div>
+                    <div class="actions">
+                        ${payButtonHtml}
+                        ${editButtonHtml}
+                        ${deleteButtonHtml}
+                    </div>
+                `;
+                transactionList.appendChild(li);
+            });
+        },
+        renderAccounts() { 
+            const accountsList = document.getElementById('accounts-list');
+            accountsList.innerHTML = '';
+            if (this.state.accounts.length === 0) {
+                accountsList.innerHTML = `<p style="text-align: center; color: var(--text-muted-color);">Nenhuma conta cadastrada.</p>`;
+                return;
+            }
+            this.state.accounts.forEach(acc => {
+                const accountBalance = acc.type === 'credit_card' ? this.formatCurrency(acc.currentBalance * -1) : this.formatCurrency(acc.currentBalance);
+                const li = document.createElement('div');
+                li.className = 'list-item';
+                li.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="main-info">
+                            <h3>${acc.name}</h3>
+                            <p style="color: var(--text-muted-color); font-size: 0.9rem;">${acc.type === 'checking' ? 'Conta Corrente' : acc.type === 'savings' ? 'Poupança' : acc.type === 'cash' ? 'Dinheiro' : 'Cartão de Crédito'}</p>
+                        </div>
+                        <div class="actions">
+                            <button class="edit-btn" data-id="${acc.id}" data-type="account">${this.getEditIconSVG()}</button>
+                            <button class="delete-button" data-id="${acc.id}">${this.getDeleteIconSVG()}</button>
+                        </div>
+                    </div>
+                    <p style="font-weight: 600; margin-top: 10px;">Saldo Atual: <span class="${acc.currentBalance >= 0 ? 'positive' : 'negative'}">${accountBalance}</span></p>
+                `;
+                accountsList.appendChild(li);
+            });
+        },
+        renderBudgets() { 
+            const budgetsList = document.getElementById('budgets-list');
+            budgetsList.innerHTML = '';
+            if (this.state.budgets.length === 0) {
+                budgetsList.innerHTML = `<p style="text-align: center; color: var(--text-muted-color);">Nenhum orçamento definido.</p>`;
+                return;
+            }
+            const now = new Date();
+            const currentMonthExpenses = this.state.transactions.filter(t => 
+                t.type === 'expense' && t.isPaid && 
+                new Date(t.date).getMonth() === now.getMonth() && 
+                new Date(t.date).getFullYear() === now.getFullYear()
+            );
+
+            this.state.budgets.forEach(budget => {
+                const spent = currentMonthExpenses
+                    .filter(t => t.category === budget.category)
+                    .reduce((sum, t) => sum + (t.amount || 0), 0);
+                
+                const percentage = (spent / budget.amount) * 100;
+                const progressClass = percentage > 100 ? 'over' : '';
+
+                const li = document.createElement('div');
+                li.className = 'list-item';
+                li.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="main-info">
+                            <h3>${budget.category}</h3>
+                            <p style="color: var(--text-muted-color); font-size: 0.9rem;">Limite: ${this.formatCurrency(budget.amount)}</p>
+                        </div>
+                        <div class="actions">
+                            <button class="edit-btn" data-id="${budget.id}" data-type="budget">${this.getEditIconSVG()}</button>
+                            <button class="delete-button" data-id="${budget.id}">${this.getDeleteIconSVG()}</button>
+                        </div>
+                    </div>
+                    <p style="margin-top: 10px;">Gasto: ${this.formatCurrency(spent)}</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar ${progressClass}" style="width: ${Math.min(100, percentage)}%;">
+                            ${Math.round(percentage)}%
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted-color); margin-top: 5px;">
+                        ${percentage > 100 ? `<span style="color: var(--error-color); font-weight: bold;">Estourou em ${this.formatCurrency(spent - budget.amount)}</span>` : `${this.formatCurrency(budget.amount - spent)} restante`}
+                    </p>
+                `;
+                budgetsList.appendChild(li);
+            });
+        },
+        renderGoals() { 
+            const goalsList = document.getElementById('goals-list');
+            goalsList.innerHTML = '';
+            if (this.state.goals.length === 0) {
+                goalsList.innerHTML = `<p style="text-align: center; color: var(--text-muted-color);">Nenhuma meta definida.</p>`;
+                return;
+            }
+            this.state.goals.forEach(goal => {
+                const progress = (goal.saved / goal.target) * 100;
+                const remaining = goal.target - goal.saved;
+                const li = document.createElement('div');
+                li.className = 'list-item';
+                li.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="main-info">
+                            <h3>${goal.name}</h3>
+                            <p style="color: var(--text-muted-color); font-size: 0.9rem;">Alvo: ${this.formatCurrency(goal.target)}</p>
+                        </div>
+                        <div class="actions">
+                            <button class="edit-btn" data-id="${goal.id}" data-type="goal">${this.getEditIconSVG()}</button>
+                            <button class="delete-button" data-id="${goal.id}">${this.getDeleteIconSVG()}</button>
+                        </div>
+                    </div>
+                    <p style="margin-top: 10px;">Guardado: ${this.formatCurrency(goal.saved)}</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${Math.min(100, progress)}%;">
+                            ${Math.round(progress)}%
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted-color); margin-top: 5px;">
+                        Faltam: ${this.formatCurrency(Math.max(0, remaining))}
+                        ${goal.deadline ? ` (Prazo: ${this.formatDate(goal.deadline)})` : ''}
+                    </p>
+                    <form class="goal-contribution-form">
+                        <input type="hidden" name="goalId" value="${goal.id}">
+                        <input type="number" name="contributionAmount" step="0.01" placeholder="Valor p/ contribuir" required>
+                        <select name="contributionAccount" required></select>
+                        <button type="submit" class="btn btn-success">Contribuir</button>
+                    </form>
+                `;
+                goalsList.appendChild(li);
+                const contributionAccountSelect = li.querySelector('select[name="contributionAccount"]');
+                const nonCreditAccounts = this.state.accounts.filter(a => a.type !== 'credit_card');
+                nonCreditAccounts.forEach(acc => {
+                    const option = document.createElement('option');
+                    option.value = acc.id;
+                    option.textContent = acc.name;
+                    contributionAccountSelect.appendChild(option);
+                });
+            });
+        },
+        renderRecurrences() { 
+            const recurrencesList = document.getElementById('recurrences-list');
+            recurrencesList.innerHTML = '';
+            if (this.state.recurrences.length === 0) {
+                recurrencesList.innerHTML = `<p style="text-align: center; color: var(--text-muted-color);">Nenhum lançamento recorrente.</p>`;
+                return;
+            }
+            this.state.recurrences.forEach(rec => {
+                const account = this.state.accounts.find(acc => acc.id === rec.accountId);
+                const li = document.createElement('div');
+                li.className = 'list-item';
+                li.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="main-info">
+                            <h3>${rec.description} (${rec.type === 'income' ? 'Receita' : 'Despesa'})</h3>
+                            <p style="color: var(--text-muted-color); font-size: 0.9rem;">
+                                ${this.formatCurrency(rec.amount)} 
+                                / ${rec.frequency === 'monthly' ? 'Mensal' : rec.frequency === 'weekly' ? 'Semanal' : 'Anual'}
+                                <br>
+                                Conta: ${account ? account.name : 'N/A'} - Categoria: ${rec.category}
+                                <br>
+                                Próx. Venc.: ${this.formatDate(rec.nextDueDate)}
+                            </p>
+                        </div>
+                        <div class="actions">
+                            <button class="edit-btn" data-id="${rec.id}" data-type="recurrence">${this.getEditIconSVG()}</button>
+                            <button class="delete-button" data-id="${rec.id}">${this.getDeleteIconSVG()}</button>
+                        </div>
+                    </div>
+                `;
+                recurrencesList.appendChild(li);
+            });
+        },
+        renderCategories() { 
+            const categoriesList = document.getElementById('categories-list');
+            categoriesList.innerHTML = '';
+            if (this.state.categories.length === 0) {
+                categoriesList.innerHTML = `<p style="text-align: center; color: var(--text-muted-color);">Nenhuma categoria cadastrada.</p>`;
+                return;
+            }
+            this.state.categories.forEach(cat => {
+                const li = document.createElement('div');
+                li.className = 'list-item category-item';
+                li.innerHTML = `
+                    <div class="main-info">
+                        <h3>${cat.name}</h3>
+                    </div>
+                    <div class="actions">
+                        <button class="edit-btn" data-id="${cat.id}" data-type="category">${this.getEditIconSVG()}</button>
+                        <button class="delete-button" data-id="${cat.id}">${this.getDeleteIconSVG()}</button>
+                    </div>
+                `;
+                categoriesList.appendChild(li);
+            });
+        },
+        updateAllRenders() { 
+            try { 
+                this.toggleTransactionFormLock(); 
+                this.updateAccountBalances(); 
+                this.populateSelectors(); 
+                this.renderSummary(); 
+                this.renderTransactions(); 
+                this.renderAccounts(); 
+                this.renderBudgets(); 
+                this.renderGoals(); 
+                this.renderRecurrences(); 
+                this.renderCategories(); 
+                this.updateCharts(); 
+            } catch (error) { 
+                console.error("An error occurred during a render update:", error); 
+            } 
+        },
+        updateAccountBalances() { 
+            this.state.accounts.forEach(acc => { 
+                let balance = acc.initialBalance || 0; 
+                this.state.transactions.forEach(t => { 
+                    if (t.accountId === acc.id && t.category !== 'Transferência') { // Exclui transferências diretas do cálculo do balanço da conta, pois elas são compensadas
+                        const amount = t.amount || 0; 
+                        if (acc.type === 'credit_card') { 
+                            if (t.type === 'expense' && t.isPaid) balance += amount; // Gasto no cartão de crédito aumenta o valor devido
+                            if (t.type === 'income' && t.isPaid) balance -= amount; // Pagamento do cartão de crédito diminui o valor devido
+                        } else { 
+                            if (t.type === 'income' && t.isPaid) balance += amount; 
+                            if (t.type === 'expense' && t.isPaid) balance -= amount; 
+                        } 
+                    }
+                    // Lógica para transferências: afeta diretamente os saldos da conta de origem e destino
+                    if (t.category === 'Transferência') {
+                        if (t.accountId === acc.id) {
+                            if (t.type === 'expense') { // Parte da transferência que sai da conta
+                                balance -= (t.amount || 0);
+                            } else if (t.type === 'income') { // Parte da transferência que entra na conta
+                                balance += (t.amount || 0);
+                            }
+                        }
+                    }
+                }); 
+                acc.currentBalance = balance; 
+            }); 
+            this.saveData(); // Salva os saldos atualizados
+        },
+        handleTransaction(e) {
+            e.preventDefault();
+            const form = e.target;
+            const type = form.elements['transaction-type'].value;
+            const description = form.elements['description'].value;
+            const amount = parseFloat(form.elements['amount'].value);
+            const date = form.elements['date'].value;
+            const accountId = form.elements['account-select'].value;
+            const category = form.elements['category-select'].value;
+            const dueDate = form.elements['due-date'].value;
+            const makeRecurring = form.elements['make-recurring-checkbox'].checked;
+
+            if (!description || !amount || !date || !accountId || !category) {
+                alert("Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            let isPaid = type === 'income'; // Receitas são pagas por padrão
+
+            // Se for despesa e não tiver data de vencimento, ou se for marcada como paga na hora
+            if (type === 'expense' && (!dueDate || form.querySelector('#add-transaction-btn').textContent === 'Salvar Transação' && this.state.editingItem && this.state.editingItem.isPaid)) {
+                isPaid = true;
+            }
+
+            if (this.state.editingItem) {
+                const index = this.state.transactions.findIndex(t => t.id === this.state.editingItem.id);
+                if (index !== -1) {
+                    this.state.transactions[index] = {
+                        ...this.state.transactions[index],
+                        type, description, amount, date, accountId, category, isPaid, dueDate
+                    };
+                }
+                alert("Transação atualizada com sucesso!");
+            } else {
+                const newTransaction = {
+                    id: Date.now().toString() + Math.random(), // ID único
+                    type, description, amount, date, accountId, category, isPaid, dueDate
+                };
+                this.state.transactions.push(newTransaction);
+                alert("Transação adicionada com sucesso!");
+                
+                // Se for despesa e marcada como recorrente
+                if (type === 'expense' && makeRecurring) {
+                    const recurrenceId = `rec-${Date.now()}`;
+                    const recurrence = {
+                        id: recurrenceId,
+                        description: newTransaction.description,
+                        amount: newTransaction.amount,
+                        type: newTransaction.type,
+                        accountId: newTransaction.accountId,
+                        category: newTransaction.category,
+                        frequency: 'monthly', // Por enquanto, só mensal
+                        startDate: newTransaction.date,
+                        nextDueDate: new Date(new Date(newTransaction.date + 'T00:00:00').setMonth(new Date(newTransaction.date + 'T00:00:00').getMonth() + 1)).toISOString().split('T')[0] // Próximo mês
+                    };
+                    this.state.recurrences.push(recurrence);
+                }
+            }
+            this.saveData();
+            this.updateAllRenders();
+            form.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            this.cancelEditMode(); // Sai do modo de edição
+        },
+        handleAccount(e) {
+            e.preventDefault();
+            const form = e.target;
+            const name = form.elements['account-name'].value;
+            const type = form.elements['account-type'].value;
+            const initialBalance = parseFloat(form.elements['initial-balance'].value);
+
+            if (!name) { alert("Por favor, preencha o nome da conta."); return; }
+
+            if (this.state.editingItem) {
+                const index = this.state.accounts.findIndex(acc => acc.id === this.state.editingItem.id);
+                if (index !== -1) {
+                    this.state.accounts[index] = { ...this.state.accounts[index], name, type, initialBalance, currentBalance: initialBalance };
+                }
+                alert("Conta atualizada com sucesso!");
+            } else {
+                const newAccount = {
+                    id: Date.now().toString(),
+                    name, type, initialBalance, currentBalance: initialBalance
+                };
+                this.state.accounts.push(newAccount);
+                alert("Conta adicionada com sucesso!");
+            }
+            this.saveData();
+            this.updateAllRenders();
+            form.reset();
+            this.cancelEditMode();
+        },
+        handleBudget(e) {
+            e.preventDefault();
+            const form = e.target;
+            const category = form.elements['budget-category'].value;
+            const amount = parseFloat(form.elements['budget-amount'].value);
+
+            if (!category || !amount) { alert("Por favor, preencha todos os campos."); return; }
+
+            if (this.state.editingItem) {
+                const index = this.state.budgets.findIndex(b => b.id === this.state.editingItem.id);
+                if (index !== -1) {
+                    this.state.budgets[index] = { ...this.state.budgets[index], category, amount };
+                }
+                alert("Orçamento atualizado com sucesso!");
+            } else {
+                const newBudget = {
+                    id: Date.now().toString(), category, amount
+                };
+                this.state.budgets.push(newBudget);
+                alert("Orçamento adicionado com sucesso!");
+            }
+            this.saveData();
+            this.updateAllRenders();
+            form.reset();
+            this.cancelEditMode();
+        },
+        handleGoal(e) {
+            e.preventDefault();
+            const form = e.target;
+            const name = form.elements['goal-name'].value;
+            const target = parseFloat(form.elements['goal-target'].value);
+            const saved = parseFloat(form.elements['goal-saved'].value);
+            const deadline = form.elements['goal-deadline'].value;
+
+            if (!name || !target) { alert("Por favor, preencha todos os campos obrigatórios."); return; }
+
+            if (this.state.editingItem) {
+                const index = this.state.goals.findIndex(g => g.id === this.state.editingItem.id);
+                if (index !== -1) {
+                    this.state.goals[index] = { ...this.state.goals[index], name, target, saved, deadline };
+                }
+                alert("Meta atualizada com sucesso!");
+            } else {
+                const newGoal = {
+                    id: Date.now().toString(), name, target, saved, deadline
+                };
+                this.state.goals.push(newGoal);
+                alert("Meta criada com sucesso!");
+            }
+            this.saveData();
+            this.updateAllRenders();
+            form.reset();
+            this.cancelEditMode();
+        },
+        handleRecurrence(e) {
+            e.preventDefault();
+            const form = e.target;
+            const description = form.elements['recurrence-description'].value;
+            const amount = parseFloat(form.elements['recurrence-amount'].value);
+            const type = form.elements['recurrence-type'].value;
+            const accountId = form.elements['recurrence-account'].value;
+            const category = form.elements['recurrence-category'].value;
+            const frequency = form.elements['recurrence-frequency'].value;
+            const startDate = form.elements['recurrence-start-date'].value;
+
+            if (!description || !amount || !type || !accountId || !category || !frequency || !startDate) {
+                alert("Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            if (this.state.editingItem) {
+                const index = this.state.recurrences.findIndex(r => r.id === this.state.editingItem.id);
+                if (index !== -1) {
+                    this.state.recurrences[index] = { ...this.state.recurrences[index], description, amount, type, accountId, category, frequency, startDate };
+                }
+                alert("Lançamento recorrente atualizado com sucesso!");
+            } else {
+                const newRecurrence = {
+                    id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate
+                };
+                this.state.recurrences.push(newRecurrence);
+                alert("Lançamento recorrente adicionado com sucesso!");
+            }
+            this.saveData();
+            this.generateRecurringTransactions(); // Gera transações para a nova recorrência imediatamente
+            this.updateAllRenders();
+            form.reset();
+            this.cancelEditMode();
+        },
+        handleCategorySubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const categoryName = form.elements['category-name'].value.trim();
+
+            if (!categoryName) {
+                alert("Por favor, digite o nome da categoria.");
+                return;
+            }
+
+            // Verifica se a categoria já existe
+            const exists = this.state.categories.some(cat => cat.name.toLowerCase() === categoryName.toLowerCase());
+            if (exists) {
+                alert("Esta categoria já existe!");
+                return;
+            }
+
+            if (this.state.editingItem) {
+                const index = this.state.categories.findIndex(cat => cat.id === this.state.editingItem.id);
+                if (index !== -1) {
+                    this.state.categories[index].name = categoryName;
+                }
+                alert("Categoria atualizada com sucesso!");
+            } else {
+                const newCategory = {
+                    id: Date.now().toString(),
+                    name: categoryName
+                };
+                this.state.categories.push(newCategory);
+                alert("Categoria adicionada com sucesso!");
+            }
+            this.saveData();
+            this.updateAllRenders();
+            form.reset();
+            this.cancelEditMode();
+        },
         
-        // NOVO: Handler dedicado para o formulário de transferências
         handleTransfer(e) {
             e.preventDefault();
             const form = e.target;
@@ -514,8 +1270,32 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!fromAccountId || !toAccountId || !amount || !date) { alert("Preencha todos os campos obrigatórios para a transferência."); return; }
             
             const transferId = `transfer-${Date.now()}`;
-            const expense_part = { id: Date.now().toString() + '-out', type: 'expense', description, amount, date, accountId: fromAccountId, category: 'Transferência', isPaid: true, dueDate: date, transferId };
-            const income_part = { id: Date.now().toString() + '-in', type: 'income', description, amount, date, accountId: toAccountId, category: 'Transferência', isPaid: true, dueDate: date, transferId };
+            // Parte da despesa (saída)
+            const expense_part = { 
+                id: Date.now().toString() + '-out', 
+                type: 'expense', 
+                description: `Transferência enviada para ${this.state.accounts.find(a => a.id === toAccountId)?.name || 'Outra Conta'} - ${description}`, 
+                amount, 
+                date, 
+                accountId: fromAccountId, 
+                category: 'Transferência', 
+                isPaid: true, 
+                dueDate: date, 
+                transferId 
+            };
+            // Parte da receita (entrada)
+            const income_part = { 
+                id: Date.now().toString() + '-in', 
+                type: 'income', 
+                description: `Transferência recebida de ${this.state.accounts.find(a => a.id === fromAccountId)?.name || 'Outra Conta'} - ${description}`, 
+                amount, 
+                date, 
+                accountId: toAccountId, 
+                category: 'Transferência', 
+                isPaid: true, 
+                dueDate: date, 
+                transferId 
+            };
             
             this.state.transactions.push(expense_part, income_part);
             this.saveData();
@@ -525,7 +1305,14 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Transferência realizada com sucesso!");
         },
 
-        markAsPaid(id) { /* ... (código inalterado) ... */ },
+        markAsPaid(id) { 
+            const transaction = this.state.transactions.find(t => t.id === id);
+            if (transaction) {
+                transaction.isPaid = true;
+                this.saveData();
+                this.updateAllRenders();
+            }
+        },
         deleteTransaction(id) {
             const transaction_to_delete = this.state.transactions.find(t => t.id === id);
             if (!transaction_to_delete) return;
@@ -538,73 +1325,642 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (confirm(confirm_message)) {
                 this.state.transactions = this.state.transactions.filter(t => t.id !== id && t.id !== also_delete_id);
-                this.saveData(); this.updateAllRenders();
+                this.saveData(); 
+                this.updateAllRenders();
             }
         },
-        deleteAccount(id) { /* ... (código inalterado) ... */ },
-        deleteBudget(id) { /* ... (código inalterado) ... */ },
-        deleteGoal(id) { /* ... (código inalterado) ... */ },
-        deleteRecurrence(id) { /* ... (código inalterado) ... */ },
-        deleteCategory(id) { /* ... (código inalterado) ... */ },
-        handleGoalContribution(e) { /* ... (código inalterado) ... */ },
-        startEditMode(type, id) { /* ... (código inalterado) ... */ },
-        cancelEditMode() { /* ... (código inalterado) ... */ },
-        getChartOptions() { /* ... (código inalterado) ... */ },
-        initCharts() { /* ... (código inalterado) ... */ },
+        deleteAccount(id) { 
+            if (confirm('Tem certeza que quer deletar esta conta? Todas as transações associadas serão perdidas.')) {
+                this.state.accounts = this.state.accounts.filter(acc => acc.id !== id);
+                // Remove transações associadas a esta conta
+                this.state.transactions = this.state.transactions.filter(t => t.accountId !== id);
+                this.saveData();
+                this.updateAllRenders();
+            }
+        },
+        deleteBudget(id) { 
+            if (confirm('Tem certeza que quer deletar este orçamento?')) {
+                this.state.budgets = this.state.budgets.filter(b => b.id !== id);
+                this.saveData();
+                this.updateAllRenders();
+            }
+        },
+        deleteGoal(id) { 
+            if (confirm('Tem certeza que quer deletar esta meta?')) {
+                this.state.goals = this.state.goals.filter(g => g.id !== id);
+                this.saveData();
+                this.updateAllRenders();
+            }
+        },
+        deleteRecurrence(id) { 
+            if (confirm('Tem certeza que quer deletar este lançamento recorrente? Transações já geradas não serão removidas.')) {
+                this.state.recurrences = this.state.recurrences.filter(r => r.id !== id);
+                this.saveData();
+                this.updateAllRenders();
+            }
+        },
+        deleteCategory(id) { 
+            // Permite deletar apenas categorias que não estão em uso por transações ou orçamentos
+            const categoryToDelete = this.state.categories.find(c => c.id === id);
+            if (!categoryToDelete) return;
+
+            const isCategoryInUse = this.state.transactions.some(t => t.category === categoryToDelete.name) ||
+                                   this.state.budgets.some(b => b.category === categoryToDelete.name);
+
+            if (isCategoryInUse) {
+                alert("Não é possível deletar esta categoria. Ela está sendo usada em transações ou orçamentos.");
+                return;
+            }
+
+            if (confirm(`Tem certeza que quer deletar a categoria "${categoryToDelete.name}"?`)) {
+                this.state.categories = this.state.categories.filter(c => c.id !== id);
+                this.saveData();
+                this.updateAllRenders();
+            }
+        },
+        handleGoalContribution(e) { 
+            e.preventDefault();
+            const form = e.target;
+            const goalId = form.elements['goalId'].value;
+            const contributionAmount = parseFloat(form.elements['contributionAmount'].value);
+            const contributionAccountId = form.elements['contributionAccount'].value;
+
+            if (!contributionAmount || !contributionAccountId) {
+                alert("Por favor, preencha o valor e selecione a conta para a contribuição.");
+                return;
+            }
+
+            const goal = this.state.goals.find(g => g.id === goalId);
+            const account = this.state.accounts.find(a => a.id === contributionAccountId);
+
+            if (goal && account) {
+                if (account.currentBalance < contributionAmount && account.type !== 'credit_card') {
+                    alert("Saldo insuficiente na conta selecionada para esta contribuição.");
+                    return;
+                }
+
+                goal.saved += contributionAmount;
+                // Cria uma transação de saída para a contribuição
+                const newTransaction = {
+                    id: Date.now().toString() + '-goal',
+                    type: 'expense',
+                    description: `Contribuição para meta: ${goal.name}`,
+                    amount: contributionAmount,
+                    date: new Date().toISOString().split('T')[0],
+                    accountId: contributionAccountId,
+                    category: 'Metas', // Categoria específica para metas
+                    isPaid: true,
+                    dueDate: new Date().toISOString().split('T')[0]
+                };
+                this.state.transactions.push(newTransaction);
+
+                this.saveData();
+                this.updateAllRenders();
+                form.reset();
+                alert(`Contribuído ${this.formatCurrency(contributionAmount)} para a meta "${goal.name}".`);
+            } else {
+                alert("Meta ou conta não encontrada.");
+            }
+        },
+        startEditMode(type, id) { 
+            this.state.editingItem = { id, type };
+            let item;
+            let form;
+            let formTitle;
+            let submitButton;
+
+            switch (type) {
+                case 'transaction':
+                    item = this.state.transactions.find(t => t.id === id);
+                    form = document.getElementById('transaction-form');
+                    formTitle = document.getElementById('transaction-form-title');
+                    submitButton = document.getElementById('add-transaction-btn');
+                    if (item) {
+                        form.elements['transaction-type'].value = item.type;
+                        form.elements['description'].value = item.description;
+                        form.elements['amount'].value = item.amount;
+                        form.elements['date'].value = item.date;
+                        form.elements['account-select'].value = item.accountId;
+                        form.elements['category-select'].value = item.category;
+                        form.elements['due-date'].value = item.dueDate || '';
+                        this.elements.makeRecurringGroup.style.display = 'none'; // Desabilita recorrência em edição
+                        this.elements.makeRecurringCheckbox.checked = false;
+                        this.handleTransactionTypeChange(); // Para atualizar a visibilidade do campo de vencimento
+                        formTitle.textContent = "Editar Transação";
+                        submitButton.textContent = "Salvar Alterações";
+                        submitButton.classList.add('btn-secondary');
+                        submitButton.classList.remove('btn-primary');
+                        // Adicionar botão de cancelar
+                        if (!document.getElementById('cancel-edit-btn')) {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.id = 'cancel-edit-btn';
+                            cancelButton.type = 'button';
+                            cancelButton.className = 'btn btn-secondary';
+                            cancelButton.textContent = 'Cancelar';
+                            cancelButton.addEventListener('click', () => this.cancelEditMode());
+                            document.getElementById('transaction-form-buttons').appendChild(cancelButton);
+                        }
+                    }
+                    break;
+                case 'account':
+                    item = this.state.accounts.find(a => a.id === id);
+                    form = document.getElementById('account-form');
+                    formTitle = document.getElementById('account-form-title');
+                    submitButton = form.querySelector('.btn-primary');
+                    if (item) {
+                        form.elements['account-name'].value = item.name;
+                        form.elements['account-type'].value = item.type;
+                        form.elements['initial-balance'].value = item.initialBalance;
+                        this.elements.initialBalanceLabel.textContent = item.type === 'credit_card' ? 'Fatura Inicial (R$)' : 'Saldo Inicial (R$)';
+                        formTitle.textContent = "Editar Conta/Cartão";
+                        submitButton.textContent = "Salvar Alterações";
+                        submitButton.classList.add('btn-secondary');
+                        submitButton.classList.remove('btn-primary');
+                        if (!document.getElementById('cancel-edit-btn-acc')) {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.id = 'cancel-edit-btn-acc';
+                            cancelButton.type = 'button';
+                            cancelButton.className = 'btn btn-secondary';
+                            cancelButton.textContent = 'Cancelar';
+                            cancelButton.addEventListener('click', () => this.cancelEditMode());
+                            document.getElementById('account-form-buttons').appendChild(cancelButton);
+                        }
+                    }
+                    break;
+                case 'budget':
+                    item = this.state.budgets.find(b => b.id === id);
+                    form = document.getElementById('budget-form');
+                    formTitle = document.getElementById('budget-form-title');
+                    submitButton = form.querySelector('.btn-primary');
+                    if (item) {
+                        form.elements['budget-category'].value = item.category;
+                        form.elements['budget-amount'].value = item.amount;
+                        formTitle.textContent = "Editar Orçamento";
+                        submitButton.textContent = "Salvar Alterações";
+                        submitButton.classList.add('btn-secondary');
+                        submitButton.classList.remove('btn-primary');
+                        if (!document.getElementById('cancel-edit-btn-bud')) {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.id = 'cancel-edit-btn-bud';
+                            cancelButton.type = 'button';
+                            cancelButton.className = 'btn btn-secondary';
+                            cancelButton.textContent = 'Cancelar';
+                            cancelButton.addEventListener('click', () => this.cancelEditMode());
+                            document.getElementById('budget-form-buttons').appendChild(cancelButton);
+                        }
+                    }
+                    break;
+                case 'goal':
+                    item = this.state.goals.find(g => g.id === id);
+                    form = document.getElementById('goal-form');
+                    formTitle = document.getElementById('goal-form-title');
+                    submitButton = form.querySelector('.btn-primary');
+                    if (item) {
+                        form.elements['goal-name'].value = item.name;
+                        form.elements['goal-target'].value = item.target;
+                        form.elements['goal-saved'].value = item.saved;
+                        form.elements['goal-deadline'].value = item.deadline || '';
+                        formTitle.textContent = "Editar Meta";
+                        submitButton.textContent = "Salvar Alterações";
+                        submitButton.classList.add('btn-secondary');
+                        submitButton.classList.remove('btn-primary');
+                        if (!document.getElementById('cancel-edit-btn-goal')) {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.id = 'cancel-edit-btn-goal';
+                            cancelButton.type = 'button';
+                            cancelButton.className = 'btn btn-secondary';
+                            cancelButton.textContent = 'Cancelar';
+                            cancelButton.addEventListener('click', () => this.cancelEditMode());
+                            document.getElementById('goal-form-buttons').appendChild(cancelButton);
+                        }
+                    }
+                    break;
+                case 'recurrence':
+                    item = this.state.recurrences.find(r => r.id === id);
+                    form = document.getElementById('recurrence-form');
+                    formTitle = document.getElementById('recurrence-form-title');
+                    submitButton = form.querySelector('.btn-primary');
+                    if (item) {
+                        form.elements['recurrence-description'].value = item.description;
+                        form.elements['recurrence-amount'].value = item.amount;
+                        form.elements['recurrence-type'].value = item.type;
+                        form.elements['recurrence-account'].value = item.accountId;
+                        form.elements['recurrence-category'].value = item.category;
+                        form.elements['recurrence-frequency'].value = item.frequency;
+                        form.elements['recurrence-start-date'].value = item.startDate;
+                        formTitle.textContent = "Editar Lançamento Recorrente";
+                        submitButton.textContent = "Salvar Alterações";
+                        submitButton.classList.add('btn-secondary');
+                        submitButton.classList.remove('btn-primary');
+                        if (!document.getElementById('cancel-edit-btn-rec')) {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.id = 'cancel-edit-btn-rec';
+                            cancelButton.type = 'button';
+                            cancelButton.className = 'btn btn-secondary';
+                            cancelButton.textContent = 'Cancelar';
+                            cancelButton.addEventListener('click', () => this.cancelEditMode());
+                            document.getElementById('recurrence-form-buttons').appendChild(cancelButton);
+                        }
+                    }
+                    break;
+                case 'category':
+                    item = this.state.categories.find(c => c.id === id);
+                    form = document.getElementById('category-form');
+                    formTitle = document.getElementById('category-form-title');
+                    submitButton = form.querySelector('.btn-primary');
+                    if (item) {
+                        form.elements['category-name'].value = item.name;
+                        formTitle.textContent = "Editar Categoria";
+                        submitButton.textContent = "Salvar Alterações";
+                        submitButton.classList.add('btn-secondary');
+                        submitButton.classList.remove('btn-primary');
+                        if (!document.getElementById('cancel-edit-btn-cat')) {
+                            const cancelButton = document.createElement('button');
+                            cancelButton.id = 'cancel-edit-btn-cat';
+                            cancelButton.type = 'button';
+                            cancelButton.className = 'btn btn-secondary';
+                            cancelButton.textContent = 'Cancelar';
+                            cancelButton.addEventListener('click', () => this.cancelEditMode());
+                            document.getElementById('category-form-buttons').appendChild(cancelButton);
+                        }
+                    }
+                    break;
+            }
+        },
+        cancelEditMode() { 
+            this.state.editingItem = null;
+            // Reset Transaction Form
+            const transactionForm = document.getElementById('transaction-form');
+            transactionForm.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('transaction-form-title').textContent = "Nova Transação";
+            const addTransactionBtn = document.getElementById('add-transaction-btn');
+            addTransactionBtn.textContent = "Adicionar Transação";
+            addTransactionBtn.classList.add('btn-primary');
+            addTransactionBtn.classList.remove('btn-secondary');
+            this.elements.makeRecurringGroup.style.display = 'block'; // Reabilita recorrência no modo normal
+            this.handleTransactionTypeChange(); // Garante que o due-date esteja correto
+
+            // Remove o botão de cancelar se existir
+            const cancelBtnTrans = document.getElementById('cancel-edit-btn');
+            if (cancelBtnTrans) cancelBtnTrans.remove();
+
+            // Reset Account Form
+            const accountForm = document.getElementById('account-form');
+            accountForm.reset();
+            document.getElementById('account-form-title').textContent = "Adicionar Conta/Cartão";
+            const addAccountBtn = accountForm.querySelector('.btn-primary');
+            addAccountBtn.textContent = "Salvar Conta";
+            addAccountBtn.classList.add('btn-primary');
+            addAccountBtn.classList.remove('btn-secondary');
+            const cancelBtnAcc = document.getElementById('cancel-edit-btn-acc');
+            if (cancelBtnAcc) cancelBtnAcc.remove();
+            this.elements.initialBalanceLabel.textContent = 'Saldo Inicial (R$)';
+
+
+            // Reset Budget Form
+            const budgetForm = document.getElementById('budget-form');
+            budgetForm.reset();
+            document.getElementById('budget-form-title').textContent = "Definir Orçamento";
+            const addBudgetBtn = budgetForm.querySelector('.btn-primary');
+            addBudgetBtn.textContent = "Salvar Orçamento";
+            addBudgetBtn.classList.add('btn-primary');
+            addBudgetBtn.classList.remove('btn-secondary');
+            const cancelBtnBud = document.getElementById('cancel-edit-btn-bud');
+            if (cancelBtnBud) cancelBtnBud.remove();
+
+            // Reset Goal Form
+            const goalForm = document.getElementById('goal-form');
+            goalForm.reset();
+            document.getElementById('goal-form-title').textContent = "Criar Nova Meta";
+            const addGoalBtn = goalForm.querySelector('.btn-primary');
+            addGoalBtn.textContent = "Criar Meta";
+            addGoalBtn.classList.add('btn-primary');
+            addGoalBtn.classList.remove('btn-secondary');
+            const cancelBtnGoal = document.getElementById('cancel-edit-btn-goal');
+            if (cancelBtnGoal) cancelBtnGoal.remove();
+
+            // Reset Recurrence Form
+            const recurrenceForm = document.getElementById('recurrence-form');
+            recurrenceForm.reset();
+            document.getElementById('recurrence-form-title').textContent = "Adicionar Lançamento Recorrente";
+            const addRecurrenceBtn = recurrenceForm.querySelector('.btn-primary');
+            addRecurrenceBtn.textContent = "Salvar Recorrência";
+            addRecurrenceBtn.classList.add('btn-primary');
+            addRecurrenceBtn.classList.remove('btn-secondary');
+            const cancelBtnRec = document.getElementById('cancel-edit-btn-rec');
+            if (cancelBtnRec) cancelBtnRec.remove();
+
+            // Reset Category Form
+            const categoryForm = document.getElementById('category-form');
+            categoryForm.reset();
+            document.getElementById('category-form-title').textContent = "Adicionar Categoria";
+            const addCategoryBtn = categoryForm.querySelector('.btn-primary');
+            addCategoryBtn.textContent = "Adicionar Categoria";
+            addCategoryBtn.classList.add('btn-primary');
+            addCategoryBtn.classList.remove('btn-secondary');
+            const cancelBtnCat = document.getElementById('cancel-edit-btn-cat');
+            if (cancelBtnCat) cancelBtnCat.remove();
+
+            this.updateAllRenders();
+        },
+        getChartOptions() { 
+            const isLightMode = document.body.classList.contains('light-mode');
+            const textColor = isLightMode ? '#1f2937' : '#ffffff';
+            const gridColor = isLightMode ? '#eef2f9' : '#0f3460';
+
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor // Cor do texto da legenda
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += financeApp.formatCurrency(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: gridColor // Cor das linhas de grade do eixo X
+                        },
+                        ticks: {
+                            color: textColor // Cor do texto dos ticks do eixo X
+                        },
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'dd/MM/yyyy',
+                            displayFormats: {
+                                day: 'dd/MM'
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: gridColor // Cor das linhas de grade do eixo Y
+                        },
+                        ticks: {
+                            color: textColor, // Cor do texto dos ticks do eixo Y
+                            callback: function(value) {
+                                return financeApp.formatCurrency(value);
+                            }
+                        }
+                    }
+                }
+            };
+        },
+        initCharts() { 
+            const mainOverviewCtx = document.getElementById('main-overview-chart').getContext('2d');
+            this.charts.mainOverviewChart = new Chart(mainOverviewCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: this.getChartOptions()
+            });
+
+            const evolutionCtx = document.getElementById('evolution-chart').getContext('2d');
+            this.charts.evolutionChart = new Chart(evolutionCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: this.getChartOptions()
+            });
+        },
         updateCharts() {
-            if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
+            if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) {
+                this.initCharts(); // Garante que os gráficos existam antes de atualizar
+            }
+
             const commonOptions = this.getChartOptions();
             const now = new Date();
             const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            // Dados para o gráfico de Visão Geral do Mês (Barra)
             const dataByDay = {};
-            for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) { dataByDay[d.toISOString().split('T')[0]] = { income: 0, expense: 0 }; }
+            for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) { 
+                dataByDay[d.toISOString().split('T')[0]] = { income: 0, expense: 0 }; 
+            }
             this.state.transactions
-                .filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear() && t.category !== 'Transferência')
+                .filter(t => new Date(t.date + 'T00:00:00').getMonth() === now.getMonth() && 
+                             new Date(t.date + 'T00:00:00').getFullYear() === now.getFullYear() && 
+                             t.category !== 'Transferência') // Exclui transferências
                 .forEach(t => {
                     if(dataByDay[t.date]) {
-                        if (t.type === 'income') dataByDay[t.date].income += (t.amount || 0);
+                        if (t.type === 'income' && t.isPaid) dataByDay[t.date].income += (t.amount || 0);
                         if (t.type === 'expense' && t.isPaid) dataByDay[t.date].expense += (t.amount || 0);
                     }
             });
-            const labels = Object.keys(dataByDay);
-            this.charts.mainOverviewChart.data.labels = labels;
-            this.charts.mainOverviewChart.data.datasets = [ { label: 'Receitas', data: labels.map(day => dataByDay[day].income), backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas Pagas', data: labels.map(day => dataByDay[day].expense), backgroundColor: 'rgba(231, 76, 60, 0.7)' } ];
-            this.charts.mainOverviewChart.options = { ...this.charts.mainOverviewChart.options, ...commonOptions };
+            const labelsMainOverview = Object.keys(dataByDay).sort(); // Garante ordem cronológica
+            this.charts.mainOverviewChart.data.labels = labelsMainOverview;
+            this.charts.mainOverviewChart.data.datasets = [ 
+                { 
+                    label: 'Receitas', 
+                    data: labelsMainOverview.map(day => dataByDay[day].income), 
+                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    borderWidth: 1
+                }, 
+                { 
+                    label: 'Despesas Pagas', 
+                    data: labelsMainOverview.map(day => dataByDay[day].expense), 
+                    backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                    borderColor: 'rgba(231, 76, 60, 1)',
+                    borderWidth: 1
+                } 
+            ];
+            this.charts.mainOverviewChart.options = { 
+                ...commonOptions,
+                scales: {
+                    x: {
+                        ...commonOptions.scales.x,
+                        type: 'category', // Gráfico de barras usa 'category' para labels discretas
+                        time: { enabled: false } // Desativa o time adapter para 'category'
+                    }
+                }
+            }; // Adapta as opções para barras
             this.charts.mainOverviewChart.update();
-            const allTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            // Dados para o gráfico de Evolução do Patrimônio (Linha)
+            const allTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date + 'T00:00:00') - new Date(b.date + 'T00:00:00'));
             const dailyNetWorth = new Map();
-            let initialNetWorth = this.state.accounts.reduce((sum, acc) => { const iBalance = acc.initialBalance || 0; return acc.type !== 'credit_card' ? sum + iBalance : sum; }, 0);
+            
+            // Calcula o patrimônio líquido inicial (saldo de todas as contas que não são cartão de crédito)
+            let initialNetWorth = this.state.accounts.reduce((sum, acc) => { 
+                return acc.type !== 'credit_card' ? sum + (acc.initialBalance || 0) : sum; 
+            }, 0);
+            
             if (allTransactions.length === 0) {
                 dailyNetWorth.set(new Date().toISOString().split('T')[0], initialNetWorth);
             } else {
                 const firstDate = new Date(allTransactions[0].date + 'T00:00:00');
-                firstDate.setDate(firstDate.getDate() - 1);
+                // Garante que o gráfico comece um dia antes da primeira transação para mostrar o saldo inicial
+                firstDate.setDate(firstDate.getDate() - 1); 
                 dailyNetWorth.set(firstDate.toISOString().split('T')[0], initialNetWorth);
             }
+            
             let runningBalance = initialNetWorth;
             allTransactions.forEach(t => {
                 const amount = t.amount || 0;
                 const account = this.state.accounts.find(a => a.id === t.accountId);
-                if (account && account.type !== 'credit_card') {
-                    if (t.type === 'income') { runningBalance += amount; }
-                    if (t.type === 'expense' && t.isPaid) { runningBalance -= amount; }
+
+                // Apenas transações que afetam o patrimônio líquido geral (exclui transferências e gastos/pagamentos de cartão de crédito que são "compensados")
+                if (account && t.category !== 'Transferência') {
+                    if (account.type !== 'credit_card') { // Contas normais
+                        if (t.type === 'income' && t.isPaid) { runningBalance += amount; }
+                        if (t.type === 'expense' && t.isPaid) { runningBalance -= amount; }
+                    } else { // Cartão de crédito (considera apenas pagamentos da fatura como saída do patrimônio)
+                        // A lógica aqui é mais complexa. Um gasto no cartão não diminui o patrimônio até que seja pago.
+                        // Um pagamento de fatura, sim, diminui o patrimônio disponível nas outras contas.
+                        // Para simplificar no gráfico de patrimônio líquido, focamos no saldo real das contas,
+                        // o valor do cartão é uma dívida que já está "embutida" no patrimônio negativo.
+                        // O cálculo `acc.currentBalance = balance;` já cuida disso.
+                        // Não precisamos ajustar o runningBalance para transações de cartão aqui.
+                    }
+                }
+                // Ajusta para cobrir dias sem transação, mantendo o último saldo
+                const currentDate = new Date(t.date + 'T00:00:00');
+                let lastDate = Array.from(dailyNetWorth.keys()).pop();
+                if (lastDate) {
+                    lastDate = new Date(lastDate + 'T00:00:00');
+                    // Preenche os dias entre a última transação e a atual
+                    let tempDate = new Date(lastDate);
+                    tempDate.setDate(tempDate.getDate() + 1); // Começa do dia seguinte à última entrada
+                    while (tempDate < currentDate) {
+                        dailyNetWorth.set(tempDate.toISOString().split('T')[0], runningBalance);
+                        tempDate.setDate(tempDate.getDate() + 1);
+                    }
                 }
                 dailyNetWorth.set(t.date, runningBalance); 
             });
-            const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
+
+            // Garante que o último dia do período coberto tenha o saldo final
+            const todayISO = new Date().toISOString().split('T')[0];
+            if (!dailyNetWorth.has(todayISO)) {
+                dailyNetWorth.set(todayISO, runningBalance);
+            }
+
+            const balanceHistory = Array.from(dailyNetWorth.entries())
+                                        .map(([date, value]) => ({ x: date, y: value }))
+                                        .sort((a, b) => new Date(a.x) - new Date(b.x));
+
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
             this.charts.evolutionChart.data.datasets = [{
                 label: 'Patrimônio Líquido', data: balanceHistory,
                 borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560',
                 backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)',
-                fill: true, tension: 0.1
+                fill: true, tension: 0.3 // Aumenta a tensão para uma linha mais suave
             }];
-            this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions };
+            this.charts.evolutionChart.options = { ...commonOptions };
             this.charts.evolutionChart.update();
         },
-        exportToCSV() { /* ... (código inalterado) ... */ },
-        exportToPDF() { /* ... (código inalterado) ... */ },
+        exportToCSV() { 
+            const filteredTransactions = this.getFilteredTransactions();
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Tipo,Descrição,Valor,Data,Conta,Categoria,Vencimento,Pago\n"; // Header
+
+            filteredTransactions.forEach(t => {
+                const accountName = this.state.accounts.find(acc => acc.id === t.accountId)?.name || 'N/A';
+                const row = [
+                    t.type === 'income' ? 'Receita' : 'Despesa',
+                    `"${t.description.replace(/"/g, '""')}"`, // Handle commas in description
+                    t.amount.toFixed(2).replace('.', ','), // Format for BR currency
+                    this.formatDate(t.date),
+                    `"${accountName.replace(/"/g, '""')}"`,
+                    `"${t.category.replace(/"/g, '""')}"`,
+                    this.formatDate(t.dueDate),
+                    t.isPaid ? 'Sim' : 'Não'
+                ].join(',');
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "transacoes_financeiras.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+        exportToPDF() { 
+            // Certifique-se de que jspdf e jspdf-autotable estão carregados
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.AcroForm === 'undefined') {
+                alert("As bibliotecas de PDF não foram carregadas corretamente. Por favor, tente novamente.");
+                console.error("jsPDF or jspdf-autotable not loaded.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("Histórico de Transações", 14, 22);
+
+            const filteredTransactions = this.getFilteredTransactions();
+            const tableColumn = ["Tipo", "Descrição", "Valor", "Data", "Conta", "Categoria", "Vencimento", "Pago"];
+            const tableRows = [];
+
+            filteredTransactions.forEach(t => {
+                const accountName = this.state.accounts.find(acc => acc.id === t.accountId)?.name || 'N/A';
+                const transactionData = [
+                    t.type === 'income' ? 'Receita' : 'Despesa',
+                    t.description,
+                    this.formatCurrency(t.amount),
+                    this.formatDate(t.date),
+                    accountName,
+                    t.category,
+                    this.formatDate(t.dueDate),
+                    t.isPaid ? 'Sim' : 'Não'
+                ];
+                tableRows.push(transactionData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 30,
+                headStyles: { fillColor: [233, 69, 96], textColor: 255, fontStyle: 'bold' },
+                styles: { fontSize: 8, cellPadding: 3, textColor: '#333' },
+                columnStyles: {
+                    0: { cellWidth: 20 }, // Tipo
+                    1: { cellWidth: 50 }, // Descrição
+                    2: { cellWidth: 25, halign: 'right' }, // Valor
+                    3: { cellWidth: 20 }, // Data
+                    4: { cellWidth: 25 }, // Conta
+                    5: { cellWidth: 25 }, // Categoria
+                    6: { cellWidth: 20 }, // Vencimento
+                    7: { cellWidth: 15, halign: 'center' } // Pago
+                },
+                didDrawPage: function(data) {
+                    // Footer
+                    let str = "Página " + doc.internal.getNumberOfPages();
+                    doc.setFontSize(10);
+                    doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                }
+            });
+
+            doc.save('transacoes_financeiras.pdf');
+        },
     };
 
     // Reatribuindo as funções para garantir que o 'this' context esteja correto
