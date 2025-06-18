@@ -137,7 +137,15 @@
 <body>
 
     <div id="login-container">
+        <div class="login-box card">
+            <h1>Acesso Seguro</h1>
+            <p style="margin-bottom: 20px; color: var(--text-muted-color);">Para começar, digite seu nome. Seus dados serão salvos localmente no seu navegador.</p>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Digite seu nome de usuário" required>
+            </div>
+            <button id="login-btn" class="btn btn-primary" style="width: 100%;">Entrar</button>
         </div>
+    </div>
 
     <div id="app-container" style="display: none;" class="container">
         <header>
@@ -166,17 +174,107 @@
 
             <main>
                 <div id="tab-dashboard" class="tab-content active">
+                    <section class="summary-section card">
+                        <div class="summary-card">
+                            <h3>Patrimônio Líquido</h3>
+                            <span id="balance" class="amount positive">R$ 0,00</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Receitas (Mês)</h3>
+                            <span id="total-income" class="amount">R$ 0,00</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Despesas Pagas (Mês)</h3>
+                            <span id="total-expense" class="amount">R$ 0,00</span>
+                        </div>
+                    </section>
+                    <section class="card">
+                        <h2>Visão Geral do Mês</h2>
+                        <div id="main-overview-chart-container">
+                            <canvas id="main-overview-chart"></canvas>
+                        </div>
+                    </section>
+                    <div class="dashboard-layout">
+                        <aside class="card">
+                            <div id="transaction-form-blocker" class="hidden">
+                                <div>
+                                    <h3>Primeiro Passo</h3>
+                                    <p>Cadastre uma conta na aba "Contas" para poder adicionar transações.</p>
+                                </div>
+                            </div>
+                            <h2 id="transaction-form-title">Nova Transação</h2>
+                            <form id="transaction-form">
+                                <div class="form-group">
+                                    <label for="transaction-type">Tipo</label>
+                                    <select id="transaction-type" required="">
+                                        <option value="expense">Despesa</option>
+                                        <option value="income">Receita</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="description">Descrição</label>
+                                    <input type="text" id="description" placeholder="Ex: Aluguel, Salário" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="amount">Valor (R$)</label>
+                                    <input type="number" id="amount" step="0.01" placeholder="150.50" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="date">Data da Transação</label>
+                                    <input type="date" id="date" required="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-select">Conta / Cartão</label>
+                                    <select id="account-select" required=""></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="category-select">Categoria</label>
+                                    <select id="category-select" required=""></select>
+                                </div>
+                                <div class="form-group" id="due-date-group">
+                                    <label for="due-date">Data de Vencimento</label>
+                                    <input type="date" id="due-date" required="">
+                                </div>
+                                <div class="form-group" id="make-recurring-group" style="display: block;">
+                                    <label for="make-recurring-checkbox" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" id="make-recurring-checkbox" style="width: auto;">
+                                        <span>Tornar esta despesa recorrente (mensal)</span>
+                                    </label>
+                                </div>
+                                <div class="form-buttons" id="transaction-form-buttons">
+                                    <button type="submit" class="btn btn-primary">Adicionar Transação</button>
+                                </div>
+                            </form>
+                        </aside>
+                        <section class="card">
+                            <h2>Histórico de Transações</h2>
+                            <div class="filters-and-actions">
+                                <div class="form-group"> <select id="date-filter"> <option value="all">Todo o Período</option> <option value="7">Últimos 7 dias</option> <option value="30">Últimos 30 dias</option> <option value="month">Este Mês</option> </select> </div>
+                                <div class="form-group"> <select id="category-filter"></select> </div>
+                                <div class="form-group"> <select id="payment-status-filter"> <option value="all">Todos os Status</option> <option value="paid">Pagas</option> <option value="unpaid">A Pagar</option> </select> </div>
+                                <button id="export-csv" class="btn btn-secondary">CSV</button>
+                                <button id="export-pdf" class="btn btn-secondary">PDF</button>
+                            </div>
+                            <ul id="transaction-list"></ul>
+                        </section>
                     </div>
+                    <section class="card">
+                        <h2>Evolução do Patrimônio</h2>
+                        <div id="evolution-chart-container">
+                            <canvas id="evolution-chart"></canvas>
+                        </div>
+                    </section>
+                </div>
 
                 <div id="tab-accounts" class="tab-content">
                     <div class="grid-layout">
                         <div class="card">
                             <h2 id="account-form-title">Adicionar Conta/Cartão</h2>
                             <form id="account-form">
-                                <div class="form-group"> <label for="account-name">Nome da Conta/Cartão</label> <input type="text" id="account-name" placeholder="Ex: Banco do Brasil, Nubank" required> </div>
-                                <div class="form-group"> <label for="account-type">Tipo</label> <select id="account-type" required> <option value="checking">Conta Corrente</option> <option value="savings">Poupança</option> <option value="cash">Dinheiro</option> <option value="credit_card">Cartão de Crédito</option> </select> </div>
-                                <div class="form-group"> <label for="initial-balance" id="initial-balance-label">Saldo Inicial</label> <input type="number" id="initial-balance" step="0.01" value="0" required> </div>
-                                <div id="credit-card-fields">
+                                <div class="form-group"> <label for="account-name">Nome da Conta/Cartão</label> <input type="text" id="account-name" placeholder="Ex: Banco do Brasil, Nubank" required=""> </div>
+                                <div class="form-group"> <label for="account-type">Tipo</label> <select id="account-type" required=""> <option value="checking">Conta Corrente</option> <option value="savings">Poupança</option> <option value="cash">Dinheiro</option> <option value="credit_card">Cartão de Crédito</option> </select> </div>
+                                <div class="form-group"> <label for="initial-balance" id="initial-balance-label">Saldo Inicial</label> <input type="number" id="initial-balance" step="0.01" value="0" required=""> </div>
+                                <div id="credit-card-fields" style="display: none;">
                                     <div class="form-group">
                                         <label for="closing-day">Dia do Fechamento da Fatura</label>
                                         <input type="number" id="closing-day" min="1" max="31" placeholder="Ex: 25">
@@ -210,7 +308,17 @@
                         </div>
                 </div>
 
-                </main>
+                <div id="tab-categories" class="tab-content">
+                     </div>
+                <div id="tab-transfers" class="tab-content">
+                     </div>
+                <div id="tab-budgets" class="tab-content">
+                     </div>
+                <div id="tab-goals" class="tab-content">
+                     </div>
+                <div id="tab-recurrences" class="tab-content">
+                     </div>
+            </main>
         </div>
     </div>
 
@@ -219,18 +327,18 @@
             <h2 id="payment-modal-title">Pagar Fatura</h2>
             <form id="payment-form">
                 <input type="hidden" id="payment-invoice-card-id">
-                <input type="hidden" id="payment-invoice-month-year">
+                <input type="hidden" id="payment-invoice-id">
                 <div class="form-group">
                     <label for="payment-amount">Valor do Pagamento</label>
-                    <input type="number" id="payment-amount" step="0.01" required>
+                    <input type="number" id="payment-amount" step="0.01" required="">
                 </div>
                 <div class="form-group">
                     <label for="payment-source-account">Pagar com a conta</label>
-                    <select id="payment-source-account" required></select>
+                    <select id="payment-source-account" required=""></select>
                 </div>
                 <div class="form-group">
                     <label for="payment-date">Data do Pagamento</label>
-                    <input type="date" id="payment-date" required>
+                    <input type="date" id="payment-date" required="">
                 </div>
                 <div class="form-buttons">
                     <button type="button" id="cancel-payment-btn" class="btn btn-secondary">Cancelar</button>
@@ -241,53 +349,148 @@
     </div>
 
 <script>
-// VERSÃO COM ABA DE FATURAS FUNCIONAL
 document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
-        // ... (propriedades elements, charts, state sem alterações) ...
+        elements: {},
+        charts: { mainOverviewChart: null, evolutionChart: null },
+        state: { user: null, transactions: [], accounts: [], budgets: [], goals: [], recurrences: [], editingItem: null, categories: [], },
 
-        init() { /* ... sem alterações ... */ },
-        initApp() { /* ... sem alterações ... */ },
+        init() {
+            this.cacheDOMElements();
+            this.addEventListeners();
+            this.checkLogin();
+        },
+
+        initApp() {
+            this.loadData();
+            if (!this.state.categories || this.state.categories.length === 0 || typeof this.state.categories[0] === 'string') {
+                 this.state.categories = [
+                    { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, 
+                    { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
+                    { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, 
+                    { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, { id: 'cat13', name: 'Pagamento de Fatura'}, { id: 'cat11', name: 'Outros' }
+                ];
+                this.saveData();
+            }
+            this.generateRecurringTransactions();
+            this.applySavedTheme();
+            this.elements.welcomeMessage.textContent = `Olá, ${this.state.user}!`;
+            document.getElementById('date').valueAsDate = new Date();
+            this.initCharts();
+            this.handleTransactionTypeChange();
+            this.updateAllRenders();
+        },
+        
         cacheDOMElements() {
             this.elements = {
-                // ... (outros elementos) ...
+                loginContainer: document.getElementById('login-container'),
+                appContainer: document.getElementById('app-container'),
+                loginBtn: document.getElementById('login-btn'),
+                logoutBtn: document.getElementById('logout-btn'),
+                usernameInput: document.getElementById('username'),
+                welcomeMessage: document.getElementById('welcome-message'),
+                themeToggle: document.getElementById('theme-toggle'),
+                initialBalanceLabel: document.getElementById('initial-balance-label'),
+                accountTypeSelect: document.getElementById('account-type'),
+                dueDateInput: document.getElementById('due-date'),
+                dueDateGroup: document.getElementById('due-date-group'),
+                transactionTypeSelect: document.getElementById('transaction-type'),
+                tabButtons: document.querySelectorAll('.tab-btn'),
+                tabContents: document.querySelectorAll('.tab-content'),
+                transactionForm: document.getElementById('transaction-form'),
+                transactionFormBlocker: document.getElementById('transaction-form-blocker'),
+                makeRecurringGroup: document.getElementById('make-recurring-group'),
+                makeRecurringCheckbox: document.getElementById('make-recurring-checkbox'),
+                menuToggle: document.getElementById('menu-toggle'),
                 sidebarNav: document.querySelector('.sidebar-nav'),
                 creditCardFields: document.getElementById('credit-card-fields'),
                 paymentModal: document.getElementById('payment-modal'),
                 paymentForm: document.getElementById('payment-form'),
             };
         },
+
         addEventListeners() {
-            // ... (maioria dos event listeners sem alterações) ...
-            
+            this.elements.loginBtn.addEventListener('click', () => this.handleLogin());
+            this.elements.usernameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') this.handleLogin(); });
+            this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
+            this.elements.tabButtons.forEach(tab => tab.addEventListener('click', (e) => this.handleTabClick(e)));
+            this.elements.menuToggle.addEventListener('click', () => this.elements.sidebarNav.classList.toggle('visible'));
+
             this.elements.accountTypeSelect.addEventListener('change', (e) => {
                 const isCreditCard = e.target.value === 'credit_card';
                 this.elements.initialBalanceLabel.textContent = isCreditCard ? 'Fatura Inicial (R$)' : 'Saldo Inicial (R$)';
                 this.elements.creditCardFields.style.display = isCreditCard ? 'block' : 'none';
             });
-
-            // --- LISTENERS DA ABA FATURAS E MODAL ---
+            
             document.getElementById('invoice-account-select').addEventListener('change', (e) => this.renderInvoices(e.target.value));
             document.getElementById('cancel-payment-btn').addEventListener('click', () => this.closePaymentModal());
             this.elements.paymentModal.addEventListener('click', (e) => { if (e.target.id === 'payment-modal') this.closePaymentModal(); });
             this.elements.paymentForm.addEventListener('submit', (e) => this.handleInvoicePayment(e));
-            
-            // Listener geral para botões de pagar fatura (que são criados dinamicamente)
             document.getElementById('invoice-details-container').addEventListener('click', (e) => {
-                if (e.target.classList.contains('pay-invoice-btn')) {
-                    const cardId = e.target.dataset.cardId;
-                    const invoiceId = e.target.dataset.invoiceId;
-                    const amount = parseFloat(e.target.dataset.amount);
+                const payButton = e.target.closest('.pay-invoice-btn');
+                if (payButton) {
+                    const cardId = payButton.dataset.cardId;
+                    const invoiceId = payButton.dataset.invoiceId;
+                    const amount = parseFloat(payButton.dataset.amount);
                     this.openPaymentModal(cardId, invoiceId, amount);
                 }
             });
 
             // ... (resto dos listeners)
+            document.getElementById('transaction-form').addEventListener('submit', (e) => this.handleTransaction(e));
+            document.getElementById('account-form').addEventListener('submit', (e) => this.handleAccount(e));
+            document.getElementById('budget-form').addEventListener('submit', (e) => this.handleBudget(e));
+            document.getElementById('goal-form').addEventListener('submit', (e) => this.handleGoal(e));
+            document.getElementById('recurrence-form').addEventListener('submit', (e) => this.handleRecurrence(e));
+            document.getElementById('category-form').addEventListener('submit', (e) => this.handleCategorySubmit(e));
+            document.getElementById('transfer-form').addEventListener('submit', (e) => this.handleTransfer(e));
+            document.getElementById('export-csv').addEventListener('click', () => this.exportToCSV());
+            document.getElementById('export-pdf').addEventListener('click', () => this.exportToPDF());
+            document.getElementById('date-filter').addEventListener('change', () => this.renderTransactions());
+            document.getElementById('category-filter').addEventListener('change', () => this.renderTransactions());
+            document.getElementById('payment-status-filter').addEventListener('change', () => this.renderTransactions());
+            this.elements.transactionTypeSelect.addEventListener('change', () => this.handleTransactionTypeChange());
+            this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+            document.getElementById('export-btn').addEventListener('click', () => this.exportBackup());
+            document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
+            document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
+            this.elements.appContainer.addEventListener('click', (e) => {
+                const target = e.target;
+                const deleteButton = target.closest('.delete-button');
+                const payButton = target.closest('.pay-btn');
+                const editButton = target.closest('.edit-btn');
+                if (editButton) { this.startEditMode(editButton.dataset.type, editButton.dataset.id); }
+                if (deleteButton) {
+                    const id = deleteButton.dataset.id;
+                    const parentListContainer = deleteButton.closest('[id$="-list"]');
+                    if (id && parentListContainer) {
+                        const listId = parentListContainer.id;
+                        if (listId === 'transaction-list') this.deleteTransaction(id);
+                        else if (listId === 'accounts-list') this.deleteAccount(id);
+                        else if (listId === 'budgets-list') this.deleteBudget(id);
+                        else if (listId === 'goals-list') this.deleteGoal(id);
+                        else if (listId === 'recurrences-list') this.deleteRecurrence(id);
+                        else if (listId === 'categories-list') this.deleteCategory(id);
+                    }
+                }
+                if (payButton) { this.markAsPaid(payButton.dataset.id); }
+            });
+            document.getElementById('goals-list').addEventListener('submit', (e) => { if (e.target.classList.contains('goal-contribution-form')) { this.handleGoalContribution(e); } });
         },
         
-        // ... (métodos getDeleteIconSVG, getEditIconSVG, etc. sem alterações) ...
-        
+        handleTabClick(e) {
+            if (this.state.editingItem) { this.cancelEditMode(); }
+            this.elements.tabButtons.forEach(tab => tab.classList.remove('active'));
+            this.elements.tabContents.forEach(content => content.classList.remove('active'));
+            const tabButton = e.currentTarget;
+            tabButton.classList.add('active');
+            document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active');
+            if (this.elements.sidebarNav.classList.contains('visible')) {
+                this.elements.sidebarNav.classList.remove('visible');
+            }
+        },
+
         handleAccount(e) {
             e.preventDefault();
             const form = e.target;
@@ -321,10 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAccounts() {
             const list = document.getElementById('accounts-list');
             list.innerHTML = '';
-            if (this.state.accounts.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma conta cadastrada.</p>';
-                return;
-            }
+            if (this.state.accounts.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma conta cadastrada.</p>'; return; }
             this.state.accounts.forEach(acc => {
                 const item = document.createElement('div');
                 item.className = 'list-item';
@@ -338,8 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // --- NOVOS MÉTODOS E MÉTODOS MODIFICADOS PARA FATURAS ---
-
         getInvoicesForAccount(accountId) {
             const account = this.state.accounts.find(a => a.id === accountId);
             if (!account || account.type !== 'credit_card' || !account.closingDay) return [];
@@ -348,7 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const invoices = new Map();
             const today = new Date();
             
-            // Itera sobre as transações de despesa para agrupá-las em faturas
             cardTransactions.filter(t => t.type === 'expense').forEach(t => {
                 const transactionDate = new Date(t.date + 'T00:00:00');
                 let closingDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), account.closingDay);
@@ -359,24 +556,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const invoiceId = `${closingDate.getFullYear()}-${String(closingDate.getMonth() + 1).padStart(2, '0')}`;
                 if (!invoices.has(invoiceId)) {
-                    invoices.set(invoiceId, {
-                        id: invoiceId,
-                        cardId: accountId,
-                        endDate: new Date(closingDate),
-                        transactions: []
-                    });
+                    invoices.set(invoiceId, { id: invoiceId, cardId: accountId, endDate: closingDate, transactions: [] });
                 }
                 invoices.get(invoiceId).transactions.push(t);
             });
             
-            // Calcula os detalhes de cada fatura
             return Array.from(invoices.values()).map(invoice => {
                 invoice.total = invoice.transactions.reduce((sum, t) => sum + t.amount, 0);
                 
+                const nextClosingDate = new Date(invoice.endDate);
+                nextClosingDate.setMonth(nextClosingDate.getMonth() + 1);
+
                 const payments = cardTransactions.filter(t => {
-                    if (t.type !== 'income') return false;
+                    if (t.type !== 'income' || t.category !== 'Pagamento de Fatura') return false;
                     const paymentDate = new Date(t.date + 'T00:00:00');
-                    return paymentDate > invoice.endDate && paymentDate <= new Date(invoice.endDate).setMonth(invoice.endDate.getMonth() + 1);
+                    return paymentDate > invoice.endDate && paymentDate <= nextClosingDate;
                 });
                 invoice.paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
                 
@@ -433,33 +627,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const transactionsListHtml = invoice.transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => `
                     <li class="transaction-item expense" style="padding: 10px; margin-bottom: 5px;">
-                        <div class="info">
-                            <span class="description">${t.description}</span>
-                            <div class="details"><span class="details-tag">${this.formatDate(t.date)}</span></div>
-                        </div>
+                        <div class="info"><span class="description">${t.description}</span><div class="details"><span class="details-tag">${this.formatDate(t.date)}</span></div></div>
                         <div class="amount expense">-${this.formatCurrency(t.amount)}</div>
-                    </li>
-                `).join('');
+                    </li>`).join('');
 
                 invoiceCard.innerHTML = `
                     <div class="invoice-header">
                         <div>
                             <h3>Fatura de ${new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(invoice.endDate)}</h3>
                             <div class="invoice-summary">
-                                <span>Total: ${this.formatCurrency(invoice.total)}</span> | 
-                                Vencimento: <span>${this.formatDate(invoice.dueDate.toISOString().split('T')[0])}</span>
+                                <span>Total: ${this.formatCurrency(invoice.total)}</span> | Vencimento: <span>${this.formatDate(invoice.dueDate.toISOString().split('T')[0])}</span>
                             </div>
                         </div>
                         <div class="actions">
                              <span class="invoice-status ${invoice.status}">${statusText.toUpperCase()}</span>
                              ${invoice.status === 'closed' || (invoice.status === 'paid' && invoice.paidAmount < invoice.total) ? 
-                                `<button class="btn btn-success pay-invoice-btn" 
-                                         data-card-id="${invoice.cardId}" 
-                                         data-invoice-id="${invoice.id}"
-                                         data-amount="${invoice.total - invoice.paidAmount}">Pagar Fatura</button>` : ''}
+                                `<button class="btn btn-success pay-invoice-btn" data-card-id="${invoice.cardId}" data-invoice-id="${invoice.id}" data-amount="${invoice.total - invoice.paidAmount}">Pagar</button>` : ''}
                         </div>
                     </div>
-                    <ul class="invoice-transaction-list">${transactionsListHtml}</ul>
+                    ${invoice.transactions.length > 0 ? `<ul class="invoice-transaction-list">${transactionsListHtml}</ul>` : '<p style="text-align:center; color: var(--text-muted-color); padding: 10px 0;">Nenhuma despesa nesta fatura.</p>'}
                 `;
                 detailsContainer.appendChild(invoiceCard);
             });
@@ -469,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.paymentModal.classList.add('visible');
             const form = this.elements.paymentForm;
             form.elements['payment-invoice-card-id'].value = cardId;
-            form.elements['payment-invoice-month-year'].value = invoiceId;
+            form.elements['payment-invoice-id'].value = invoiceId;
             form.elements['payment-amount'].value = amount.toFixed(2);
             form.elements['payment-date'].valueAsDate = new Date();
 
@@ -497,29 +683,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const sourceAccountId = form.elements['payment-source-account'].value;
             const date = form.elements['payment-date'].value;
             
-            if (!cardId || !amount || !sourceAccountId || !date) {
-                alert('Todos os campos são obrigatórios.');
-                return;
-            }
+            if (!cardId || !amount || !sourceAccountId || !date) { alert('Todos os campos são obrigatórios.'); return; }
 
             const cardAccount = this.state.accounts.find(a => a.id === cardId);
             const sourceAccount = this.state.accounts.find(a => a.id === sourceAccountId);
 
-            if (sourceAccount.currentBalance < amount) {
-                alert('Saldo insuficiente na conta de origem.');
-                return;
-            }
+            if (sourceAccount.currentBalance < amount) { alert('Saldo insuficiente na conta de origem.'); return; }
             
-            // Cria a transação de "despesa" na conta de origem
             this.state.transactions.push({ id: Date.now().toString() + '-out', type: 'expense', description: `Pagamento Fatura ${cardAccount.name}`, amount, date, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: date });
-
-            // Cria a transação de "receita" no cartão de crédito para abater a dívida
-            this.state.transactions.push({ id: Date.now().toString() + '-in', type: 'income', description: `Pagamento Fatura de ${sourceAccount.name}`, amount, date, accountId: cardId, category: 'Pagamento de Fatura', isPaid: true, dueDate: date });
+            this.state.transactions.push({ id: Date.now().toString() + '-in', type: 'income', description: `Pagamento da Fatura`, amount, date, accountId: cardId, category: 'Pagamento de Fatura', isPaid: true, dueDate: date });
             
             this.saveData();
             this.updateAllRenders();
             this.closePaymentModal();
-            this.renderInvoices(cardId); // Re-renderiza a fatura para atualizar o status
             alert('Pagamento da fatura registrado com sucesso!');
         },
 
@@ -539,10 +715,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.updateCharts(); 
             } catch (error) { 
                 console.error("An error occurred during a render update:", error); 
+                alert('Ocorreu um erro crítico. Por favor, recarregue a página. Se o erro persistir, considere restaurar um backup.');
             } 
         },
 
-        // ... (resto dos métodos sem alterações) ...
+        // ... (resto dos métodos, como handleTransaction, deleteAccount, etc., sem alterações) ...
+        // ... (É importante manter todos os outros métodos que já existiam)
+        
     };
     financeApp.init();
 });
