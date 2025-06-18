@@ -130,6 +130,9 @@
         <header>
             <h1 id="welcome-message">Painel Financeiro</h1>
             <div class="header-actions">
+                <button id="export-btn" class="btn btn-secondary" title="Exportar Backup">📥</button>
+                <button id="import-btn" class="btn btn-secondary" title="Importar Backup">📤</button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
                 <button id="theme-toggle" title="Alterar Tema">🌙</button>
                 <button id="logout-btn" class="btn btn-secondary">Sair</button>
             </div>
@@ -179,13 +182,13 @@
                         </div>
                         <h2 id="transaction-form-title">Nova Transação</h2>
                         <form id="transaction-form">
-                             <div class="form-group">
-                                 <label for="transaction-type">Tipo</label>
-                                 <select id="transaction-type" required>
-                                     <option value="expense">Despesa</option>
-                                     <option value="income">Receita</option>
-                                 </select>
-                             </div>
+                                <div class="form-group">
+                                    <label for="transaction-type">Tipo</label>
+                                    <select id="transaction-type" required>
+                                        <option value="expense">Despesa</option>
+                                        <option value="income">Receita</option>
+                                    </select>
+                                </div>
                             <div class="form-group">
                                 <label for="description">Descrição</label>
                                 <input type="text" id="description" placeholder="Ex: Aluguel, Salário" required>
@@ -352,7 +355,7 @@
     </div>
 
 <script>
-// VERSÃO CORRIGIDA E ESTÁVEL
+// VERSÃO CORRIGIDA E ESTÁVEL COM BACKUP/RESTAURAÇÃO
 document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
@@ -435,6 +438,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.accountTypeSelect.addEventListener('change', (e) => { this.elements.initialBalanceLabel.textContent = e.target.value === 'credit_card' ? 'Fatura Inicial (R$)' : 'Saldo Inicial (R$)'; });
             this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
 
+            // --- EVENT LISTENERS PARA BACKUP/RESTAURAÇÃO ---
+            document.getElementById('export-btn').addEventListener('click', () => this.exportBackup());
+            document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
+            document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
+
+
             this.elements.appContainer.addEventListener('click', (e) => {
                 const target = e.target;
                 const deleteButton = target.closest('.delete-button');
@@ -509,6 +518,84 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); const now = new Date(); const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); const dataByDay = {}; for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) { dataByDay[d.toISOString().split('T')[0]] = { income: 0, expense: 0 }; } this.state.transactions.filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear() && t.category !== 'Transferência').forEach(t => { if(dataByDay[t.date]) { if (t.type === 'income') dataByDay[t.date].income += (t.amount || 0); if (t.type === 'expense' && t.isPaid) dataByDay[t.date].expense += (t.amount || 0); } }); const labels = Object.keys(dataByDay); this.charts.mainOverviewChart.data.labels = labels; this.charts.mainOverviewChart.data.datasets = [ { label: 'Receitas', data: labels.map(day => dataByDay[day].income), backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas Pagas', data: labels.map(day => dataByDay[day].expense), backgroundColor: 'rgba(231, 76, 60, 0.7)' } ]; this.charts.mainOverviewChart.options = { ...this.charts.mainOverviewChart.options, ...commonOptions }; this.charts.mainOverviewChart.update(); const allTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); let initialNetWorth = this.state.accounts.reduce((sum, acc) => { const iBalance = acc.initialBalance || 0; return acc.type !== 'credit_card' ? sum + iBalance : sum; }, 0); if (allTransactions.length === 0) { dailyNetWorth.set(new Date().toISOString().split('T')[0], initialNetWorth); } else { const firstDate = new Date(allTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], initialNetWorth); } let runningBalance = initialNetWorth; allTransactions.forEach(t => { const amount = t.amount || 0; const account = this.state.accounts.find(a => a.id === t.accountId); if (account && account.type !== 'credit_card') { if (t.type === 'income') { runningBalance += amount; } if (t.type === 'expense' && t.isPaid) { runningBalance -= amount; } } dailyNetWorth.set(t.date, runningBalance); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
         exportToCSV() { const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Status']; const rows = this.getFilteredTransactions().map(t => { const account = this.state.accounts.find(a => a.id === t.accountId); const rowData = [ t.date, `"${(t.description || '').replace(/"/g, '""')}"`, t.type, t.amount || 0, t.category, account ? account.name : 'N/A', t.isPaid ? 'Pago' : 'A pagar' ]; return rowData.join(','); }); const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + rows.join('\n'); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "transacoes.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); },
         exportToPDF() { try { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const tableColumn = ["Data", "Descrição", "Tipo", "Valor", "Categoria", "Conta", "Status"]; const tableRows = []; this.getFilteredTransactions().forEach(t => { const account = this.state.accounts.find(a => a.id === t.accountId); let statusText = ''; if(t.category === 'Transferência') { statusText = 'N/A'; } else if (t.type === 'income') { statusText = t.isPaid ? 'Recebido' : 'A Receber'; } else { statusText = t.isPaid ? 'Pago' : 'A Pagar'; } const transactionData = [ this.formatDate(t.date), t.description || '', t.type === 'income' ? 'Receita' : 'Despesa', this.formatCurrency(t.amount || 0), t.category || '', account ? account.name : 'N/A', statusText ]; tableRows.push(transactionData); }); doc.autoTable({ head: [tableColumn], body: tableRows, startY: 20, headStyles: { fillColor: [233, 69, 96] } }); doc.text("Relatório de Transações", 14, 15); doc.save("transacoes.pdf"); } catch (error) { console.error("Failed to generate PDF:", error); alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes."); } },
+
+        // --- MÉTODOS DE BACKUP/RESTAURAÇÃO ---
+        exportBackup() {
+            try {
+                const dataToSave = {
+                    transactions: this.state.transactions,
+                    accounts: this.state.accounts,
+                    budgets: this.state.budgets,
+                    goals: this.state.goals,
+                    recurrences: this.state.recurrences,
+                    categories: this.state.categories,
+                    lastBackup: new Date().toISOString()
+                };
+
+                const jsonString = JSON.stringify(dataToSave, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                
+                const today = new Date();
+                const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                link.download = `financeApp_backup_${dateString}.json`;
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                URL.revokeObjectURL(url);
+                alert('Backup exportado com sucesso!');
+
+            } catch (error) {
+                console.error("Erro ao exportar backup:", error);
+                alert("Ocorreu um erro ao exportar seus dados.");
+            }
+        },
+
+        importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+
+                    if (parsedData && parsedData.transactions && parsedData.accounts) {
+                        if (confirm('Tem certeza que deseja restaurar este backup? Todos os dados atuais serão substituídos.')) {
+                            this.state.transactions = parsedData.transactions || [];
+                            this.state.accounts = parsedData.accounts || [];
+                            this.state.budgets = parsedData.budgets || [];
+                            this.state.goals = parsedData.goals || [];
+                            this.state.recurrences = parsedData.recurrences || [];
+                            this.state.categories = parsedData.categories || [];
+                            
+                            this.saveData();
+                            this.updateAllRenders();
+                            
+                            alert('Backup restaurado com sucesso!');
+                        }
+                    } else {
+                        alert('Arquivo de backup inválido ou corrompido.');
+                    }
+                } catch (error) {
+                    console.error("Erro ao importar backup:", error);
+                    alert('Erro ao ler o arquivo. Verifique se é um backup válido.');
+                } finally {
+                    event.target.value = null;
+                }
+            };
+
+            reader.readAsText(file);
+        },
+
     };
 
     financeApp.init();
