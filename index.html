@@ -33,7 +33,7 @@
         body { background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; overflow-x: hidden; line-height: 1.6; }
         .container { padding: 20px; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .card { background-color: var(--card-bg-color); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); transition: background-color 0.3s; position: relative; margin-bottom: 20px; }
+        .card { background-color: var(--card-bg-color); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); transition: background-color 0.3s; position: relative; }
         h1, h2, h3 { color: var(--text-color); transition: color 0.3s; }
         h2 { margin-bottom: 20px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px; }
         .btn { padding: 10px 20px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -57,7 +57,7 @@
         #theme-toggle:hover { transform: scale(1.1); }
         .tab-content { display: none; animation: fadeIn 0.4s; }
         .tab-content.active { display: block; }
-        .summary-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .summary-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .summary-card .amount { font-size: 2rem; font-weight: 600; }
         #balance.positive { color: var(--success-color); }
         #balance.negative { color: var(--error-color); }
@@ -68,7 +68,7 @@
         #main-overview-chart-container, #evolution-chart-container { min-height: 400px; position: relative; }
         .filters-and-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center; }
         .filters-and-actions .form-group { margin-bottom: 0; flex-grow: 1; }
-        #transaction-list, #categories-list, .invoice-transaction-list { list-style: none; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        #transaction-list, #categories-list { list-style: none; max-height: 400px; overflow-y: auto; padding-right: 10px; }
         .list-item, .category-item, .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: var(--primary-color); border-radius: var(--border-radius); margin-bottom: 10px; flex-wrap: wrap; gap: 10px; transition: opacity 0.3s, background-color 0.3s; }
         .transaction-item { border-left: 5px solid; }
         .transaction-item.income { border-left-color: var(--success-color); }
@@ -92,7 +92,11 @@
         .progress-bar-container { width: 100%; background-color: var(--secondary-color); border-radius: var(--border-radius); overflow: hidden; margin-top: 5px; }
         .progress-bar { height: 15px; background-color: var(--accent-color); border-radius: var(--border-radius); width: 0; transition: width 0.5s; text-align: center; color: white; font-size: 0.7rem; line-height: 15px; }
         .progress-bar.over { background-color: var(--error-color); }
+        .goal-contribution-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--secondary-color); }
+        .goal-contribution-form input, .goal-contribution-form select { flex-grow: 1; width: auto; }
+        .goal-contribution-form .btn { flex-shrink: 0; }
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .single-form-layout { max-width: 500px; margin: 0 auto; }
         .list-item, .category-item { flex-direction: column; }
         .list-item-header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
         .list-item .main-info { flex-grow: 1; }
@@ -106,37 +110,80 @@
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--primary-color); }
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
-        /* Estilos do Menu Lateral */
-        #menu-toggle { display: none; font-size: 1.5rem; padding: 5px 12px; }
-        .app-layout { display: flex; gap: 20px; align-items: flex-start; }
-        .sidebar-nav { width: 240px; flex-shrink: 0; padding: 15px; display: flex; flex-direction: column; gap: 5px; }
-        .tab-btn { border: none; background-color: transparent; cursor: pointer; transition: all 0.3s; color: var(--text-muted-color); }
-        .sidebar-nav .tab-btn { width: 100%; text-align: left; border-left: 4px solid transparent; padding: 12px 15px; border-radius: var(--border-radius); font-weight: 500; }
-        .sidebar-nav .tab-btn:hover { background-color: var(--secondary-color); color: var(--text-color); }
-        .sidebar-nav .tab-btn.active { border-left-color: var(--accent-color); background-color: var(--primary-color); color: var(--accent-color); font-weight: 600; }
-        main { flex-grow: 1; width: 100%; }
-        @media (max-width: 992px) {
-            #menu-toggle { display: block; }
-            .sidebar-nav { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; background-color: var(--card-bg-color); transform: translateX(-100%); transition: transform 0.3s ease-in-out; border-radius: 0 var(--border-radius) var(--border-radius) 0; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
-            .sidebar-nav.visible { transform: translateX(0); }
+        /* === ESTILOS PARA O MENU LATERAL === */
+        #menu-toggle {
+            display: none; /* Escondido em telas grandes */
+            font-size: 1.5rem;
+            padding: 5px 12px;
+        }
+        .app-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .sidebar-nav {
+            width: 240px;
+            flex-shrink: 0; /* Impede que o menu encolha */
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .tab-btn { /* Estilo geral para botões de aba/menu */
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-muted-color);
+        }
+        .sidebar-nav .tab-btn {
+            width: 100%;
+            text-align: left;
+            border-left: 4px solid transparent; /* Prepara para o estado ativo */
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+        }
+        .sidebar-nav .tab-btn:hover {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        .sidebar-nav .tab-btn.active {
+            border-left-color: var(--accent-color);
+            background-color: var(--primary-color);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        main {
+            flex-grow: 1;
+            width: 100%;
         }
 
-        /* Estilos da Aba Faturas */
-        #credit-card-fields { display: none; }
-        .invoice-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
-        .invoice-summary { font-size: 0.9rem; color: var(--text-muted-color); }
-        .invoice-summary span { color: var(--text-color); font-weight: 500; }
-        .invoice-status { padding: 5px 10px; border-radius: var(--border-radius); font-weight: 600; font-size: 0.8rem; }
-        .invoice-status.open { background-color: var(--accent-color); color: white; }
-        .invoice-status.closed { background-color: var(--warning-color); color: #1f2937; }
-        .invoice-status.paid { background-color: var(--success-color); color: white; }
-        .invoice-transaction-list { padding-top: 15px; border-top: 1px solid var(--secondary-color); margin-top: 15px; }
-        .invoice-transaction-list .transaction-item { padding: 10px; }
-        
-        /* Estilos do Modal de Pagamento */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
-        .modal-overlay.visible { opacity: 1; visibility: visible; }
-        .modal-content { max-width: 500px; width: 90%; }
+        /* === RESPONSIVIDADE PARA CELULARES === */
+        @media (max-width: 992px) {
+            #menu-toggle {
+                display: block; /* Mostra o botão hambúrguer */
+            }
+            .app-layout {
+                position: relative;
+            }
+            .sidebar-nav {
+                position: fixed; /* Fica por cima de tudo */
+                left: 0;
+                top: 0;
+                bottom: 0;
+                height: 100vh;
+                z-index: 1000;
+                background-color: var(--card-bg-color);
+                transform: translateX(-100%); /* Começa escondido fora da tela */
+                transition: transform 0.3s ease-in-out;
+                border-radius: 0 var(--border-radius) var(--border-radius) 0;
+                box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            }
+            .sidebar-nav.visible {
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -169,7 +216,6 @@
             <aside class="sidebar-nav card">
                 <button class="tab-btn active" data-tab="dashboard">Painel</button>
                 <button class="tab-btn" data-tab="accounts">Contas</button>
-                <button class="tab-btn" data-tab="invoices">Faturas</button>
                 <button class="tab-btn" data-tab="categories">Categorias</button>
                 <button class="tab-btn" data-tab="transfers">Transferências</button>
                 <button class="tab-btn" data-tab="budgets">Orçamentos</button>
@@ -193,12 +239,14 @@
                             <span id="total-expense" class="amount">R$ 0,00</span>
                         </div>
                     </section>
-                    <section class="card">
+                    
+                    <section class="card" style="margin-bottom: 30px;">
                         <h2>Visão Geral do Mês</h2>
                         <div id="main-overview-chart-container">
                             <canvas id="main-overview-chart"></canvas>
                         </div>
                     </section>
+                    
                     <div class="dashboard-layout">
                         <aside class="card">
                             <div id="transaction-form-blocker">
@@ -209,14 +257,61 @@
                             </div>
                             <h2 id="transaction-form-title">Nova Transação</h2>
                             <form id="transaction-form">
-                                </form>
+                                    <div class="form-group">
+                                        <label for="transaction-type">Tipo</label>
+                                        <select id="transaction-type" required>
+                                            <option value="expense">Despesa</option>
+                                            <option value="income">Receita</option>
+                                        </select>
+                                    </div>
+                                <div class="form-group">
+                                    <label for="description">Descrição</label>
+                                    <input type="text" id="description" placeholder="Ex: Aluguel, Salário" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="amount">Valor (R$)</label>
+                                    <input type="number" id="amount" step="0.01" placeholder="150.50" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="date">Data da Transação</label>
+                                    <input type="date" id="date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-select">Conta / Cartão</label>
+                                    <select id="account-select" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="category-select">Categoria</label>
+                                    <select id="category-select" required></select>
+                                </div>
+                                <div class="form-group" id="due-date-group">
+                                    <label for="due-date">Data de Vencimento</label>
+                                    <input type="date" id="due-date">
+                                </div>
+                                <div class="form-group" id="make-recurring-group" style="display: none;">
+                                    <label for="make-recurring-checkbox" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" id="make-recurring-checkbox" style="width: auto;">
+                                        <span>Tornar esta despesa recorrente (mensal)</span>
+                                    </label>
+                                </div>
+                                <div class="form-buttons" id="transaction-form-buttons">
+                                    <button type="submit" class="btn btn-primary">Adicionar Transação</button>
+                                </div>
+                            </form>
                         </aside>
                         <section class="card">
                             <h2>Histórico de Transações</h2>
+                            <div class="filters-and-actions">
+                                <div class="form-group"> <select id="date-filter"> <option value="all">Todo o Período</option> <option value="7">Últimos 7 dias</option> <option value="30">Últimos 30 dias</option> <option value="month">Este Mês</option> </select> </div>
+                                <div class="form-group"> <select id="category-filter"></select> </div>
+                                <div class="form-group"> <select id="payment-status-filter"> <option value="all">Todos os Status</option> <option value="paid">Pagas</option> <option value="unpaid">A Pagar</option> </select> </div>
+                                <button id="export-csv" class="btn btn-secondary">CSV</button>
+                                <button id="export-pdf" class="btn btn-secondary">PDF</button>
+                            </div>
                             <ul id="transaction-list"></ul>
                         </section>
                     </div>
-                    <section class="card">
+                    <section class="card" style="margin-top: 30px;">
                         <h2>Evolução do Patrimônio</h2>
                         <div id="evolution-chart-container">
                             <canvas id="evolution-chart"></canvas>
@@ -232,16 +327,6 @@
                                 <div class="form-group"> <label for="account-name">Nome da Conta/Cartão</label> <input type="text" id="account-name" placeholder="Ex: Banco do Brasil, Nubank" required> </div>
                                 <div class="form-group"> <label for="account-type">Tipo</label> <select id="account-type" required> <option value="checking">Conta Corrente</option> <option value="savings">Poupança</option> <option value="cash">Dinheiro</option> <option value="credit_card">Cartão de Crédito</option> </select> </div>
                                 <div class="form-group"> <label for="initial-balance" id="initial-balance-label">Saldo Inicial</label> <input type="number" id="initial-balance" step="0.01" value="0" required> </div>
-                                <div id="credit-card-fields">
-                                    <div class="form-group">
-                                        <label for="closing-day">Dia do Fechamento da Fatura</label>
-                                        <input type="number" id="closing-day" min="1" max="31" placeholder="Ex: 25">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="due-day">Dia do Vencimento da Fatura</label>
-                                        <input type="number" id="due-day" min="1" max="31" placeholder="Ex: 4">
-                                    </div>
-                                </div>
                                 <div class="form-buttons" id="account-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Conta</button> </div>
                             </form>
                         </div>
@@ -252,56 +337,119 @@
                     </div>
                 </div>
 
-                <div id="tab-invoices" class="tab-content">
-                    <div class="card">
-                        <h2>Faturas de Cartão de Crédito</h2>
-                        <div class="form-group">
-                            <label for="invoice-account-select">Selecione um Cartão de Crédito</label>
-                            <select id="invoice-account-select">
-                                <option value="">-- Selecione um cartão --</option>
-                            </select>
+                <div id="tab-categories" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="category-form-title">Adicionar Categoria</h2>
+                            <form id="category-form">
+                               <div class="form-group"> <label for="category-name">Nome da Categoria</label> <input type="text" id="category-name" placeholder="Ex: Supermercado" required> </div>
+                                <div class="form-buttons" id="category-form-buttons"> <button type="submit" class="btn btn-primary">Adicionar Categoria</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Minhas Categorias</h2>
+                            <div id="categories-list"></div>
                         </div>
                     </div>
-                    <div id="invoice-details-container"></div>
                 </div>
-                
-                </main>
-        </div>
-    </div>
 
-    <div id="payment-modal" class="modal-overlay">
-        <div class="modal-content card">
-            <h2 id="payment-modal-title">Pagar Fatura</h2>
-            <form id="payment-form">
-                <input type="hidden" id="payment-invoice-card-id">
-                <input type="hidden" id="payment-invoice-id">
-                <div class="form-group">
-                    <label for="payment-amount">Valor do Pagamento</label>
-                    <input type="number" id="payment-amount" step="0.01" required>
+                <div id="tab-transfers" class="tab-content">
+                    <div class="single-form-layout">
+                        <div class="card">
+                            <h2>Nova Transferência</h2>
+                            <form id="transfer-form">
+                                <div class="form-group"> <label for="transfer-amount">Valor (R$)</label> <input type="number" id="transfer-amount" step="0.01" placeholder="100.00" required> </div>
+                                <div class="form-group"> <label for="transfer-date">Data da Transferência</label> <input type="date" id="transfer-date" required> </div>
+                                <div class="form-group"> <label for="transfer-from-account">Da Conta (Origem)</label> <select id="transfer-from-account" required></select> </div>
+                                <div class="form-group"> <label for="transfer-to-account">Para a Conta (Destino)</label> <select id="transfer-to-account" required></select> </div>
+                                <div class="form-group"> <label for="transfer-description">Descrição (Opcional)</label> <input type="text" id="transfer-description" placeholder="Ex: Mover para poupança"> </div>
+                                <div class="form-buttons" id="transfer-form-buttons"> <button type="submit" class="btn btn-primary">Realizar Transferência</button> </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="payment-source-account">Pagar com a conta</label>
-                    <select id="payment-source-account" required></select>
+
+                <div id="tab-budgets" class="tab-content">
+                     <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="budget-form-title">Definir Orçamento</h2>
+                            <form id="budget-form">
+                                <div class="form-group"> <label for="budget-category">Categoria</label> <select id="budget-category" required></select> </div>
+                                <div class="form-group"> <label for="budget-amount">Limite Mensal (R$)</label> <input type="number" id="budget-amount" step="0.01" placeholder="500.00" required> </div>
+                                <div class="form-buttons" id="budget-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Orçamento</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Acompanhamento dos Orçamentos</h2>
+                            <div id="budgets-list"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="payment-date">Data do Pagamento</label>
-                    <input type="date" id="payment-date" required>
+
+                <div id="tab-goals" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="goal-form-title">Criar Nova Meta</h2>
+                            <form id="goal-form">
+                                <div class="form-group"> <label for="goal-name">Nome da Meta</label> <input type="text" id="goal-name" placeholder="Ex: Viagem para a Europa" required> </div>
+                                <div class="form-group"> <label for="goal-target">Valor Alvo (R$)</label> <input type="number" id="goal-target" step="0.01" placeholder="10000.00" required> </div>
+                                <div class="form-group"> <label for="goal-saved">Valor Já Guardado (R$)</label> <input type="number" id="goal-saved" step="0.01" value="0" required> </div>
+                                <div class="form-group"> <label for="goal-deadline">Prazo (Opcional)</label> <input type="date" id="goal-deadline"> </div>
+                                <div class="form-buttons" id="goal-form-buttons"> <button type="submit" class="btn btn-primary">Criar Meta</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Minhas Metas</h2>
+                            <div id="goals-list"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-buttons">
-                    <button type="button" id="cancel-payment-btn" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Confirmar Pagamento</button>
+
+                <div id="tab-recurrences" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="recurrence-form-title">Adicionar Lançamento Recorrente</h2>
+                            <form id="recurrence-form">
+                                <div class="form-group"> <label for="recurrence-description">Descrição</label> <input type="text" id="recurrence-description" placeholder="Ex: Assinatura Spotify, Aluguel" required> </div>
+                                <div class="form-group"> <label for="recurrence-amount">Valor (R$)</label> <input type="number" id="recurrence-amount" step="0.01" required> </div>
+                                <div class="form-group"> <label for="recurrence-type">Tipo</label> <select id="recurrence-type" required> <option value="expense">Despesa</option> <option value="income">Receita</option> </select> </div>
+                                <div class="form-group"> <label for="recurrence-account">Conta / Cartão</label> <select id="recurrence-account" required></select> </div>
+                                <div class="form-group"> <label for="recurrence-category">Categoria</label> <select id="recurrence-category" required></select> </div>
+                                <div class="form-group"> <label for="recurrence-frequency">Frequência</label> <select id="recurrence-frequency" required> <option value="monthly">Mensal</option> <option value="weekly">Semanal</option> <option value="yearly">Anual</option> </select> </div>
+                                <div class="form-group"> <label for="recurrence-start-date">Data de Início</label> <input type="date" id="recurrence-start-date" required> </div>
+                                <div class="form-buttons" id="recurrence-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Recorrência</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Meus Lançamentos Recorrentes</h2>
+                            <div id="recurrences-list"></div>
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </main>
         </div>
     </div>
 
 <script>
+// VERSÃO COM PWA, BACKUP E MENU LATERAL
 document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
         elements: {},
-        charts: { mainOverviewChart: null, evolutionChart: null },
-        state: { user: null, transactions: [], accounts: [], budgets: [], goals: [], recurrences: [], editingItem: null, categories: [], },
+        charts: {
+            mainOverviewChart: null,
+            evolutionChart: null
+        },
+        state: {
+            user: null, 
+            transactions: [], 
+            accounts: [], 
+            budgets: [],
+            goals: [], 
+            recurrences: [], 
+            editingItem: null, 
+            categories: [],
+        },
 
         init() {
             this.cacheDOMElements();
@@ -311,9 +459,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         initApp() {
             this.loadData();
-            const paymentCategoryExists = this.state.categories.some(c => c.name === 'Pagamento de Fatura');
-            if (!paymentCategoryExists) {
-                this.state.categories.push({ id: `cat${Date.now()}`, name: 'Pagamento de Fatura' });
+            if (!this.state.categories || this.state.categories.length === 0 || typeof this.state.categories[0] === 'string') {
+                 this.state.categories = [
+                    { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, 
+                    { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
+                    { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, 
+                    { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, { id: 'cat11', name: 'Outros' }
+                ];
                 this.saveData();
             }
             this.generateRecurringTransactions();
@@ -347,9 +499,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 makeRecurringCheckbox: document.getElementById('make-recurring-checkbox'),
                 menuToggle: document.getElementById('menu-toggle'),
                 sidebarNav: document.querySelector('.sidebar-nav'),
-                creditCardFields: document.getElementById('credit-card-fields'),
-                paymentModal: document.getElementById('payment-modal'),
-                paymentForm: document.getElementById('payment-form'),
             };
         },
 
@@ -359,43 +508,27 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
             this.elements.tabButtons.forEach(tab => tab.addEventListener('click', (e) => this.handleTabClick(e)));
             this.elements.menuToggle.addEventListener('click', () => this.elements.sidebarNav.classList.toggle('visible'));
-            this.elements.accountTypeSelect.addEventListener('change', (e) => {
-                const isCreditCard = e.target.value === 'credit_card';
-                this.elements.initialBalanceLabel.textContent = isCreditCard ? 'Fatura Inicial (R$)' : 'Saldo Inicial (R$)';
-                this.elements.creditCardFields.style.display = isCreditCard ? 'block' : 'none';
-            });
-            document.getElementById('invoice-account-select').addEventListener('change', (e) => this.renderInvoices(e.target.value));
-            document.getElementById('cancel-payment-btn').addEventListener('click', () => this.closePaymentModal());
-            this.elements.paymentModal.addEventListener('click', (e) => { if (e.target.id === 'payment-modal') this.closePaymentModal(); });
-            this.elements.paymentForm.addEventListener('submit', (e) => this.handleInvoicePayment(e));
-            document.getElementById('invoice-details-container').addEventListener('click', (e) => {
-                const payButton = e.target.closest('.pay-invoice-btn');
-                if (payButton) {
-                    e.preventDefault();
-                    const cardId = payButton.dataset.cardId;
-                    const invoiceId = payButton.dataset.invoiceId;
-                    const amount = parseFloat(payButton.dataset.amount);
-                    this.openPaymentModal(cardId, invoiceId, amount);
-                }
-            });
-            // O restante dos listeners... (coloque o conteúdo do seu `addEventListeners` anterior aqui, se houver algo faltando)
+
             document.getElementById('transaction-form').addEventListener('submit', (e) => this.handleTransaction(e));
             document.getElementById('account-form').addEventListener('submit', (e) => this.handleAccount(e));
-            document.getElementById('budget-form')?.addEventListener('submit', (e) => this.handleBudget(e));
-            document.getElementById('goal-form')?.addEventListener('submit', (e) => this.handleGoal(e));
-            document.getElementById('recurrence-form')?.addEventListener('submit', (e) => this.handleRecurrence(e));
-            document.getElementById('category-form')?.addEventListener('submit', (e) => this.handleCategorySubmit(e));
-            document.getElementById('transfer-form')?.addEventListener('submit', (e) => this.handleTransfer(e));
+            document.getElementById('budget-form').addEventListener('submit', (e) => this.handleBudget(e));
+            document.getElementById('goal-form').addEventListener('submit', (e) => this.handleGoal(e));
+            document.getElementById('recurrence-form').addEventListener('submit', (e) => this.handleRecurrence(e));
+            document.getElementById('category-form').addEventListener('submit', (e) => this.handleCategorySubmit(e));
+            document.getElementById('transfer-form').addEventListener('submit', (e) => this.handleTransfer(e));
             document.getElementById('export-csv').addEventListener('click', () => this.exportToCSV());
             document.getElementById('export-pdf').addEventListener('click', () => this.exportToPDF());
             document.getElementById('date-filter').addEventListener('change', () => this.renderTransactions());
             document.getElementById('category-filter').addEventListener('change', () => this.renderTransactions());
             document.getElementById('payment-status-filter').addEventListener('change', () => this.renderTransactions());
             this.elements.transactionTypeSelect.addEventListener('change', () => this.handleTransactionTypeChange());
+            this.elements.accountTypeSelect.addEventListener('change', (e) => { this.elements.initialBalanceLabel.textContent = e.target.value === 'credit_card' ? 'Fatura Inicial (R$)' : 'Saldo Inicial (R$)'; });
             this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+
             document.getElementById('export-btn').addEventListener('click', () => this.exportBackup());
             document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
             document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
+
             this.elements.appContainer.addEventListener('click', (e) => {
                 const target = e.target;
                 const deleteButton = target.closest('.delete-button');
@@ -417,131 +550,152 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (payButton) { this.markAsPaid(payButton.dataset.id); }
             });
-            document.getElementById('goals-list')?.addEventListener('submit', (e) => { if (e.target.classList.contains('goal-contribution-form')) { this.handleGoalContribution(e); } });
-        },
-        
-        getInvoicesForAccount(accountId) {
-            const account = this.state.accounts.find(a => a.id === accountId);
-            if (!account || account.type !== 'credit_card' || !account.closingDay) return [];
-
-            const cardTransactions = this.state.transactions.filter(t => t.accountId === accountId);
-            const invoicesMap = new Map();
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            cardTransactions.filter(t => t.type === 'expense').forEach(t => {
-                const transactionDate = new Date(t.date + 'T00:00:00');
-                let closingYear = transactionDate.getFullYear();
-                let closingMonth = transactionDate.getMonth();
-
-                if (transactionDate.getDate() > account.closingDay) {
-                    closingMonth += 1;
-                    if (closingMonth > 11) {
-                        closingMonth = 0;
-                        closingYear += 1;
-                    }
-                }
-                
-                const invoiceId = `${closingYear}-${String(closingMonth + 1).padStart(2, '0')}`;
-                const closingDate = new Date(closingYear, closingMonth, account.closingDay);
-
-                if (!invoicesMap.has(invoiceId)) {
-                    invoicesMap.set(invoiceId, { id: invoiceId, cardId: accountId, endDate: closingDate, transactions: [] });
-                }
-                invoicesMap.get(invoiceId).transactions.push(t);
-            });
             
-            return Array.from(invoicesMap.values()).map(invoice => {
-                invoice.total = invoice.transactions.reduce((sum, t) => sum + t.amount, 0);
-                
-                const paymentWindowStart = new Date(invoice.endDate);
-                paymentWindowStart.setDate(paymentWindowStart.getDate() + 1);
-                const paymentWindowEnd = new Date(invoice.endDate);
-                paymentWindowEnd.setMonth(paymentWindowEnd.getMonth() + 1);
-
-                const payments = cardTransactions.filter(t => {
-                    if (t.type !== 'income' || t.category !== 'Pagamento de Fatura') return false;
-                    const paymentDate = new Date(t.date + 'T00:00:00');
-                    return paymentDate >= paymentWindowStart && paymentDate <= paymentWindowEnd;
-                });
-                invoice.paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-                
-                const dueDate = new Date(invoice.endDate);
-                dueDate.setDate(account.dueDay);
-                if (account.dueDay <= account.closingDay) {
-                    dueDate.setMonth(dueDate.getMonth() + 1);
-                }
-                invoice.dueDate = dueDate;
-
-                if (today <= invoice.endDate) {
-                    invoice.status = 'open';
-                } else if (invoice.paidAmount >= invoice.total) {
-                    invoice.status = 'paid';
-                } else {
-                    invoice.status = 'closed';
-                }
-                return invoice;
-            }).sort((a, b) => b.endDate - a.endDate);
+            document.getElementById('goals-list').addEventListener('submit', (e) => { if (e.target.classList.contains('goal-contribution-form')) { this.handleGoalContribution(e); } });
         },
         
-        // ... (resto dos métodos, colando todos para garantir)
-        // Omitido aqui por brevidade, mas o código completo está no objeto abaixo.
+        getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
+        getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
+        getStorageKey() { return `financeApp_${this.state.user}`; },
+        saveData() { if (!this.state.user) return; try { const dataToSave = { transactions: this.state.transactions, accounts: this.state.accounts, budgets: this.state.budgets, goals: this.state.goals, recurrences: this.state.recurrences, categories: this.state.categories, }; localStorage.setItem(this.getStorageKey(), JSON.stringify(dataToSave)); } catch (error) { console.error("Failed to save data:", error); } },
+        loadData() { if (!this.state.user) return; try { const data = localStorage.getItem(this.getStorageKey()); if (data) { const parsedData = JSON.parse(data); this.state.transactions = parsedData.transactions || []; this.state.accounts = parsedData.accounts || []; this.state.budgets = parsedData.budgets || []; this.state.goals = parsedData.goals || []; this.state.recurrences = parsedData.recurrences || []; this.state.categories = parsedData.categories || []; } else { Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } }); } } catch (error) { console.error("Failed to load data:", error); Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } }); } },
+        generateRecurringTransactions() { const today = new Date(); today.setHours(0, 0, 0, 0); let somethingChanged = false; this.state.recurrences.forEach(r => { if (!r.nextDueDate) return; let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); while (nextDueDate <= today) { const newTransaction = { id: Date.now().toString() + Math.random(), type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; this.state.transactions.push(newTransaction); if (r.frequency === 'monthly') { nextDueDate.setMonth(nextDueDate.getMonth() + 1); } else if (r.frequency === 'weekly') { nextDueDate.setDate(nextDueDate.getDate() + 7); } else if (r.frequency === 'yearly') { nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); } r.nextDueDate = nextDueDate.toISOString().split('T')[0]; somethingChanged = true; } }); if (somethingChanged) { this.saveData(); } },
+        checkLogin() { const user = localStorage.getItem('financeAppUser'); if (user) { this.state.user = user; this.elements.loginContainer.style.display = 'none'; this.elements.appContainer.style.display = 'block'; this.initApp(); } else { this.elements.loginContainer.style.display = 'flex'; this.elements.appContainer.style.display = 'none'; } },
+        handleLogin() { const username = this.elements.usernameInput.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
+        handleLogout() { if (confirm('Você tem certeza que deseja sair?')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
+        toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
+        applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
+        
+        handleTabClick(e) {
+            if (this.state.editingItem) { this.cancelEditMode(); }
+            this.elements.tabButtons.forEach(tab => tab.classList.remove('active'));
+            this.elements.tabContents.forEach(content => content.classList.remove('active'));
+            const tabButton = e.currentTarget;
+            tabButton.classList.add('active');
+            document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active');
+
+            // --- CORREÇÃO PARA FECHAR O MENU NO CELULAR ---
+            if (this.elements.sidebarNav.classList.contains('visible')) {
+                this.elements.sidebarNav.classList.remove('visible');
+            }
+        },
+
+        toggleTransactionFormLock() { const hasAccounts = this.state.accounts.length > 0; this.elements.transactionFormBlocker.classList.toggle('hidden', hasAccounts); const formElements = this.elements.transactionForm.elements; for (let i = 0; i < formElements.length; i++) { formElements[i].disabled = !hasAccounts; } },
+        handleTransactionTypeChange() { const type = this.elements.transactionTypeSelect.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDateInput.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense ? 'block' : 'none'; },
+        formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
+        formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
+        populateSelectors() { const categoryOptions = this.state.categories.map(c => ({ value: c.name, text: c.name })); const allAccounts = this.state.accounts.map(a => ({ value: a.id, text: a.name })); const nonCreditAccounts = this.state.accounts.filter(a => a.type !== 'credit_card').map(a => ({ value: a.id, text: a.name })); const selectors = { 'account-select': allAccounts, 'transfer-from-account': allAccounts, 'transfer-to-account': nonCreditAccounts, 'category-select': categoryOptions, 'budget-category': categoryOptions, 'category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions], 'recurrence-account': allAccounts, 'recurrence-category': categoryOptions, }; for (const id in selectors) { const select = document.getElementById(id); if(select) { const currentValue = select.value; select.innerHTML = ''; selectors[id].forEach(opt => { const option = document.createElement('option'); option.value = opt.value; option.textContent = opt.text; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) { select.value = currentValue; } } } },
+        renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const balance = this.state.accounts.reduce((sum, acc) => { const currentVal = acc.currentBalance || 0; return acc.type === 'credit_card' ? sum - currentVal : sum + currentVal; }, 0); const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(balance); balanceEl.className = `amount ${balance >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
+        getFilteredTransactions() { const dateFilter = document.getElementById('date-filter').value, categoryFilter = document.getElementById('category-filter').value, paymentStatusFilter = document.getElementById('payment-status-filter').value; const now = new Date(); return this.state.transactions.filter(t => { const tDate = new Date(t.date); let dateMatch = true; if (dateFilter !== 'all') { const days = parseInt(dateFilter); if (days) { const filterDate = new Date(); filterDate.setDate(now.getDate() - days); dateMatch = tDate >= filterDate; } else if (dateFilter === 'month') { dateMatch = tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear(); } } const categoryMatch = categoryFilter === 'all' || t.category === categoryFilter; let paymentMatch = true; if (paymentStatusFilter === 'paid') paymentMatch = t.isPaid; else if (paymentStatusFilter === 'unpaid') paymentMatch = !t.isPaid && t.type === 'expense'; return dateMatch && categoryMatch && paymentMatch; }); },
+        renderTransactions() { const list = document.getElementById('transaction-list'); list.innerHTML = ''; const filteredTransactions = this.getFilteredTransactions().sort((a,b) => new Date(b.date) - new Date(a.date)); if (filteredTransactions.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma transação encontrada.</p>'; return; } filteredTransactions.forEach(t => { const item = document.createElement('li'); const account = this.state.accounts.find(a => a.id === t.accountId); const today = new Date(); today.setHours(0,0,0,0); let statusClass = '', dueDateTag = ''; if (t.type === 'expense' && !t.isPaid && t.dueDate) { const dueDate = new Date(t.dueDate + 'T00:00:00'); const diffTime = dueDate.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays < 0) { statusClass = 'overdue'; dueDateTag = `<span class="details-tag due-date-tag">Vencido</span>`; } else if (diffDays <= 7) { statusClass = 'due-soon'; dueDateTag = `<span class="details-tag due-date-tag">Vence em ${diffDays} dias</span>`; } else { dueDateTag = `<span class="details-tag">Venc: ${this.formatDate(t.dueDate)}</span>`; } } else if (t.dueDate) { dueDateTag = `<span class="details-tag">Venc: ${this.formatDate(t.dueDate)}</span>`; } if (t.isPaid) statusClass += ' paid'; item.className = `transaction-item ${t.category === 'Transferência' ? 'transfer' : t.type} ${statusClass}`; item.innerHTML = `<div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> <span class="details-tag">${account ? account.name : 'Conta Deletada'}</span> ${dueDateTag} ${t.isPaid ? `<span class="paid-tag">PAGO</span>` : ''} </div> </div> <div class="amount ${t.category === 'Transferência' ? 'transfer' : t.type}"> ${t.type === 'expense' ? '-' : ''}${this.formatCurrency(t.amount)} </div> <div class="actions"> ${t.type === 'expense' && !t.isPaid ? `<button class="btn pay-btn" data-id="${t.id}" title="Marcar como Paga">✔️</button>` : ''} <button class="btn edit-btn" data-type="transaction" data-id="${t.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${t.id}" title="Excluir">${this.getDeleteIconSVG()}</button> </div>`; list.appendChild(item); }); },
+        renderAccounts() { const list = document.getElementById('accounts-list'); list.innerHTML = ''; if (this.state.accounts.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma conta cadastrada.</p>'; return; } this.state.accounts.forEach(acc => { const item = document.createElement('div'); item.className = 'list-item'; const balanceLabel = acc.type === 'credit_card' ? 'Fatura Atual' : 'Saldo'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${acc.name}</strong> (${acc.type.replace('_', ' ')}) <p style="font-size: 0.9rem; color: var(--text-muted-color);">${balanceLabel}: ${this.formatCurrency(acc.currentBalance)}</p> </div> <div class="actions"> <button class="btn edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${acc.id}">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
+        renderBudgets() { const list = document.getElementById('budgets-list'); list.innerHTML = ''; if (this.state.budgets.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum orçamento definido.</p>'; return; } const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.state.budgets.forEach(b => { const spent = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.category === b.category && t.type === 'expense' && t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0); const budgetAmount = b.amount || 0; const percentage = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0; const progressClass = percentage > 100 ? 'over' : ''; const item = document.createElement('div'); item.className = 'list-item'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${b.category}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Gasto: ${this.formatCurrency(spent)} de ${this.formatCurrency(budgetAmount)} </p> <div class="progress-bar-container"> <div class="progress-bar ${progressClass}" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${b.id}" title="Excluir Orçamento">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
+        renderGoals() { const list = document.getElementById('goals-list'); list.innerHTML = ''; if (this.state.goals.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma meta criada.</p>'; return; } this.state.goals.forEach(g => { const saved = g.saved || 0; const target = g.target || 0; const percentage = target > 0 ? (saved / target) * 100 : 0; const accountOptions = this.state.accounts.filter(acc => acc.type !== 'credit_card').map(acc => `<option value="${acc.id}">${acc.name}</option>`).join(''); const item = document.createElement('div'); item.className = 'list-item'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${g.name}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Alcançado: ${this.formatCurrency(saved)} de ${this.formatCurrency(target)} ${g.deadline ? `| Prazo: ${this.formatDate(g.deadline)}` : ''} </p> <div class="progress-bar-container"> <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="goal" data-id="${g.id}" title="Editar Meta">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${g.id}" title="Excluir meta">${this.getDeleteIconSVG()}</button> </div> </div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" step="0.01" placeholder="Valor do aporte" class="contribution-amount" required> <select class="contribution-account" required> ${accountOptions.length > 0 ? accountOptions : '<option disabled>Nenhuma conta disponível</option>'} </select> <button type="submit" class="btn btn-success" ${accountOptions.length === 0 ? 'disabled' : ''}>Aportar</button> </form>`; list.appendChild(item); }); },
+        renderRecurrences() { const list = document.getElementById('recurrences-list'); list.innerHTML = ''; if (this.state.recurrences.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum lançamento recorrente.</p>'; return; } this.state.recurrences.forEach(r => { const item = document.createElement('div'); item.className = 'list-item'; const account = this.state.accounts.find(a => a.id === r.accountId); item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${r.description}</strong> (${r.type === 'income' ? 'Receita' : 'Despesa'}) <p style="font-size: 0.8rem; color: var(--text-muted-color);"> ${this.formatCurrency(r.amount)} | ${r.frequency === 'monthly' ? 'Mensal' : (r.frequency === 'weekly' ? 'Semanal' : 'Anual')} </p> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Próximo Lançamento: ${this.formatDate(r.nextDueDate)} no(a) ${account ? account.name : 'N/A'} </p> </div> <div class="actions"> <button class="btn edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar Recorrência">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${r.id}" title="Excluir Recorrência">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
+        renderCategories() { const list = document.getElementById('categories-list'); list.innerHTML = ''; if (this.state.categories.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma categoria cadastrada.</p>'; return; } this.state.categories.forEach(cat => { const item = document.createElement('div'); item.className = 'category-item list-item'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"><span>${cat.name}</span></div> <div class="actions"> <button class="btn edit-btn" data-type="category" data-id="${cat.id}" title="Editar Categoria">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${cat.id}" title="Excluir Categoria">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
+        updateAllRenders() { try { this.toggleTransactionFormLock(); this.updateAccountBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactions(); this.renderAccounts(); this.renderBudgets(); this.renderGoals(); this.renderRecurrences(); this.renderCategories(); this.updateCharts(); } catch (error) { console.error("An error occurred during a render update:", error); } },
+        updateAccountBalances() { this.state.accounts.forEach(acc => { let balance = acc.initialBalance || 0; this.state.transactions.forEach(t => { if (t.accountId === acc.id) { const amount = t.amount || 0; if (acc.type === 'credit_card') { if (t.type === 'expense') balance += amount; if (t.type === 'income') balance -= amount; } else { if (t.type === 'income') balance += amount; if (t.type === 'expense' && t.isPaid) balance -= amount; } } }); acc.currentBalance = balance; }); },
+        handleTransaction(e) { e.preventDefault(); const form = e.target; const description = form.elements['description'].value, amount = parseFloat(form.elements['amount'].value), date = form.elements['date'].value, accountId = form.elements['account-select'].value, category = form.elements['category-select'].value, type = form.elements['transaction-type'].value, dueDate = form.elements['due-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'transaction') { const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id); if (transaction) { Object.assign(transaction, {description, amount, date, accountId, category, type, dueDate}); } } else { if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; } if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; } this.state.transactions.push({ id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' }); if (type === 'expense' && form.elements['make-recurring-checkbox'].checked) { const recurrenceExists = this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase()); if (!recurrenceExists) { const nextMonthDate = new Date(dueDate + 'T00:00:00'); nextMonthDate.setMonth(nextMonthDate.getMonth() + 1); this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] }); } } } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); },
+        handleAccount(e) { e.preventDefault(); const form = e.target; const name = form.elements['account-name'].value, type = form.elements['account-type'].value, initialBalance = parseFloat(form.elements['initial-balance'].value); if (this.state.editingItem && this.state.editingItem.type === 'account') { const account = this.state.accounts.find(a => a.id === this.state.editingItem.id); if (account) { Object.assign(account, {name, type, initialBalance}); } } else { this.state.accounts.push({ id: Date.now().toString(), name, type, initialBalance, currentBalance: initialBalance }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleBudget(e) { e.preventDefault(); const form = e.target; const category = form.elements['budget-category'].value, amount = parseFloat(form.elements['budget-amount'].value); if (this.state.editingItem && this.state.editingItem.type === 'budget') { const budget = this.state.budgets.find(b => b.id === this.state.editingItem.id); if (budget) { Object.assign(budget, {category, amount}); } } else { this.state.budgets = this.state.budgets.filter(b => b.category !== category); this.state.budgets.push({ id: Date.now().toString(), category, amount }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleGoal(e) { e.preventDefault(); const form = e.target; const name = form.elements['goal-name'].value, target = parseFloat(form.elements['goal-target'].value), saved = parseFloat(form.elements['goal-saved'].value), deadline = form.elements['goal-deadline'].value; if (this.state.editingItem && this.state.editingItem.type === 'goal') { const goal = this.state.goals.find(g => g.id === this.state.editingItem.id); if (goal) { Object.assign(goal, {name, target, saved, deadline}); } } else { if (!name || isNaN(target) || target <= 0) { alert("Preencha o nome da meta e um valor alvo válido."); return; } this.state.goals.push({ id: Date.now().toString(), name, target, saved, deadline: deadline || null }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleRecurrence(e) { e.preventDefault(); const form = e.target; const description = form.elements['recurrence-description'].value, amount = parseFloat(form.elements['recurrence-amount'].value), type = form.elements['recurrence-type'].value, accountId = form.elements['recurrence-account'].value, category = form.elements['recurrence-category'].value, frequency = form.elements['recurrence-frequency'].value, startDate = form.elements['recurrence-start-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'recurrence') { const recurrence = this.state.recurrences.find(r => r.id === this.state.editingItem.id); if (recurrence) { Object.assign(recurrence, {description, amount, type, accountId, category, frequency, startDate}); if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) { recurrence.nextDueDate = recurrence.startDate; } } } else { this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleCategorySubmit(e) { e.preventDefault(); const form = e.target; const nameInput = form.elements['category-name']; const name = nameInput.value.trim(); if (!name) { alert('O nome da categoria não pode ser vazio.'); return; } const nameExists = this.state.categories.some(cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== (this.state.editingItem && this.state.editingItem.id)); if (nameExists) { alert('Esta categoria já existe.'); return; } if (this.state.editingItem && this.state.editingItem.type === 'category') { const category = this.state.categories.find(c => c.id === this.state.editingItem.id); if (category) { category.name = name; } } else { this.state.categories.push({ id: Date.now().toString(), name }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleTransfer(e) { e.preventDefault(); const form = e.target; const fromAccountId = form.elements['transfer-from-account'].value; const toAccountId = form.elements['transfer-to-account'].value; const amount = parseFloat(form.elements['transfer-amount'].value); const date = form.elements['transfer-date'].value; const description = form.elements['transfer-description'].value || 'Transferência entre contas'; if (fromAccountId === toAccountId) { alert("A conta de origem e destino não podem ser a mesma."); return; } if (!fromAccountId || !toAccountId || !amount || !date) { alert("Preencha todos os campos obrigatórios para a transferência."); return; } const transferId = `transfer-${Date.now()}`; const expense_part = { id: Date.now().toString() + '-out', type: 'expense', description: `Transferência para ${this.state.accounts.find(a=>a.id===toAccountId)?.name}`, amount, date, accountId: fromAccountId, category: 'Transferência', isPaid: true, dueDate: date, transferId }; const income_part = { id: Date.now().toString() + '-in', type: 'income', description: `Transferência de ${this.state.accounts.find(a=>a.id===fromAccountId)?.name}`, amount, date, accountId: toAccountId, category: 'Transferência', isPaid: true, dueDate: date, transferId }; this.state.transactions.push(expense_part, income_part); this.saveData(); this.updateAllRenders(); form.reset(); document.getElementById('transfer-date').valueAsDate = new Date(); alert("Transferência realizada com sucesso!"); },
+        markAsPaid(id) { const t = this.state.transactions.find(t => t.id === id); if (t) { t.isPaid = true; this.saveData(); this.updateAllRenders(); } },
+        deleteTransaction(id) { const transaction_to_delete = this.state.transactions.find(t => t.id === id); if (!transaction_to_delete) return; let confirm_message = 'Tem certeza que quer deletar esta transação?'; let also_delete_id = null; if(transaction_to_delete.transferId) { confirm_message = 'Esta é uma transação de transferência. Deletá-la também removerá a outra parte da transferência. Deseja continuar?'; const other_part = this.state.transactions.find(t => t.transferId === transaction_to_delete.transferId && t.id !== id); if(other_part) also_delete_id = other_part.id; } if (confirm(confirm_message)) { this.state.transactions = this.state.transactions.filter(t => t.id !== id && t.id !== also_delete_id); this.saveData(); this.updateAllRenders(); } },
+        deleteAccount(id) { if (confirm('Deletar uma conta também deletará TODAS as transações e recorrências associadas a ela. Deseja continuar?')) { this.state.accounts = this.state.accounts.filter(acc => acc.id !== id); this.state.transactions = this.state.transactions.filter(t => t.accountId !== id); this.state.recurrences = this.state.recurrences.filter(r => r.accountId !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteBudget(id) { if(confirm('Tem certeza que deseja remover este orçamento?')) { this.state.budgets = this.state.budgets.filter(b => b.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteGoal(id) { if(confirm('Tem certeza que deseja remover esta meta?')) { this.state.goals = this.state.goals.filter(g => g.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteRecurrence(id) { if(confirm('Tem certeza que deseja remover este lançamento recorrente? Transações já geradas não serão afetadas.')) { this.state.recurrences = this.state.recurrences.filter(r => r.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteCategory(id) { const categoryToDelete = this.state.categories.find(c => c.id === id); if (!categoryToDelete) return; const isCategoryInUse = this.state.transactions.some(t => t.category === categoryToDelete.name) || this.state.budgets.some(b => b.category === categoryToDelete.name); if (isCategoryInUse) { alert("Não é possível deletar esta categoria. Ela está sendo usada em transações ou orçamentos."); return; } if (confirm(`Tem certeza que quer deletar a categoria "${categoryToDelete.name}"?`)) { this.state.categories = this.state.categories.filter(c => c.id !== id); this.saveData(); this.updateAllRenders(); } },
+        handleGoalContribution(e) { e.preventDefault(); const form = e.target; const goalId = form.dataset.goalId; const amountInput = form.querySelector('.contribution-amount'); const accountInput = form.querySelector('.contribution-account'); const amountToAdd = parseFloat(amountInput.value) || 0; const accountId = accountInput.value; if (amountToAdd <= 0 || !accountId) { alert("Por favor, insira um valor válido e selecione uma conta."); return; } const goal = this.state.goals.find(g => g.id === goalId); this.updateAccountBalances(); const account = this.state.accounts.find(a => a.id === accountId); if (!goal || !account) { alert("Meta ou conta não encontrada. Tente novamente."); return; } if(account.currentBalance < amountToAdd) { alert("Saldo insuficiente na conta selecionada."); return; } goal.saved = (goal.saved || 0) + amountToAdd; const today = new Date().toISOString().split('T')[0]; const newTransaction = { id: Date.now().toString(), type: 'expense', description: `Aporte para meta: ${goal.name}`, amount: amountToAdd, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today }; this.state.transactions.push(newTransaction); this.saveData(); this.updateAllRenders(); amountInput.value = ''; },
+        startEditMode(type, id) { this.state.editingItem = { type, id }; let item; const config = { transaction: { formId: 'transaction-form', tabId: 'dashboard', title: 'Editar Transação', collection: 'transactions' }, account: { formId: 'account-form', tabId: 'accounts', title: 'Editar Conta', collection: 'accounts' }, category: { formId: 'category-form', tabId: 'categories', title: 'Editar Categoria', collection: 'categories' }, budget: { formId: 'budget-form', tabId: 'budgets', title: 'Editar Orçamento', collection: 'budgets' }, goal: { formId: 'goal-form', tabId: 'goals', title: 'Editar Meta', collection: 'goals' }, recurrence: { formId: 'recurrence-form', tabId: 'recurrences', title: 'Editar Recorrência', collection: 'recurrences' } }; const currentConfig = config[type]; if (!currentConfig) return; item = this.state[currentConfig.collection].find(i => i.id === id); if (!item) return; document.querySelector(`.tab-btn[data-tab="${currentConfig.tabId}"]`).click(); const form = document.getElementById(currentConfig.formId); const titleId = currentConfig.formId.replace('-form', '-form-title'); const buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons'); Object.keys(item).forEach(key => { const input = form.elements[key] || form.elements[`${type}-${key}`] || document.getElementById(`${type}-${key}`) || form.elements[`category-name`]; if (input) { input.value = item[key]; } }); if (type === 'transaction') form.elements['account-select'].value = item.accountId; if (type === 'account') form.elements['initial-balance'].value = item.initialBalance; document.getElementById(titleId).textContent = currentConfig.title; const buttonContainer = document.getElementById(buttonContainerId); buttonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar</button> <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancelar</button>`; document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode()); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+        cancelEditMode() { if (!this.state.editingItem) return; const type = this.state.editingItem.type; const config = { transaction: { formId: 'transaction-form', title: 'Nova Transação', btnText: 'Adicionar Transação' }, account: { formId: 'account-form', title: 'Adicionar Conta/Cartão', btnText: 'Salvar Conta' }, budget: { formId: 'budget-form', title: 'Definir Orçamento', btnText: 'Salvar Orçamento' }, goal: { formId: 'goal-form', title: 'Criar Nova Meta', btnText: 'Criar Meta' }, recurrence: { formId: 'recurrence-form', title: 'Adicionar Lançamento Recorrente', btnText: 'Salvar Recorrência' }, category: { formId: 'category-form', title: 'Adicionar Categoria', btnText: 'Adicionar Categoria' } }; const currentConfig = config[type]; if (currentConfig) { const form = document.getElementById(currentConfig.formId); const titleId = currentConfig.formId.replace('-form', '-form-title'); const buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons'); form.reset(); document.getElementById(titleId).textContent = currentConfig.title; document.getElementById(buttonContainerId).innerHTML = `<button type="submit" class="btn btn-primary" style="width:100%">${currentConfig.btnText}</button>`; } this.state.editingItem = null; },
+        getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'; const textColor = isLight ? '#333' : '#eee'; return { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } }, tooltip: { backgroundColor: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 } }, scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } } }; },
+        initCharts() { if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y, beginAtZero: true } } } }); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y } } } }); },
+        updateCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); const now = new Date(); const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); const dataByDay = {}; for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) { dataByDay[d.toISOString().split('T')[0]] = { income: 0, expense: 0 }; } this.state.transactions.filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear() && t.category !== 'Transferência').forEach(t => { if(dataByDay[t.date]) { if (t.type === 'income') dataByDay[t.date].income += (t.amount || 0); if (t.type === 'expense' && t.isPaid) dataByDay[t.date].expense += (t.amount || 0); } }); const labels = Object.keys(dataByDay); this.charts.mainOverviewChart.data.labels = labels; this.charts.mainOverviewChart.data.datasets = [ { label: 'Receitas', data: labels.map(day => dataByDay[day].income), backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas Pagas', data: labels.map(day => dataByDay[day].expense), backgroundColor: 'rgba(231, 76, 60, 0.7)' } ]; this.charts.mainOverviewChart.options = { ...this.charts.mainOverviewChart.options, ...commonOptions }; this.charts.mainOverviewChart.update(); const allTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); let initialNetWorth = this.state.accounts.reduce((sum, acc) => { const iBalance = acc.initialBalance || 0; return acc.type !== 'credit_card' ? sum + iBalance : sum; }, 0); if (allTransactions.length === 0) { dailyNetWorth.set(new Date().toISOString().split('T')[0], initialNetWorth); } else { const firstDate = new Date(allTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], initialNetWorth); } let runningBalance = initialNetWorth; allTransactions.forEach(t => { const amount = t.amount || 0; const account = this.state.accounts.find(a => a.id === t.accountId); if (account && account.type !== 'credit_card') { if (t.type === 'income') { runningBalance += amount; } if (t.type === 'expense' && t.isPaid) { runningBalance -= amount; } } dailyNetWorth.set(t.date, runningBalance); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
+        exportToCSV() { const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Status']; const rows = this.getFilteredTransactions().map(t => { const account = this.state.accounts.find(a => a.id === t.accountId); const rowData = [ t.date, `"${(t.description || '').replace(/"/g, '""')}"`, t.type, t.amount || 0, t.category, account ? account.name : 'N/A', t.isPaid ? 'Pago' : 'A pagar' ]; return rowData.join(','); }); const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + rows.join('\n'); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "transacoes.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); },
+        exportToPDF() { try { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const tableColumn = ["Data", "Descrição", "Tipo", "Valor", "Categoria", "Conta", "Status"]; const tableRows = []; this.getFilteredTransactions().forEach(t => { const account = this.state.accounts.find(a => a.id === t.accountId); let statusText = ''; if(t.category === 'Transferência') { statusText = 'N/A'; } else if (t.type === 'income') { statusText = t.isPaid ? 'Recebido' : 'A Receber'; } else { statusText = t.isPaid ? 'Pago' : 'A Pagar'; } const transactionData = [ this.formatDate(t.date), t.description || '', t.type === 'income' ? 'Receita' : 'Despesa', this.formatCurrency(t.amount || 0), t.category || '', account ? account.name : 'N/A', statusText ]; tableRows.push(transactionData); }); doc.autoTable({ head: [tableColumn], body: tableRows, startY: 20, headStyles: { fillColor: [233, 69, 96] } }); doc.text("Relatório de Transações", 14, 15); doc.save("transacoes.pdf"); } catch (error) { console.error("Failed to generate PDF:", error); alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes."); } },
+
+        exportBackup() {
+            try {
+                const dataToSave = {
+                    transactions: this.state.transactions,
+                    accounts: this.state.accounts,
+                    budgets: this.state.budgets,
+                    goals: this.state.goals,
+                    recurrences: this.state.recurrences,
+                    categories: this.state.categories,
+                    lastBackup: new Date().toISOString()
+                };
+
+                const jsonString = JSON.stringify(dataToSave, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                
+                const today = new Date();
+                const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                link.download = `financeApp_backup_${dateString}.json`;
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                URL.revokeObjectURL(url);
+                alert('Backup exportado com sucesso!');
+
+            } catch (error) {
+                console.error("Erro ao exportar backup:", error);
+                alert("Ocorreu um erro ao exportar seus dados.");
+            }
+        },
+
+        importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+
+                    if (parsedData && parsedData.transactions && parsedData.accounts) {
+                        if (confirm('Tem certeza que deseja restaurar este backup? Todos os dados atuais serão substituídos.')) {
+                            this.state.transactions = parsedData.transactions || [];
+                            this.state.accounts = parsedData.accounts || [];
+                            this.state.budgets = parsedData.budgets || [];
+                            this.state.goals = parsedData.goals || [];
+                            this.state.recurrences = parsedData.recurrences || [];
+                            this.state.categories = parsedData.categories || [];
+                            
+                            this.saveData();
+                            this.updateAllRenders();
+                            
+                            alert('Backup restaurado com sucesso!');
+                        }
+                    } else {
+                        alert('Arquivo de backup inválido ou corrompido.');
+                    }
+                } catch (error) {
+                    console.error("Erro ao importar backup:", error);
+                    alert('Erro ao ler o arquivo. Verifique se é um backup válido.');
+                } finally {
+                    event.target.value = null;
+                }
+            };
+
+            reader.readAsText(file);
+        },
+
     };
 
-    // Objeto completo com todos os métodos para evitar qualquer perda
-    const allMethods = {
-        ...financeApp,
-        ...{
-            getDeleteIconSVG:() => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`,
-            getEditIconSVG:() => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`,
-            getStorageKey() { return `financeApp_${this.state.user}`; },
-            saveData() { if (!this.state.user) return; try { const dataToSave = { transactions: this.state.transactions, accounts: this.state.accounts, budgets: this.state.budgets, goals: this.state.goals, recurrences: this.state.recurrences, categories: this.state.categories, }; localStorage.setItem(this.getStorageKey(), JSON.stringify(dataToSave)); } catch (error) { console.error("Failed to save data:", error); } },
-            loadData() { if (!this.state.user) return; try { const data = localStorage.getItem(this.getStorageKey()); if (data) { const parsedData = JSON.parse(data); this.state.transactions = parsedData.transactions || []; this.state.accounts = parsedData.accounts || []; this.state.budgets = parsedData.budgets || []; this.state.goals = parsedData.goals || []; this.state.recurrences = parsedData.recurrences || []; this.state.categories = parsedData.categories || []; } else { Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } }); } } catch (error) { console.error("Failed to load data:", error); Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } }); } },
-            generateRecurringTransactions() { const today = new Date(); today.setHours(0, 0, 0, 0); let somethingChanged = false; this.state.recurrences.forEach(r => { if (!r.nextDueDate) return; let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); while (nextDueDate <= today) { const newTransaction = { id: Date.now().toString() + Math.random(), type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; this.state.transactions.push(newTransaction); if (r.frequency === 'monthly') { nextDueDate.setMonth(nextDueDate.getMonth() + 1); } else if (r.frequency === 'weekly') { nextDueDate.setDate(nextDueDate.getDate() + 7); } else if (r.frequency === 'yearly') { nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); } r.nextDueDate = nextDueDate.toISOString().split('T')[0]; somethingChanged = true; } }); if (somethingChanged) { this.saveData(); } },
-            checkLogin() { const user = localStorage.getItem('financeAppUser'); if (user) { this.state.user = user; this.elements.loginContainer.style.display = 'none'; this.elements.appContainer.style.display = 'block'; this.initApp(); } else { this.elements.loginContainer.style.display = 'flex'; this.elements.appContainer.style.display = 'none'; } },
-            handleLogin() { const username = this.elements.usernameInput.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
-            handleLogout() { if (confirm('Você tem certeza que deseja sair?')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
-            toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
-            applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-            toggleTransactionFormLock() { const hasAccounts = this.state.accounts.length > 0; this.elements.transactionFormBlocker.classList.toggle('hidden', hasAccounts); const formElements = this.elements.transactionForm.elements; for (let i = 0; i < formElements.length; i++) { formElements[i].disabled = !hasAccounts; } },
-            handleTransactionTypeChange() { const type = this.elements.transactionTypeSelect.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDateInput.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense ? 'block' : 'none'; },
-            formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
-            formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
-            populateSelectors() { const categoryOptions = this.state.categories.map(c => ({ value: c.name, text: c.name })); const allAccounts = this.state.accounts.map(a => ({ value: a.id, text: a.name })); const nonCreditAccounts = this.state.accounts.filter(a => a.type !== 'credit_card').map(a => ({ value: a.id, text: a.name })); const selectors = { 'account-select': allAccounts, 'transfer-from-account': allAccounts, 'transfer-to-account': nonCreditAccounts, 'category-select': categoryOptions, 'budget-category': categoryOptions, 'category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions], 'recurrence-account': allAccounts, 'recurrence-category': categoryOptions, }; for (const id in selectors) { const select = document.getElementById(id); if(select) { const currentValue = select.value; select.innerHTML = ''; selectors[id].forEach(opt => { const option = document.createElement('option'); option.value = opt.value; option.textContent = opt.text; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) { select.value = currentValue; } } } },
-            renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const balance = this.state.accounts.reduce((sum, acc) => { const currentVal = acc.currentBalance || 0; return acc.type === 'credit_card' ? sum - currentVal : sum + currentVal; }, 0); const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(balance); balanceEl.className = `amount ${balance >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
-            getFilteredTransactions() { const dateFilter = document.getElementById('date-filter').value, categoryFilter = document.getElementById('category-filter').value, paymentStatusFilter = document.getElementById('payment-status-filter').value; const now = new Date(); return this.state.transactions.filter(t => { const tDate = new Date(t.date); let dateMatch = true; if (dateFilter !== 'all') { const days = parseInt(dateFilter); if (days) { const filterDate = new Date(); filterDate.setDate(now.getDate() - days); dateMatch = tDate >= filterDate; } else if (dateFilter === 'month') { dateMatch = tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear(); } } const categoryMatch = categoryFilter === 'all' || t.category === categoryFilter; let paymentMatch = true; if (paymentStatusFilter === 'paid') paymentMatch = t.isPaid; else if (paymentStatusFilter === 'unpaid') paymentMatch = !t.isPaid && t.type === 'expense'; return dateMatch && categoryMatch && paymentMatch; }); },
-            renderTransactions() { const list = document.getElementById('transaction-list'); if(!list) return; list.innerHTML = ''; const filteredTransactions = this.getFilteredTransactions().sort((a,b) => new Date(b.date) - new Date(a.date)); if (filteredTransactions.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma transação encontrada.</p>'; return; } filteredTransactions.forEach(t => { const item = document.createElement('li'); const account = this.state.accounts.find(a => a.id === t.accountId); const today = new Date(); today.setHours(0,0,0,0); let statusClass = '', dueDateTag = ''; if (t.type === 'expense' && !t.isPaid && t.dueDate) { const dueDate = new Date(t.dueDate + 'T00:00:00'); const diffTime = dueDate.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays < 0) { statusClass = 'overdue'; dueDateTag = `<span class="details-tag due-date-tag">Vencido</span>`; } else if (diffDays <= 7) { statusClass = 'due-soon'; dueDateTag = `<span class="details-tag due-date-tag">Vence em ${diffDays} dias</span>`; } else { dueDateTag = `<span class="details-tag">Venc: ${this.formatDate(t.dueDate)}</span>`; } } else if (t.dueDate) { dueDateTag = `<span class="details-tag">Venc: ${this.formatDate(t.dueDate)}</span>`; } if (t.isPaid) statusClass += ' paid'; item.className = `transaction-item ${t.category === 'Transferência' ? 'transfer' : t.type} ${statusClass}`; item.innerHTML = `<div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> <span class="details-tag">${account ? account.name : 'Conta Deletada'}</span> ${dueDateTag} ${t.isPaid ? `<span class="paid-tag">PAGO</span>` : ''} </div> </div> <div class="amount ${t.category === 'Transferência' ? 'transfer' : t.type}"> ${t.type === 'expense' ? '-' : ''}${this.formatCurrency(t.amount)} </div> <div class="actions"> ${t.type === 'expense' && !t.isPaid ? `<button class="btn pay-btn" data-id="${t.id}" title="Marcar como Paga">✔️</button>` : ''} <button class="btn edit-btn" data-type="transaction" data-id="${t.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${t.id}" title="Excluir">${this.getDeleteIconSVG()}</button> </div>`; list.appendChild(item); }); },
-            renderBudgets() { const list = document.getElementById('budgets-list'); if(!list) return; list.innerHTML = ''; if (this.state.budgets.length === 0) { list.innerHTML = '<p class="card" style="text-align:center; color: var(--text-muted-color);">Nenhum orçamento definido.</p>'; return; } const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.state.budgets.forEach(b => { const spent = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.category === b.category && t.type === 'expense' && t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0); const budgetAmount = b.amount || 0; const percentage = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0; const progressClass = percentage > 100 ? 'over' : ''; const item = document.createElement('div'); item.className = 'list-item card'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${b.category}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Gasto: ${this.formatCurrency(spent)} de ${this.formatCurrency(budgetAmount)} </p> <div class="progress-bar-container"> <div class="progress-bar ${progressClass}" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${b.id}" title="Excluir Orçamento">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
-            renderGoals() { const list = document.getElementById('goals-list'); if(!list) return; list.innerHTML = ''; if (this.state.goals.length === 0) { list.innerHTML = '<p class="card" style="text-align:center; color: var(--text-muted-color);">Nenhuma meta criada.</p>'; return; } this.state.goals.forEach(g => { const saved = g.saved || 0; const target = g.target || 0; const percentage = target > 0 ? (saved / target) * 100 : 0; const accountOptions = this.state.accounts.filter(acc => acc.type !== 'credit_card').map(acc => `<option value="${acc.id}">${acc.name}</option>`).join(''); const item = document.createElement('div'); item.className = 'list-item card'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${g.name}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Alcançado: ${this.formatCurrency(saved)} de ${this.formatCurrency(target)} ${g.deadline ? `| Prazo: ${this.formatDate(g.deadline)}` : ''} </p> <div class="progress-bar-container"> <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="goal" data-id="${g.id}" title="Editar Meta">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${g.id}" title="Excluir meta">${this.getDeleteIconSVG()}</button> </div> </div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" step="0.01" placeholder="Valor do aporte" class="contribution-amount" required> <select class="contribution-account" required> ${accountOptions.length > 0 ? accountOptions : '<option disabled>Nenhuma conta disponível</option>'} </select> <button type="submit" class="btn btn-success" ${accountOptions.length === 0 ? 'disabled' : ''}>Aportar</button> </form>`; list.appendChild(item); }); },
-            renderRecurrences() { const list = document.getElementById('recurrences-list'); if(!list) return; list.innerHTML = ''; if (this.state.recurrences.length === 0) { list.innerHTML = '<p class="card" style="text-align:center; color: var(--text-muted-color);">Nenhum lançamento recorrente.</p>'; return; } this.state.recurrences.forEach(r => { const item = document.createElement('div'); item.className = 'list-item card'; const account = this.state.accounts.find(a => a.id === r.accountId); item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${r.description}</strong> (${r.type === 'income' ? 'Receita' : 'Despesa'}) <p style="font-size: 0.8rem; color: var(--text-muted-color);"> ${this.formatCurrency(r.amount)} | ${r.frequency === 'monthly' ? 'Mensal' : (r.frequency === 'weekly' ? 'Semanal' : 'Anual')} </p> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Próximo Lançamento: ${this.formatDate(r.nextDueDate)} no(a) ${account ? account.name : 'N/A'} </p> </div> <div class="actions"> <button class="btn edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar Recorrência">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${r.id}" title="Excluir Recorrência">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
-            renderCategories() { const list = document.getElementById('categories-list'); if(!list) return; list.innerHTML = ''; if (this.state.categories.length === 0) { list.innerHTML = '<p class="card" style="text-align:center; color: var(--text-muted-color);">Nenhuma categoria cadastrada.</p>'; return; } this.state.categories.forEach(cat => { const item = document.createElement('div'); item.className = 'category-item list-item card'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"><span>${cat.name}</span></div> <div class="actions"> <button class="btn edit-btn" data-type="category" data-id="${cat.id}" title="Editar Categoria">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${cat.id}" title="Excluir Categoria">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
-            updateAccountBalances() { this.state.accounts.forEach(acc => { let balance = acc.initialBalance || 0; this.state.transactions.forEach(t => { if (t.accountId === acc.id) { const amount = t.amount || 0; if (acc.type === 'credit_card') { if (t.type === 'expense') balance += amount; if (t.type === 'income') balance -= amount; } else { if (t.type === 'income') balance += amount; if (t.type === 'expense' && t.isPaid) balance -= amount; } } }); acc.currentBalance = balance; }); },
-            handleTransaction(e) { e.preventDefault(); const form = e.target; const description = form.elements['description'].value, amount = parseFloat(form.elements['amount'].value), date = form.elements['date'].value, accountId = form.elements['account-select'].value, category = form.elements['category-select'].value, type = form.elements['transaction-type'].value, dueDate = form.elements['due-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'transaction') { const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id); if (transaction) { Object.assign(transaction, {description, amount, date, accountId, category, type, dueDate}); } } else { if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; } if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; } this.state.transactions.push({ id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' }); if (type === 'expense' && form.elements['make-recurring-checkbox'].checked) { const recurrenceExists = this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase()); if (!recurrenceExists) { const nextMonthDate = new Date(dueDate + 'T00:00:00'); nextMonthDate.setMonth(nextMonthDate.getMonth() + 1); this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] }); } } } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); },
-            handleBudget(e) { e.preventDefault(); const form = e.target; const category = form.elements['budget-category'].value, amount = parseFloat(form.elements['budget-amount'].value); if (this.state.editingItem && this.state.editingItem.type === 'budget') { const budget = this.state.budgets.find(b => b.id === this.state.editingItem.id); if (budget) { Object.assign(budget, {category, amount}); } } else { this.state.budgets = this.state.budgets.filter(b => b.category !== category); this.state.budgets.push({ id: Date.now().toString(), category, amount }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-            handleGoalContribution(e) { e.preventDefault(); const form = e.target; const goalId = form.dataset.goalId; const amountInput = form.querySelector('.contribution-amount'); const accountInput = form.querySelector('.contribution-account'); const amountToAdd = parseFloat(amountInput.value) || 0; const accountId = accountInput.value; if (amountToAdd <= 0 || !accountId) { alert("Por favor, insira um valor válido e selecione uma conta."); return; } const goal = this.state.goals.find(g => g.id === goalId); this.updateAccountBalances(); const account = this.state.accounts.find(a => a.id === accountId); if (!goal || !account) { alert("Meta ou conta não encontrada. Tente novamente."); return; } if(account.currentBalance < amountToAdd) { alert("Saldo insuficiente na conta selecionada."); return; } goal.saved = (goal.saved || 0) + amountToAdd; const today = new Date().toISOString().split('T')[0]; const newTransaction = { id: Date.now().toString(), type: 'expense', description: `Aporte para meta: ${goal.name}`, amount: amountToAdd, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today }; this.state.transactions.push(newTransaction); this.saveData(); this.updateAllRenders(); amountInput.value = ''; },
-            handleTransfer(e) { e.preventDefault(); const form = e.target; const fromAccountId = form.elements['transfer-from-account'].value; const toAccountId = form.elements['transfer-to-account'].value; const amount = parseFloat(form.elements['transfer-amount'].value); const date = form.elements['transfer-date'].value; const description = form.elements['transfer-description'].value || 'Transferência entre contas'; if (fromAccountId === toAccountId) { alert("A conta de origem e destino não podem ser a mesma."); return; } if (!fromAccountId || !toAccountId || !amount || !date) { alert("Preencha todos os campos obrigatórios para a transferência."); return; } const transferId = `transfer-${Date.now()}`; const expense_part = { id: Date.now().toString() + '-out', type: 'expense', description: `Transferência para ${this.state.accounts.find(a=>a.id===toAccountId)?.name}`, amount, date, accountId: fromAccountId, category: 'Transferência', isPaid: true, dueDate: date, transferId }; const income_part = { id: Date.now().toString() + '-in', type: 'income', description: `Transferência de ${this.state.accounts.find(a=>a.id===fromAccountId)?.name}`, amount, date, accountId: toAccountId, category: 'Transferência', isPaid: true, dueDate: date, transferId }; this.state.transactions.push(expense_part, income_part); this.saveData(); this.updateAllRenders(); form.reset(); document.getElementById('transfer-date').valueAsDate = new Date(); alert("Transferência realizada com sucesso!"); },
-            markAsPaid(id) { const t = this.state.transactions.find(t => t.id === id); if (t) { t.isPaid = true; this.saveData(); this.updateAllRenders(); } },
-            deleteTransaction(id) { const transaction_to_delete = this.state.transactions.find(t => t.id === id); if (!transaction_to_delete) return; let confirm_message = 'Tem certeza que quer deletar esta transação?'; let also_delete_id = null; if(transaction_to_delete.transferId) { confirm_message = 'Esta é uma transação de transferência. Deletá-la também removerá a outra parte da transferência. Deseja continuar?'; const other_part = this.state.transactions.find(t => t.transferId === transaction_to_delete.transferId && t.id !== id); if(other_part) also_delete_id = other_part.id; } if (confirm(confirm_message)) { this.state.transactions = this.state.transactions.filter(t => t.id !== id && t.id !== also_delete_id); this.saveData(); this.updateAllRenders(); } },
-            deleteAccount(id) { if (confirm('Deletar uma conta também deletará TODAS as transações e recorrências associadas a ela. Deseja continuar?')) { this.state.accounts = this.state.accounts.filter(acc => acc.id !== id); this.state.transactions = this.state.transactions.filter(t => t.accountId !== id); this.state.recurrences = this.state.recurrences.filter(r => r.accountId !== id); this.saveData(); this.updateAllRenders(); } },
-            deleteBudget(id) { if(confirm('Tem certeza que deseja remover este orçamento?')) { this.state.budgets = this.state.budgets.filter(b => b.id !== id); this.saveData(); this.updateAllRenders(); } },
-            deleteGoal(id) { if(confirm('Tem certeza que deseja remover esta meta?')) { this.state.goals = this.state.goals.filter(g => g.id !== id); this.saveData(); this.updateAllRenders(); } },
-            deleteRecurrence(id) { if(confirm('Tem certeza que deseja remover este lançamento recorrente? Transações já geradas não serão afetadas.')) { this.state.recurrences = this.state.recurrences.filter(r => r.id !== id); this.saveData(); this.updateAllRenders(); } },
-            deleteCategory(id) { const categoryToDelete = this.state.categories.find(c => c.id === id); if (!categoryToDelete) return; const isCategoryInUse = this.state.transactions.some(t => t.category === categoryToDelete.name) || this.state.budgets.some(b => b.category === categoryToDelete.name); if (isCategoryInUse) { alert("Não é possível deletar esta categoria. Ela está sendo usada em transações ou orçamentos."); return; } if (confirm(`Tem certeza que quer deletar a categoria "${categoryToDelete.name}"?`)) { this.state.categories = this.state.categories.filter(c => c.id !== id); this.saveData(); this.updateAllRenders(); } },
-            handleGoal(e) { e.preventDefault(); const form = e.target; const name = form.elements['goal-name'].value, target = parseFloat(form.elements['goal-target'].value), saved = parseFloat(form.elements['goal-saved'].value) || 0, deadline = form.elements['goal-deadline'].value; if (this.state.editingItem && this.state.editingItem.type === 'goal') { const goal = this.state.goals.find(g => g.id === this.state.editingItem.id); if (goal) { Object.assign(goal, {name, target, saved, deadline}); } } else { if (!name || isNaN(target) || target <= 0) { alert("Preencha o nome da meta e um valor alvo válido."); return; } this.state.goals.push({ id: Date.now().toString(), name, target, saved, deadline: deadline || null }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-            handleRecurrence(e) { e.preventDefault(); const form = e.target; const description = form.elements['recurrence-description'].value, amount = parseFloat(form.elements['recurrence-amount'].value), type = form.elements['recurrence-type'].value, accountId = form.elements['recurrence-account'].value, category = form.elements['recurrence-category'].value, frequency = form.elements['recurrence-frequency'].value, startDate = form.elements['recurrence-start-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'recurrence') { const recurrence = this.state.recurrences.find(r => r.id === this.state.editingItem.id); if (recurrence) { Object.assign(recurrence, {description, amount, type, accountId, category, frequency, startDate}); if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) { recurrence.nextDueDate = recurrence.startDate; } } } else { this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-            handleCategorySubmit(e) { e.preventDefault(); const form = e.target; const nameInput = form.elements['category-name']; const name = nameInput.value.trim(); if (!name) { alert('O nome da categoria não pode ser vazio.'); return; } const nameExists = this.state.categories.some(cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== (this.state.editingItem && this.state.editingItem.id)); if (nameExists) { alert('Esta categoria já existe.'); return; } if (this.state.editingItem && this.state.editingItem.type === 'category') { const category = this.state.categories.find(c => c.id === this.state.editingItem.id); if (category) { category.name = name; } } else { this.state.categories.push({ id: Date.now().toString(), name }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-            startEditMode(type, id) { this.state.editingItem = { type, id }; let item; const config = { transaction: { formId: 'transaction-form', tabId: 'dashboard', title: 'Editar Transação', collection: 'transactions' }, account: { formId: 'account-form', tabId: 'accounts', title: 'Editar Conta', collection: 'accounts' }, category: { formId: 'category-form', tabId: 'categories', title: 'Editar Categoria', collection: 'categories' }, budget: { formId: 'budget-form', tabId: 'budgets', title: 'Editar Orçamento', collection: 'budgets' }, goal: { formId: 'goal-form', tabId: 'goals', title: 'Editar Meta', collection: 'goals' }, recurrence: { formId: 'recurrence-form', tabId: 'recurrences', title: 'Editar Recorrência', collection: 'recurrences' } }; const currentConfig = config[type]; if (!currentConfig) return; item = this.state[currentConfig.collection].find(i => i.id === id); if (!item) return; document.querySelector(`.tab-btn[data-tab="${currentConfig.tabId}"]`).click(); const form = document.getElementById(currentConfig.formId); const titleId = currentConfig.formId.replace('-form', '-form-title'); const buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons'); Object.keys(item).forEach(key => { const input = form.elements[key.replace(/([A-Z])/g, "-$1").toLowerCase()] || form.elements[key]; if (input) { if (input.type === 'checkbox') { input.checked = item[key]; } else { input.value = item[key]; } } }); if (type === 'account') { document.getElementById('credit-card-fields').style.display = item.type === 'credit_card' ? 'block' : 'none'; } document.getElementById(titleId).textContent = currentConfig.title; const buttonContainer = document.getElementById(buttonContainerId); buttonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar</button> <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancelar</button>`; document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode()); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
-            cancelEditMode() { if (!this.state.editingItem) return; const type = this.state.editingItem.type; const config = { transaction: { formId: 'transaction-form', title: 'Nova Transação', btnText: 'Adicionar Transação' }, account: { formId: 'account-form', title: 'Adicionar Conta/Cartão', btnText: 'Salvar Conta' }, budget: { formId: 'budget-form', title: 'Definir Orçamento', btnText: 'Salvar Orçamento' }, goal: { formId: 'goal-form', title: 'Criar Nova Meta', btnText: 'Criar Meta' }, recurrence: { formId: 'recurrence-form', title: 'Adicionar Lançamento Recorrente', btnText: 'Salvar Recorrência' }, category: { formId: 'category-form', title: 'Adicionar Categoria', btnText: 'Adicionar Categoria' } }; const currentConfig = config[type]; if (currentConfig) { const form = document.getElementById(currentConfig.formId); const titleId = currentConfig.formId.replace('-form', '-form-title'); const buttonContainerId = currentConfig.formId.replace('-form', '-form-buttons'); form.reset(); if (type === 'account') { document.getElementById('credit-card-fields').style.display = 'none'; } document.getElementById(titleId).textContent = currentConfig.title; document.getElementById(buttonContainerId).innerHTML = `<button type="submit" class="btn btn-primary">${currentConfig.btnText}</button>`; } this.state.editingItem = null; },
-            getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'; const textColor = isLight ? '#333' : '#eee'; return { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } }, tooltip: { backgroundColor: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 } }, scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } } }; },
-            initCharts() { if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y, beginAtZero: true } } } }); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y } } } }); },
-            updateCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); const now = new Date(); const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); const dataByDay = {}; for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) { dataByDay[d.toISOString().split('T')[0]] = { income: 0, expense: 0 }; } this.state.transactions.filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear() && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').forEach(t => { if(dataByDay[t.date]) { if (t.type === 'income') dataByDay[t.date].income += (t.amount || 0); if (t.type === 'expense' && t.isPaid) dataByDay[t.date].expense += (t.amount || 0); } }); const labels = Object.keys(dataByDay); this.charts.mainOverviewChart.data.labels = labels; this.charts.mainOverviewChart.data.datasets = [ { label: 'Receitas', data: labels.map(day => dataByDay[day].income), backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas Pagas', data: labels.map(day => dataByDay[day].expense), backgroundColor: 'rgba(231, 76, 60, 0.7)' } ]; this.charts.mainOverviewChart.options = { ...this.charts.mainOverviewChart.options, ...commonOptions }; this.charts.mainOverviewChart.update(); const allTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); let initialNetWorth = this.state.accounts.reduce((sum, acc) => { const iBalance = acc.initialBalance || 0; return acc.type !== 'credit_card' ? sum + iBalance : sum; }, 0); if (allTransactions.length === 0) { dailyNetWorth.set(new Date().toISOString().split('T')[0], initialNetWorth); } else { const firstDate = new Date(allTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], initialNetWorth); } let runningBalance = initialNetWorth; allTransactions.forEach(t => { const amount = t.amount || 0; const account = this.state.accounts.find(a => a.id === t.accountId); if (account && account.type !== 'credit_card') { if (t.type === 'income') { runningBalance += amount; } if (t.type === 'expense' && t.isPaid) { runningBalance -= amount; } } dailyNetWorth.set(t.date, runningBalance); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
-            exportToCSV() { const headers = ['Data', 'Descrição', 'Tipo', 'Valor', 'Categoria', 'Conta', 'Status']; const rows = this.getFilteredTransactions().map(t => { const account = this.state.accounts.find(a => a.id === t.accountId); const rowData = [ t.date, `"${(t.description || '').replace(/"/g, '""')}"`, t.type, t.amount || 0, t.category, account ? account.name : 'N/A', t.isPaid ? 'Pago' : 'A pagar' ]; return rowData.join(','); }); const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n' + rows.join('\n'); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "transacoes.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); },
-            exportToPDF() { try { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const tableColumn = ["Data", "Descrição", "Tipo", "Valor", "Categoria", "Conta", "Status"]; const tableRows = []; this.getFilteredTransactions().forEach(t => { const account = this.state.accounts.find(a => a.id === t.accountId); let statusText = ''; if(t.category === 'Transferência') { statusText = 'N/A'; } else if (t.type === 'income') { statusText = t.isPaid ? 'Recebido' : 'A Receber'; } else { statusText = t.isPaid ? 'Pago' : 'A Pagar'; } const transactionData = [ this.formatDate(t.date), t.description || '', t.type === 'income' ? 'Receita' : 'Despesa', this.formatCurrency(t.amount || 0), t.category || '', account ? account.name : 'N/A', statusText ]; tableRows.push(transactionData); }); doc.autoTable({ head: [tableColumn], body: tableRows, startY: 20, headStyles: { fillColor: [233, 69, 96] } }); doc.text("Relatório de Transações", 14, 15); doc.save("transacoes.pdf"); } catch (error) { console.error("Failed to generate PDF:", error); alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes."); } },
-            exportBackup() { try { const dataToSave = { transactions: this.state.transactions, accounts: this.state.accounts, budgets: this.state.budgets, goals: this.state.goals, recurrences: this.state.recurrences, categories: this.state.categories, lastBackup: new Date().toISOString() }; const jsonString = JSON.stringify(dataToSave, null, 2); const blob = new Blob([jsonString], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; const today = new Date(); const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`; link.download = `financeApp_backup_${dateString}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); alert('Backup exportado com sucesso!'); } catch (error) { console.error("Erro ao exportar backup:", error); alert("Ocorreu um erro ao exportar seus dados."); } },
-            importBackup(event) { const file = event.target.files[0]; if (!file) { return; } const reader = new FileReader(); reader.onload = (e) => { try { const parsedData = JSON.parse(e.target.result); if (parsedData && parsedData.transactions && parsedData.accounts) { if (confirm('Tem certeza que deseja restaurar este backup? Todos os dados atuais serão substituídos.')) { this.state.transactions = parsedData.transactions || []; this.state.accounts = parsedData.accounts || []; this.state.budgets = parsedData.budgets || []; this.state.goals = parsedData.goals || []; this.state.recurrences = parsedData.recurrences || []; this.state.categories = parsedData.categories || []; this.saveData(); this.updateAllRenders(); alert('Backup restaurado com sucesso!'); } } else { alert('Arquivo de backup inválido ou corrompido.'); } } catch (error) { console.error("Erro ao importar backup:", error); alert('Erro ao ler o arquivo. Verifique se é um backup válido.'); } finally { event.target.value = null; } }; reader.readAsText(file); },
-        }
-    };
-    Object.assign(financeApp, allMethods);
     financeApp.init();
 });
 </script>
@@ -550,8 +704,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./service-worker.js')
-                .then(registration => { console.log('Service Worker registrado com sucesso:', registration); })
-                .catch(error => { console.log('Falha ao registrar o Service Worker:', error); });
+                .then(registration => {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar o Service Worker:', error);
+                });
         });
     }
 </script>
