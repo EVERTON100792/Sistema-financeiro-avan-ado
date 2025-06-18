@@ -216,6 +216,7 @@
             <aside class="sidebar-nav card">
                 <button class="tab-btn active" data-tab="dashboard">Painel</button>
                 <button class="tab-btn" data-tab="accounts">Contas</button>
+                <button class="tab-btn" data-tab="invoices">Faturas</button>
                 <button class="tab-btn" data-tab="categories">Categorias</button>
                 <button class="tab-btn" data-tab="transfers">Transferências</button>
                 <button class="tab-btn" data-tab="budgets">Orçamentos</button>
@@ -337,6 +338,20 @@
                     </div>
                 </div>
 
+                <div id="tab-invoices" class="tab-content">
+                    <div class="card">
+                        <h2>Faturas de Cartão de Crédito</h2>
+                        <div class="form-group">
+                            <label for="invoice-account-select">Selecione um Cartão de Crédito</label>
+                            <select id="invoice-account-select">
+                                <option value="">-- Selecione um cartão --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="invoice-details-container" style="margin-top: 20px;">
+                        </div>
+                </div>
+
                 <div id="tab-categories" class="tab-content">
                     <div class="grid-layout">
                         <div class="card">
@@ -431,7 +446,7 @@
     </div>
 
 <script>
-// VERSÃO COM PWA, BACKUP E MENU LATERAL
+// VERSÃO COM ESTRUTURA INICIAL DA ABA FATURAS
 document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
@@ -574,7 +589,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tabButton.classList.add('active');
             document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active');
 
-            // --- CORREÇÃO PARA FECHAR O MENU NO CELULAR ---
             if (this.elements.sidebarNav.classList.contains('visible')) {
                 this.elements.sidebarNav.classList.remove('visible');
             }
@@ -593,7 +607,29 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGoals() { const list = document.getElementById('goals-list'); list.innerHTML = ''; if (this.state.goals.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma meta criada.</p>'; return; } this.state.goals.forEach(g => { const saved = g.saved || 0; const target = g.target || 0; const percentage = target > 0 ? (saved / target) * 100 : 0; const accountOptions = this.state.accounts.filter(acc => acc.type !== 'credit_card').map(acc => `<option value="${acc.id}">${acc.name}</option>`).join(''); const item = document.createElement('div'); item.className = 'list-item'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${g.name}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Alcançado: ${this.formatCurrency(saved)} de ${this.formatCurrency(target)} ${g.deadline ? `| Prazo: ${this.formatDate(g.deadline)}` : ''} </p> <div class="progress-bar-container"> <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="goal" data-id="${g.id}" title="Editar Meta">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${g.id}" title="Excluir meta">${this.getDeleteIconSVG()}</button> </div> </div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" step="0.01" placeholder="Valor do aporte" class="contribution-amount" required> <select class="contribution-account" required> ${accountOptions.length > 0 ? accountOptions : '<option disabled>Nenhuma conta disponível</option>'} </select> <button type="submit" class="btn btn-success" ${accountOptions.length === 0 ? 'disabled' : ''}>Aportar</button> </form>`; list.appendChild(item); }); },
         renderRecurrences() { const list = document.getElementById('recurrences-list'); list.innerHTML = ''; if (this.state.recurrences.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum lançamento recorrente.</p>'; return; } this.state.recurrences.forEach(r => { const item = document.createElement('div'); item.className = 'list-item'; const account = this.state.accounts.find(a => a.id === r.accountId); item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${r.description}</strong> (${r.type === 'income' ? 'Receita' : 'Despesa'}) <p style="font-size: 0.8rem; color: var(--text-muted-color);"> ${this.formatCurrency(r.amount)} | ${r.frequency === 'monthly' ? 'Mensal' : (r.frequency === 'weekly' ? 'Semanal' : 'Anual')} </p> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Próximo Lançamento: ${this.formatDate(r.nextDueDate)} no(a) ${account ? account.name : 'N/A'} </p> </div> <div class="actions"> <button class="btn edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar Recorrência">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${r.id}" title="Excluir Recorrência">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
         renderCategories() { const list = document.getElementById('categories-list'); list.innerHTML = ''; if (this.state.categories.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma categoria cadastrada.</p>'; return; } this.state.categories.forEach(cat => { const item = document.createElement('div'); item.className = 'category-item list-item'; item.innerHTML = `<div class="list-item-header"> <div class="main-info"><span>${cat.name}</span></div> <div class="actions"> <button class="btn edit-btn" data-type="category" data-id="${cat.id}" title="Editar Categoria">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${cat.id}" title="Excluir Categoria">${this.getDeleteIconSVG()}</button> </div> </div>`; list.appendChild(item); }); },
-        updateAllRenders() { try { this.toggleTransactionFormLock(); this.updateAccountBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactions(); this.renderAccounts(); this.renderBudgets(); this.renderGoals(); this.renderRecurrences(); this.renderCategories(); this.updateCharts(); } catch (error) { console.error("An error occurred during a render update:", error); } },
+        
+        renderInvoices() {
+            const creditCardAccounts = this.state.accounts.filter(acc => acc.type === 'credit_card');
+            const select = document.getElementById('invoice-account-select');
+            
+            // Guarda o valor selecionado atualmente para não perdê-lo
+            const currentSelectedValue = select.value;
+            select.innerHTML = '<option value="">-- Selecione um cartão --</option>';
+
+            creditCardAccounts.forEach(acc => {
+                const option = document.createElement('option');
+                option.value = acc.id;
+                option.textContent = acc.name;
+                select.appendChild(option);
+            });
+            
+            // Restaura o valor selecionado se ele ainda existir na lista
+            if (creditCardAccounts.some(acc => acc.id === currentSelectedValue)) {
+                select.value = currentSelectedValue;
+            }
+        },
+
+        updateAllRenders() { try { this.toggleTransactionFormLock(); this.updateAccountBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactions(); this.renderAccounts(); this.renderBudgets(); this.renderGoals(); this.renderRecurrences(); this.renderCategories(); this.renderInvoices(); this.updateCharts(); } catch (error) { console.error("An error occurred during a render update:", error); } },
         updateAccountBalances() { this.state.accounts.forEach(acc => { let balance = acc.initialBalance || 0; this.state.transactions.forEach(t => { if (t.accountId === acc.id) { const amount = t.amount || 0; if (acc.type === 'credit_card') { if (t.type === 'expense') balance += amount; if (t.type === 'income') balance -= amount; } else { if (t.type === 'income') balance += amount; if (t.type === 'expense' && t.isPaid) balance -= amount; } } }); acc.currentBalance = balance; }); },
         handleTransaction(e) { e.preventDefault(); const form = e.target; const description = form.elements['description'].value, amount = parseFloat(form.elements['amount'].value), date = form.elements['date'].value, accountId = form.elements['account-select'].value, category = form.elements['category-select'].value, type = form.elements['transaction-type'].value, dueDate = form.elements['due-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'transaction') { const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id); if (transaction) { Object.assign(transaction, {description, amount, date, accountId, category, type, dueDate}); } } else { if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; } if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; } this.state.transactions.push({ id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' }); if (type === 'expense' && form.elements['make-recurring-checkbox'].checked) { const recurrenceExists = this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase()); if (!recurrenceExists) { const nextMonthDate = new Date(dueDate + 'T00:00:00'); nextMonthDate.setMonth(nextMonthDate.getMonth() + 1); this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] }); } } } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); },
         handleAccount(e) { e.preventDefault(); const form = e.target; const name = form.elements['account-name'].value, type = form.elements['account-type'].value, initialBalance = parseFloat(form.elements['initial-balance'].value); if (this.state.editingItem && this.state.editingItem.type === 'account') { const account = this.state.accounts.find(a => a.id === this.state.editingItem.id); if (account) { Object.assign(account, {name, type, initialBalance}); } } else { this.state.accounts.push({ id: Date.now().toString(), name, type, initialBalance, currentBalance: initialBalance }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
