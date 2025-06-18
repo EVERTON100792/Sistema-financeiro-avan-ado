@@ -15,381 +15,99 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* CSS Reset e Configurações Globais */
         :root {
-            --bg-color: #1a1a2e;
-            --primary-color: #16213e;
-            --secondary-color: #0f3460;
-            --accent-color: #e94560;
-            --text-color: #ffffff;
-            --text-muted-color: #a0a0b0;
-            --success-color: #2ecc71;
-            --error-color: #e74c3c;
-            --warning-color: #f1c40f;
-            --card-bg-color: #1e1e3f;
-            --border-radius: 12px;
-            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --bg-color: #1a1a2e; --primary-color: #16213e; --secondary-color: #0f3460;
+            --accent-color: #e94560; --text-color: #ffffff; --text-muted-color: #a0a0b0;
+            --success-color: #2ecc71; --error-color: #e74c3c; --warning-color: #f1c40f;
+            --card-bg-color: #1e1e3f; --border-radius: 12px; --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
             --font-family: 'Poppins', sans-serif;
         }
-
         body.light-mode {
-            --bg-color: #f4f7fc;
-            --primary-color: #ffffff;
-            --secondary-color: #eef2f9;
-            --accent-color: #3b82f6;
-            --text-color: #1f2937;
-            --text-muted-color: #6b7280;
-            --card-bg-color: #ffffff;
-            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --bg-color: #f4f7fc; --primary-color: #ffffff; --secondary-color: #eef2f9;
+            --accent-color: #3b82f6; --text-color: #1f2937; --text-muted-color: #6b7280;
+            --card-bg-color: #ffffff; --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: var(--font-family);
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
-
-        /* --- Estrutura Geral --- */
-        .container {
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card {
-            background-color: var(--card-bg-color);
-            padding: 25px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            transition: background-color 0.3s;
-            position: relative;
-        }
-
-        h1, h2, h3 {
-            color: var(--text-color);
-            transition: color 0.3s;
-        }
-
-        h2 {
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--secondary-color);
-            padding-bottom: 10px;
-        }
-
-        /* --- Componentes UI --- */
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-weight: 600;
-            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+        body { background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; overflow-x: hidden; line-height: 1.6; }
+        .container { padding: 20px; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background-color: var(--card-bg-color); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); transition: background-color 0.3s; position: relative; }
+        h1, h2, h3 { color: var(--text-color); transition: color 0.3s; }
+        h2 { margin-bottom: 20px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-secondary { background-color: var(--secondary-color); color: var(--text-color); }
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-danger { background-color: var(--error-color); color: white; }
-        
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; color: var(--text-muted-color); font-weight: 500; }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px;
-            border-radius: var(--border-radius);
-            border: 1px solid var(--secondary-color);
-            background-color: var(--primary-color);
-            color: var(--text-color);
-            font-size: 0.95rem;
-            transition: all 0.3s;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
-        }
-        .form-group input:disabled, .form-group select:disabled {
-            background-color: var(--secondary-color);
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .form-buttons .btn {
-            flex-grow: 1;
-        }
-
-        /* --- Tela de Login --- */
-        #login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%);
-        }
-
-        .login-box {
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            animation: fadeIn 0.5s;
-        }
-
-        /* --- Header --- */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border-radius: var(--border-radius); border: 1px solid var(--secondary-color); background-color: var(--primary-color); color: var(--text-color); font-size: 0.95rem; transition: all 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+        .form-group input:disabled, .form-group select:disabled { background-color: var(--secondary-color); cursor: not-allowed; opacity: 0.7; }
+        .form-buttons { display: flex; gap: 10px; }
+        .form-buttons .btn { flex-grow: 1; }
+        #login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%); }
+        .login-box { text-align: center; width: 90%; max-width: 400px; animation: fadeIn 0.5s; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .header-actions { display: flex; align-items: center; gap: 15px; }
-
-        #theme-toggle {
-            background: none; border: none; font-size: 1.5rem; cursor: pointer;
-            color: var(--text-muted-color);
-            transition: transform 0.2s;
-        }
+        #theme-toggle { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted-color); transition: transform 0.2s; }
         #theme-toggle:hover { transform: scale(1.1); }
-
-        /* --- Navegação por Abas --- */
-        nav.tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .tab-btn {
-            padding: 10px 20px;
-            border: none;
-            border-bottom: 3px solid transparent;
-            border-radius: 8px 8px 0 0;
-            background-color: transparent;
-            color: var(--text-muted-color);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+        nav.tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 20px; border: none; border-bottom: 3px solid transparent; border-radius: 8px 8px 0 0; background-color: transparent; color: var(--text-muted-color); font-weight: 500; cursor: pointer; transition: all 0.3s; }
         .tab-btn:hover { color: var(--text-color); background-color: var(--secondary-color); }
-        .tab-btn.active {
-            color: var(--accent-color);
-            font-weight: 600;
-            border-bottom-color: var(--accent-color);
-        }
-
+        .tab-btn.active { color: var(--accent-color); font-weight: 600; border-bottom-color: var(--accent-color); }
         .tab-content { display: none; animation: fadeIn 0.4s; }
         .tab-content.active { display: block; }
-        
-        /* --- Painel Principal (Dashboard) --- */
-        .summary-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+        .summary-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .summary-card .amount { font-size: 2rem; font-weight: 600; }
         #balance.positive { color: var(--success-color); }
         #balance.negative { color: var(--error-color); }
         #total-income { color: var(--success-color); }
         #total-expense { color: var(--error-color); }
-
-        .dashboard-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-        @media (min-width: 992px) {
-            .dashboard-layout { grid-template-columns: 380px 1fr; }
-        }
-        
-        #main-overview-chart-container, #evolution-chart-container {
-             min-height: 400px;
-             position: relative;
-         }
-
-        /* --- Histórico de Transações --- */
-        .filters-and-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
-        }
+        .dashboard-layout { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        @media (min-width: 992px) { .dashboard-layout { grid-template-columns: 380px 1fr; } }
+        #main-overview-chart-container, #evolution-chart-container { min-height: 400px; position: relative; }
+        .filters-and-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center; }
         .filters-and-actions .form-group { margin-bottom: 0; flex-grow: 1; }
         #transaction-list, #categories-list { list-style: none; max-height: 400px; overflow-y: auto; padding-right: 10px; }
-        .transaction-item, .category-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background-color: var(--primary-color);
-            border-radius: var(--border-radius);
-            margin-bottom: 10px;
-            flex-wrap: wrap; gap: 10px;
-            transition: opacity 0.3s, background-color 0.3s;
-        }
-        .transaction-item {
-            border-left: 5px solid;
-        }
+        .transaction-item, .category-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: var(--primary-color); border-radius: var(--border-radius); margin-bottom: 10px; flex-wrap: wrap; gap: 10px; transition: opacity 0.3s, background-color 0.3s; }
+        .transaction-item { border-left: 5px solid; }
         .transaction-item.income { border-left-color: var(--success-color); }
         .transaction-item.expense { border-left-color: var(--error-color); }
-        
         .transaction-item.due-soon { border-left-color: var(--warning-color) !important; background-color: color-mix(in srgb, var(--primary-color) 80%, var(--warning-color) 20%); }
         .transaction-item.overdue { border-left-color: var(--error-color) !important; background-color: color-mix(in srgb, var(--primary-color) 80%, var(--error-color) 20%); }
         body.light-mode .transaction-item.due-soon { background-color: #fffbe6; }
         body.light-mode .transaction-item.overdue { background-color: #ffeef0; }
         .transaction-item.paid { opacity: 0.7; }
-
         .transaction-item .info .description { font-weight: 500; }
         .transaction-item .info .details { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: var(--text-muted-color); margin-top: 5px; }
         .transaction-item .info .details .details-tag { background-color: var(--secondary-color); padding: 2px 8px; border-radius: 5px; }
         .transaction-item .info .details .paid-tag { background-color: var(--success-color); color: white; font-weight: bold; }
         .transaction-item.due-soon .info .details .due-date-tag { background-color: var(--warning-color); color: #1f2937; font-weight: 500;}
         .transaction-item.overdue .info .details .due-date-tag { background-color: var(--error-color); color: white; }
-        
         .transaction-item .amount { font-weight: 600; font-size: 1.1rem; }
         .transaction-item .amount.income { color: var(--success-color); }
         .transaction-item .amount.expense { color: var(--error-color); }
-        
-        /* --- Orçamentos e Metas --- */
-        .progress-bar-container {
-            width: 100%;
-            background-color: var(--secondary-color);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .progress-bar {
-            height: 15px;
-            background-color: var(--accent-color);
-            border-radius: var(--border-radius);
-            width: 0;
-            transition: width 0.5s;
-            text-align: center;
-            color: white;
-            font-size: 0.7rem;
-            line-height: 15px;
-        }
+        .progress-bar-container { width: 100%; background-color: var(--secondary-color); border-radius: var(--border-radius); overflow: hidden; margin-top: 5px; }
+        .progress-bar { height: 15px; background-color: var(--accent-color); border-radius: var(--border-radius); width: 0; transition: width 0.5s; text-align: center; color: white; font-size: 0.7rem; line-height: 15px; }
         .progress-bar.over { background-color: var(--error-color); }
-
-        .goal-contribution-form {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--secondary-color);
-        }
-        .goal-contribution-form input, .goal-contribution-form select {
-            flex-grow: 1;
-            width: auto;
-        }
-        .goal-contribution-form .btn {
-            flex-shrink: 0;
-        }
-        
-        /* --- Responsive Grid --- */
-        .grid-layout {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-        .list-item {
-            display: flex;
-            flex-direction: column;
-            background-color: var(--primary-color);
-            padding: 15px;
-            border-radius: var(--border-radius);
-            margin-bottom: 10px;
-            transition: background-color 0.3s, opacity 0.3s;
-        }
-        .list-item-header {
-             display: flex;
-             justify-content: space-between;
-             align-items: flex-start;
-             width: 100%;
-        }
-        .list-item .main-info {
-            flex-grow: 1;
-        }
-        .actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            position: relative;
-        }
-        .actions button { 
-            background: none; 
-            border: none; 
-            cursor: pointer; 
-            color: var(--text-muted-color); 
-            padding: 5px;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .goal-contribution-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--secondary-color); }
+        .goal-contribution-form input, .goal-contribution-form select { flex-grow: 1; width: auto; }
+        .goal-contribution-form .btn { flex-shrink: 0; }
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .list-item { display: flex; flex-direction: column; background-color: var(--primary-color); padding: 15px; border-radius: var(--border-radius); margin-bottom: 10px; transition: background-color 0.3s, opacity 0.3s; }
+        .list-item-header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+        .list-item .main-info { flex-grow: 1; }
+        .actions { display: flex; align-items: center; gap: 8px; position: relative; }
+        .actions button { background: none; border: none; cursor: pointer; color: var(--text-muted-color); padding: 5px; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
         .actions button:hover { color: var(--accent-color); }
-
-        .delete-button {
-            background-color: var(--error-color) !important;
-            color: white !important;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-        }
-        .delete-button:hover {
-            background-color: #c0392b !important;
-        }
-        
-        /* --- Bloqueador de Formulário --- */
-        #transaction-form-blocker {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            border-radius: var(--border-radius);
-            z-index: 10;
-            backdrop-filter: blur(5px);
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        
-        #transaction-form-blocker.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--primary-color); }
-        ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+        .delete-button { background-color: var(--error-color) !important; color: white !important; border-radius: 50%; width: 28px; height: 28px; }
+        .delete-button:hover { background-color: #c0392b !important; }
+        #transaction-form-blocker { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.7); color: white; display: flex; justify-content: center; align-items: center; text-align: center; padding: 20px; border-radius: var(--border-radius); z-index: 10; backdrop-filter: blur(5px); transition: opacity 0.3s, visibility 0.3s; }
+        #transaction-form-blocker.hidden { opacity: 0; visibility: hidden; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--primary-color); }
+        ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
     </style>
 </head>
 <body>
@@ -779,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
             this.elements.tabs.forEach(tab => tab.addEventListener('click', (e) => this.handleTabClick(e)));
-            this.elements.transactionForm.addEventListener('submit', (e) => this.handleTransaction(e));
+            document.getElementById('transaction-form').addEventListener('submit', (e) => this.handleTransaction(e));
             document.getElementById('account-form').addEventListener('submit', (e) => this.handleAccount(e));
             document.getElementById('budget-form').addEventListener('submit', (e) => this.handleBudget(e));
             document.getElementById('goal-form').addEventListener('submit', (e) => this.handleGoal(e));
@@ -834,12 +552,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        getDeleteIconSVG() {
-            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`;
-        },
-        getEditIconSVG() {
-            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`;
-        },
+        getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
+        getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         getStorageKey() { return `financeApp_${this.state.user}`; },
         saveData() {
             if (!this.state.user) return;
@@ -864,15 +578,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.state.recurrences = parsedData.recurrences || [];
                     this.state.categories = parsedData.categories || [];
                 } else {
-                    Object.keys(this.state).forEach(key => {
-                        if (Array.isArray(this.state[key])) { this.state[key] = []; }
-                    });
+                    Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } });
                 }
             } catch (error) {
                 console.error("Failed to load data:", error);
-                 Object.keys(this.state).forEach(key => {
-                    if (Array.isArray(this.state[key])) { this.state[key] = []; }
-                });
+                 Object.keys(this.state).forEach(key => { if (Array.isArray(this.state[key])) { this.state[key] = []; } });
             }
         },
         generateRecurringTransactions() {
@@ -957,8 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const categoryOptions = this.state.categories.map(c => ({ value: c.name, text: c.name }));
             const selectors = {
                 'account-select': this.state.accounts.map(a => ({ value: a.id, text: a.name })),
-                'category-select': categoryOptions,
-                'budget-category': categoryOptions,
+                'category-select': categoryOptions, 'budget-category': categoryOptions,
                 'category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions],
                 'recurrence-account': this.state.accounts.map(a => ({ value: a.id, text: a.name })),
                 'recurrence-category': categoryOptions,
@@ -993,9 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense);
         },
         getFilteredTransactions() {
-            const dateFilter = document.getElementById('date-filter').value;
-            const categoryFilter = document.getElementById('category-filter').value;
-            const paymentStatusFilter = document.getElementById('payment-status-filter').value;
+            const dateFilter = document.getElementById('date-filter').value, categoryFilter = document.getElementById('category-filter').value, paymentStatusFilter = document.getElementById('payment-status-filter').value;
             const now = new Date();
             return this.state.transactions.filter(t => {
                 const tDate = new Date(t.date); let dateMatch = true;
@@ -1015,42 +722,83 @@ document.addEventListener('DOMContentLoaded', () => {
             const list = document.getElementById('transaction-list'); list.innerHTML = '';
             const filteredTransactions = this.getFilteredTransactions().sort((a,b) => new Date(b.date) - new Date(a.date));
             if (filteredTransactions.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma transação encontrada.</p>'; return; }
-            filteredTransactions.forEach(t => { /* ... (código inalterado) ... */ });
+            filteredTransactions.forEach(t => {
+                const item = document.createElement('li');
+                const account = this.state.accounts.find(a => a.id === t.accountId);
+                const today = new Date(); today.setHours(0,0,0,0);
+                let statusClass = '', dueDateTag = '';
+                if (t.type === 'expense' && !t.isPaid && t.dueDate) {
+                     const dueDate = new Date(t.dueDate + 'T00:00:00');
+                     const diffTime = dueDate.getTime() - today.getTime();
+                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                     if (diffDays < 0) { statusClass = 'overdue'; dueDateTag = `<span class="details-tag due-date-tag">Vencido</span>`; } 
+                     else if (diffDays <= 7) { statusClass = 'due-soon'; dueDateTag = `<span class="details-tag due-date-tag">Vence em ${diffDays} dias</span>`; } 
+                     else { dueDateTag = `<span class="details-tag">Venc: ${this.formatDate(t.dueDate)}</span>`; }
+                } else if (t.dueDate) { dueDateTag = `<span class="details-tag">Venc: ${this.formatDate(t.dueDate)}</span>`; }
+                if (t.isPaid) statusClass += ' paid';
+                item.className = `transaction-item ${t.type} ${statusClass}`;
+                item.innerHTML = `
+                    <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> <span class="details-tag">${account ? account.name : 'Conta Deletada'}</span> ${dueDateTag} ${t.isPaid ? `<span class="paid-tag">PAGO</span>` : ''} </div> </div>
+                    <div class="amount ${t.type}"> ${t.type === 'expense' ? '-' : ''}${this.formatCurrency(t.amount)} </div>
+                    <div class="actions">
+                        ${t.type === 'expense' && !t.isPaid ? `<button class="btn pay-btn" data-id="${t.id}" title="Marcar como Paga">✔️</button>` : ''}
+                        <button class="btn edit-btn" data-type="transaction" data-id="${t.id}" title="Editar">${this.getEditIconSVG()}</button>
+                        <button class="delete-button" data-id="${t.id}" title="Excluir">${this.getDeleteIconSVG()}</button>
+                    </div>`;
+                list.appendChild(item);
+            });
         },
         renderAccounts() {
             const list = document.getElementById('accounts-list'); list.innerHTML = '';
             if (this.state.accounts.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma conta cadastrada.</p>'; return; }
-            this.state.accounts.forEach(acc => { /* ... (código inalterado) ... */ });
+            this.state.accounts.forEach(acc => {
+                const item = document.createElement('div'); item.className = 'list-item';
+                const balanceLabel = acc.type === 'credit_card' ? 'Fatura Atual' : 'Saldo';
+                item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${acc.name}</strong> (${acc.type.replace('_', ' ')}) <p style="font-size: 0.9rem; color: var(--text-muted-color);">${balanceLabel}: ${this.formatCurrency(acc.currentBalance)}</p> </div> <div class="actions"> <button class="btn edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${acc.id}">${this.getDeleteIconSVG()}</button> </div> </div>`;
+                list.appendChild(item);
+            });
         },
         renderBudgets() {
             const list = document.getElementById('budgets-list'); list.innerHTML = '';
             if (this.state.budgets.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum orçamento definido.</p>'; return; }
-            /* ... (código inalterado) ... */
+            const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear();
+            this.state.budgets.forEach(b => {
+                const spent = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.category === b.category && t.type === 'expense' && t.isPaid).reduce((sum, t) => sum + (t.amount || 0), 0);
+                const budgetAmount = b.amount || 0;
+                const percentage = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
+                const progressClass = percentage > 100 ? 'over' : '';
+                const item = document.createElement('div'); item.className = 'list-item';
+                item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${b.category}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Gasto: ${this.formatCurrency(spent)} de ${this.formatCurrency(budgetAmount)} </p> <div class="progress-bar-container"> <div class="progress-bar ${progressClass}" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${b.id}" title="Excluir Orçamento">${this.getDeleteIconSVG()}</button> </div> </div>`;
+                list.appendChild(item);
+            });
         },
         renderGoals() {
             const list = document.getElementById('goals-list'); list.innerHTML = '';
             if (this.state.goals.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma meta criada.</p>'; return; }
-            /* ... (código inalterado) ... */
+            this.state.goals.forEach(g => {
+                const saved = g.saved || 0; const target = g.target || 0; const percentage = target > 0 ? (saved / target) * 100 : 0;
+                const accountOptions = this.state.accounts.filter(acc => acc.type !== 'credit_card').map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+                const item = document.createElement('div'); item.className = 'list-item';
+                item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${g.name}</strong> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Alcançado: ${this.formatCurrency(saved)} de ${this.formatCurrency(target)} ${g.deadline ? `| Prazo: ${this.formatDate(g.deadline)}` : ''} </p> <div class="progress-bar-container"> <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${percentage.toFixed(0)}%</div> </div> </div> <div class="actions"> <button class="btn edit-btn" data-type="goal" data-id="${g.id}" title="Editar Meta">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${g.id}" title="Excluir meta">${this.getDeleteIconSVG()}</button> </div> </div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" step="0.01" placeholder="Valor do aporte" class="contribution-amount" required> <select class="contribution-account" required> ${accountOptions.length > 0 ? accountOptions : '<option disabled>Nenhuma conta disponível</option>'} </select> <button type="submit" class="btn btn-success" ${accountOptions.length === 0 ? 'disabled' : ''}>Aportar</button> </form>`;
+                list.appendChild(item);
+            });
         },
         renderRecurrences() {
             const list = document.getElementById('recurrences-list'); list.innerHTML = '';
             if (this.state.recurrences.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum lançamento recorrente.</p>'; return; }
-            /* ... (código inalterado) ... */
+            this.state.recurrences.forEach(r => {
+                const item = document.createElement('div'); item.className = 'list-item';
+                const account = this.state.accounts.find(a => a.id === r.accountId);
+                item.innerHTML = `<div class="list-item-header"> <div class="main-info"> <strong>${r.description}</strong> (${r.type === 'income' ? 'Receita' : 'Despesa'}) <p style="font-size: 0.8rem; color: var(--text-muted-color);"> ${this.formatCurrency(r.amount)} | ${r.frequency === 'monthly' ? 'Mensal' : (r.frequency === 'weekly' ? 'Semanal' : 'Anual')} </p> <p style="font-size: 0.8rem; color: var(--text-muted-color);"> Próximo Lançamento: ${this.formatDate(r.nextDueDate)} no(a) ${account ? account.name : 'N/A'} </p> </div> <div class="actions"> <button class="btn edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar Recorrência">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${r.id}" title="Excluir Recorrência">${this.getDeleteIconSVG()}</button> </div> </div>`;
+                list.appendChild(item);
+            });
         },
         renderCategories() {
             const list = document.getElementById('categories-list'); list.innerHTML = '';
             if (this.state.categories.length === 0) { list.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma categoria cadastrada.</p>'; return; }
             this.state.categories.forEach(cat => {
-                const item = document.createElement('div');
-                item.className = 'category-item list-item'; // Adicionei list-item para consistência
-                item.innerHTML = `
-                    <div class="list-item-header">
-                        <div class="main-info"><span>${cat.name}</span></div>
-                        <div class="actions">
-                            <button class="btn edit-btn" data-type="category" data-id="${cat.id}" title="Editar Categoria">${this.getEditIconSVG()}</button>
-                            <button class="delete-button" data-id="${cat.id}" title="Excluir Categoria">${this.getDeleteIconSVG()}</button>
-                        </div>
-                    </div>`;
+                const item = document.createElement('div'); item.className = 'category-item list-item';
+                item.innerHTML = `<div class="list-item-header"> <div class="main-info"><span>${cat.name}</span></div> <div class="actions"> <button class="btn edit-btn" data-type="category" data-id="${cat.id}" title="Editar Categoria">${this.getEditIconSVG()}</button> <button class="delete-button" data-id="${cat.id}" title="Excluir Categoria">${this.getDeleteIconSVG()}</button> </div> </div>`;
                 list.appendChild(item);
             });
         },
@@ -1072,111 +820,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 acc.currentBalance = balance;
             });
         },
-        handleTransaction(e) {
-            e.preventDefault(); const form = e.target;
-            const description = form.elements['description'].value, amount = parseFloat(form.elements['amount'].value), date = form.elements['date'].value,
-                  accountId = form.elements['account-select'].value, category = form.elements['category-select'].value,
-                  type = form.elements['transaction-type'].value, dueDate = form.elements['due-date'].value;
-            if (this.state.editingItem && this.state.editingItem.type === 'transaction') {
-                const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id);
-                if (transaction) { Object.assign(transaction, {description, amount, date, accountId, category, type, dueDate}); }
-            } else {
-                if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; }
-                if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; }
-                this.state.transactions.push({ id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' });
-                if (type === 'expense' && this.elements.makeRecurringCheckbox.checked) {
-                    const recurrenceExists = this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase());
-                    if (!recurrenceExists) {
-                        const nextMonthDate = new Date(dueDate + 'T00:00:00'); nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-                        this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] });
-                    }
-                }
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); this.handleTransactionTypeChange();
-        },
-        handleAccount(e) {
-            e.preventDefault(); const form = e.target;
-            const name = form.elements['account-name'].value, type = form.elements['account-type'].value, initialBalance = parseFloat(form.elements['initial-balance'].value);
-            if (this.state.editingItem && this.state.editingItem.type === 'account') {
-                const account = this.state.accounts.find(a => a.id === this.state.editingItem.id);
-                if (account) { Object.assign(account, {name, type, initialBalance}); }
-            } else { this.state.accounts.push({ id: Date.now().toString(), name, type, initialBalance, currentBalance: initialBalance }); }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleBudget(e) {
-            e.preventDefault(); const form = e.target;
-            const category = form.elements['budget-category'].value, amount = parseFloat(form.elements['budget-amount'].value);
-            if (this.state.editingItem && this.state.editingItem.type === 'budget') {
-                const budget = this.state.budgets.find(b => b.id === this.state.editingItem.id);
-                if (budget) { Object.assign(budget, {category, amount}); }
-            } else {
-                 this.state.budgets = this.state.budgets.filter(b => b.category !== category);
-                 this.state.budgets.push({ id: Date.now().toString(), category, amount });
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleGoal(e) {
-            e.preventDefault(); const form = e.target;
-            const name = form.elements['goal-name'].value, target = parseFloat(form.elements['goal-target'].value), saved = parseFloat(form.elements['goal-saved'].value), deadline = form.elements['goal-deadline'].value;
-            if (this.state.editingItem && this.state.editingItem.type === 'goal') {
-                const goal = this.state.goals.find(g => g.id === this.state.editingItem.id);
-                if (goal) { Object.assign(goal, {name, target, saved, deadline}); }
-            } else {
-                if (!name || isNaN(target) || target <= 0) { alert("Preencha o nome da meta e um valor alvo válido."); return; }
-                this.state.goals.push({ id: Date.now().toString(), name, target, saved, deadline: deadline || null });
-            }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleRecurrence(e) {
-            e.preventDefault(); const form = e.target;
-            const description = form.elements['recurrence-description'].value, amount = parseFloat(form.elements['recurrence-amount'].value), type = form.elements['recurrence-type'].value,
-                  accountId = form.elements['recurrence-account'].value, category = form.elements['recurrence-category'].value,
-                  frequency = form.elements['recurrence-frequency'].value, startDate = form.elements['recurrence-start-date'].value;
-            if (this.state.editingItem && this.state.editingItem.type === 'recurrence') {
-                const recurrence = this.state.recurrences.find(r => r.id === this.state.editingItem.id);
-                if (recurrence) {
-                    Object.assign(recurrence, {description, amount, type, accountId, category, frequency, startDate});
-                    if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) { recurrence.nextDueDate = recurrence.startDate; }
-                }
-            } else { this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate }); }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        handleCategorySubmit(e) {
-            e.preventDefault(); const form = e.target;
-            const nameInput = form.elements['category-name']; const name = nameInput.value.trim();
-            if (!name) { alert('O nome da categoria não pode ser vazio.'); return; }
-            const nameExists = this.state.categories.some(cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== (this.state.editingItem && this.state.editingItem.id));
-            if (nameExists) { alert('Esta categoria já existe.'); return; }
-            if (this.state.editingItem && this.state.editingItem.type === 'category') {
-                const category = this.state.categories.find(c => c.id === this.state.editingItem.id);
-                if (category) { category.name = name; }
-            } else { this.state.categories.push({ id: Date.now().toString(), name }); }
-            this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset();
-        },
-        markAsPaid(id) { const t = this.state.transactions.find(t => t.id === id); if (t) { t.isPaid = true; this.saveData(); this.updateAllRenders(); } },
-        deleteTransaction(id) { if (confirm('Tem certeza que quer deletar esta transação? Esta ação não pode ser desfeita.')) { this.state.transactions = this.state.transactions.filter(t => t.id !== id); this.saveData(); this.updateAllRenders(); } },
-        deleteAccount(id) { if (confirm('Deletar uma conta também deletará TODAS as transações e recorrências associadas a ela. Deseja continuar?')) { this.state.accounts = this.state.accounts.filter(acc => acc.id !== id); this.state.transactions = this.state.transactions.filter(t => t.accountId !== id); this.state.recurrences = this.state.recurrences.filter(r => r.accountId !== id); this.saveData(); this.updateAllRenders(); } },
-        deleteBudget(id) { if(confirm('Tem certeza que deseja remover este orçamento?')) { this.state.budgets = this.state.budgets.filter(b => b.id !== id); this.saveData(); this.updateAllRenders(); } },
-        deleteGoal(id) { if(confirm('Tem certeza que deseja remover esta meta?')) { this.state.goals = this.state.goals.filter(g => g.id !== id); this.saveData(); this.updateAllRenders(); } },
-        deleteRecurrence(id) { if(confirm('Tem certeza que deseja remover este lançamento recorrente? As transações já criadas não serão afetadas.')) { this.state.recurrences = this.state.recurrences.filter(r => r.id !== id); this.saveData(); this.updateAllRenders(); } },
-        deleteCategory(id) { if (confirm('Tem certeza? As transações existentes com esta categoria não serão afetadas, mas ela será removida das opções futuras.')) { this.state.categories = this.state.categories.filter(c => c.id !== id); this.saveData(); this.updateAllRenders(); } },
-        handleGoalContribution(e) {
-            e.preventDefault(); const form = e.target; const goalId = form.dataset.goalId;
-            const amountInput = form.querySelector('.contribution-amount'); const accountInput = form.querySelector('.contribution-account');
-            const amountToAdd = parseFloat(amountInput.value) || 0; const accountId = accountInput.value;
-            if (amountToAdd <= 0 || !accountId) { alert("Por favor, insira um valor válido e selecione uma conta."); return; }
-            const goal = this.state.goals.find(g => g.id === goalId);
-            this.updateAccountBalances(); 
-            const account = this.state.accounts.find(a => a.id === accountId);
-            if (!goal || !account) { alert("Meta ou conta não encontrada. Tente novamente."); return; }
-            if(account.currentBalance < amountToAdd) { alert("Saldo insuficiente na conta selecionada."); return; }
-            goal.saved = (goal.saved || 0) + amountToAdd;
-            const today = new Date().toISOString().split('T')[0];
-            const newTransaction = { id: Date.now().toString(), type: 'expense', description: `Aporte para meta: ${goal.name}`, amount: amountToAdd, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today };
-            this.state.transactions.push(newTransaction);
-            this.saveData(); this.updateAllRenders(); amountInput.value = '';
-        },
-        startEditMode(type, id) {
+        handleTransaction: function(e) { e.preventDefault(); const form = e.target; const description = form.elements['description'].value, amount = parseFloat(form.elements['amount'].value), date = form.elements['date'].value, accountId = form.elements['account-select'].value, category = form.elements['category-select'].value, type = form.elements['transaction-type'].value, dueDate = form.elements['due-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'transaction') { const transaction = this.state.transactions.find(t => t.id === this.state.editingItem.id); if (transaction) { Object.assign(transaction, {description, amount, date, accountId, category, type, dueDate}); } } else { if (!description || !amount || !date || !accountId || !category) { alert("Por favor, preencha todos os campos obrigatórios."); return; } if (type === 'expense' && !dueDate) { alert("Para despesas, a data de vencimento é obrigatória."); return; } this.state.transactions.push({ id: Date.now().toString(), type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: type === 'income' }); if (type === 'expense' && this.elements.makeRecurringCheckbox.checked) { const recurrenceExists = this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase()); if (!recurrenceExists) { const nextMonthDate = new Date(dueDate + 'T00:00:00'); nextMonthDate.setMonth(nextMonthDate.getMonth() + 1); this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] }); } } } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); this.handleTransactionTypeChange(); },
+        handleAccount: function(e) { e.preventDefault(); const form = e.target; const name = form.elements['account-name'].value, type = form.elements['account-type'].value, initialBalance = parseFloat(form.elements['initial-balance'].value); if (this.state.editingItem && this.state.editingItem.type === 'account') { const account = this.state.accounts.find(a => a.id === this.state.editingItem.id); if (account) { Object.assign(account, {name, type, initialBalance}); } } else { this.state.accounts.push({ id: Date.now().toString(), name, type, initialBalance, currentBalance: initialBalance }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleBudget: function(e) { e.preventDefault(); const form = e.target; const category = form.elements['budget-category'].value, amount = parseFloat(form.elements['budget-amount'].value); if (this.state.editingItem && this.state.editingItem.type === 'budget') { const budget = this.state.budgets.find(b => b.id === this.state.editingItem.id); if (budget) { Object.assign(budget, {category, amount}); } } else { this.state.budgets = this.state.budgets.filter(b => b.category !== category); this.state.budgets.push({ id: Date.now().toString(), category, amount }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleGoal: function(e) { e.preventDefault(); const form = e.target; const name = form.elements['goal-name'].value, target = parseFloat(form.elements['goal-target'].value), saved = parseFloat(form.elements['goal-saved'].value), deadline = form.elements['goal-deadline'].value; if (this.state.editingItem && this.state.editingItem.type === 'goal') { const goal = this.state.goals.find(g => g.id === this.state.editingItem.id); if (goal) { Object.assign(goal, {name, target, saved, deadline}); } } else { if (!name || isNaN(target) || target <= 0) { alert("Preencha o nome da meta e um valor alvo válido."); return; } this.state.goals.push({ id: Date.now().toString(), name, target, saved, deadline: deadline || null }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleRecurrence: function(e) { e.preventDefault(); const form = e.target; const description = form.elements['recurrence-description'].value, amount = parseFloat(form.elements['recurrence-amount'].value), type = form.elements['recurrence-type'].value, accountId = form.elements['recurrence-account'].value, category = form.elements['recurrence-category'].value, frequency = form.elements['recurrence-frequency'].value, startDate = form.elements['recurrence-start-date'].value; if (this.state.editingItem && this.state.editingItem.type === 'recurrence') { const recurrence = this.state.recurrences.find(r => r.id === this.state.editingItem.id); if (recurrence) { Object.assign(recurrence, {description, amount, type, accountId, category, frequency, startDate}); if(new Date(recurrence.startDate) > new Date(recurrence.nextDueDate)) { recurrence.nextDueDate = recurrence.startDate; } } } else { this.state.recurrences.push({ id: Date.now().toString(), description, amount, type, accountId, category, frequency, startDate, nextDueDate: startDate }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        handleCategorySubmit: function(e) { e.preventDefault(); const form = e.target; const nameInput = form.elements['category-name']; const name = nameInput.value.trim(); if (!name) { alert('O nome da categoria não pode ser vazio.'); return; } const nameExists = this.state.categories.some(cat => cat.name.toLowerCase() === name.toLowerCase() && cat.id !== (this.state.editingItem && this.state.editingItem.id)); if (nameExists) { alert('Esta categoria já existe.'); return; } if (this.state.editingItem && this.state.editingItem.type === 'category') { const category = this.state.categories.find(c => c.id === this.state.editingItem.id); if (category) { category.name = name; } } else { this.state.categories.push({ id: Date.now().toString(), name }); } this.saveData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        markAsPaid: function(id) { const t = this.state.transactions.find(t => t.id === id); if (t) { t.isPaid = true; this.saveData(); this.updateAllRenders(); } },
+        deleteTransaction: function(id) { if (confirm('Tem certeza que quer deletar esta transação? Esta ação não pode ser desfeita.')) { this.state.transactions = this.state.transactions.filter(t => t.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteAccount: function(id) { if (confirm('Deletar uma conta também deletará TODAS as transações e recorrências associadas a ela. Deseja continuar?')) { this.state.accounts = this.state.accounts.filter(acc => acc.id !== id); this.state.transactions = this.state.transactions.filter(t => t.accountId !== id); this.state.recurrences = this.state.recurrences.filter(r => r.accountId !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteBudget: function(id) { if(confirm('Tem certeza que deseja remover este orçamento?')) { this.state.budgets = this.state.budgets.filter(b => b.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteGoal: function(id) { if(confirm('Tem certeza que deseja remover esta meta?')) { this.state.goals = this.state.goals.filter(g => g.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteRecurrence: function(id) { if(confirm('Tem certeza que deseja remover este lançamento recorrente? As transações já criadas não serão afetadas.')) { this.state.recurrences = this.state.recurrences.filter(r => r.id !== id); this.saveData(); this.updateAllRenders(); } },
+        deleteCategory: function(id) { if (confirm('Tem certeza? As transações existentes com esta categoria não serão afetadas, mas ela será removida das opções futuras.')) { this.state.categories = this.state.categories.filter(c => c.id !== id); this.saveData(); this.updateAllRenders(); } },
+        handleGoalContribution: function(e) { e.preventDefault(); const form = e.target; const goalId = form.dataset.goalId; const amountInput = form.querySelector('.contribution-amount'); const accountInput = form.querySelector('.contribution-account'); const amountToAdd = parseFloat(amountInput.value) || 0; const accountId = accountInput.value; if (amountToAdd <= 0 || !accountId) { alert("Por favor, insira um valor válido e selecione uma conta."); return; } const goal = this.state.goals.find(g => g.id === goalId); this.updateAccountBalances(); const account = this.state.accounts.find(a => a.id === accountId); if (!goal || !account) { alert("Meta ou conta não encontrada. Tente novamente."); return; } if(account.currentBalance < amountToAdd) { alert("Saldo insuficiente na conta selecionada."); return; } goal.saved = (goal.saved || 0) + amountToAdd; const today = new Date().toISOString().split('T')[0]; const newTransaction = { id: Date.now().toString(), type: 'expense', description: `Aporte para meta: ${goal.name}`, amount: amountToAdd, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today }; this.state.transactions.push(newTransaction); this.saveData(); this.updateAllRenders(); amountInput.value = ''; },
+        startEditMode: function(type, id) {
             this.state.editingItem = { type, id }; let item;
             const config = {
                 transaction: { formId: 'transaction-form', tabId: 'dashboard', title: 'Editar Transação', collection: 'transactions' },
@@ -1204,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode());
             form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
-        cancelEditMode() {
+        cancelEditMode: function() {
             if (!this.state.editingItem) return;
             const type = this.state.editingItem.type;
             const config = {
@@ -1226,17 +884,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             this.state.editingItem = null;
         },
-        getChartOptions() {
+        getChartOptions: function() {
             const isLight = document.body.classList.contains('light-mode');
             const gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
             const textColor = isLight ? '#333' : '#eee';
-            return {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: textColor } }, tooltip: { backgroundColor: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 } },
-                scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } }
-            };
+            return { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } }, tooltip: { backgroundColor: isLight ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 } }, scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } } };
         },
-        initCharts() {
+        initCharts: function() {
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy();
             if (this.charts.evolutionChart) this.charts.evolutionChart.destroy();
             const mainCtx = document.getElementById('main-overview-chart').getContext('2d');
@@ -1244,7 +898,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const evoCtx = document.getElementById('evolution-chart').getContext('2d');
             this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...this.getChartOptions(), scales: { x: { ...this.getChartOptions().scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...this.getChartOptions().scales.y } } } });
         },
-        updateCharts() {
+        updateCharts: function() {
             if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
             const commonOptions = this.getChartOptions();
             const now = new Date();
