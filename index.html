@@ -616,35 +616,39 @@ document.addEventListener('DOMContentLoaded', () => {
         
         async handleTransaction(e) {
             e.preventDefault();
+            const form = e.target;
+            let accountId = form.elements['account-select'].value;
+            let justCreatedAccount = false;
 
-            if (this.state.accounts.length === 0) {
+            if (!accountId && this.state.accounts.length === 0) {
                 const defaultAccount = { id: `acc-${Date.now()}`, name: 'Dinheiro', type: 'cash', initialBalance: 0, currentBalance: 0 };
                 await db.put('accounts', defaultAccount);
                 await this.loadData();
                 this.populateSelectors(); 
-                document.getElementById('account-select').value = defaultAccount.id;
-                alert("Como esta é sua primeira transação, criamos uma conta inicial 'Dinheiro' para você com saldo zero. Você pode editar ou criar novas contas depois, na aba 'Contas'.");
+                accountId = defaultAccount.id;
+                justCreatedAccount = true;
+            }
+            
+            if (!accountId) {
+                alert("Por favor, selecione uma conta para a transação.");
+                return;
             }
 
-            const form = e.target;
             const id = this.state.editingItem?.id || Date.now().toString();
             const type = form.elements['transaction-type'].value;
             const description = form.elements['description'].value;
             const amount = parseFloat(form.elements['amount'].value);
             const date = form.elements['date'].value;
-            const accountId = form.elements['account-select'].value;
             const category = form.elements['category-select'].value;
             const dueDate = form.elements['due-date'].value;
-            
-            if (!accountId) {
-                alert("Erro: Nenhuma conta foi selecionada para a transação. Por favor, recarregue a página e tente novamente.");
-                return;
-            }
-
             const existing = this.state.editingItem?.id ? this.state.transactions.find(t=>t.id===id) : null;
             const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
             
             await db.put('transactions', newT);
+            
+            if (justCreatedAccount) {
+                alert("Como esta é sua primeira transação, criamos uma conta inicial 'Dinheiro' para você. A transação foi salva nela.");
+            }
             
             if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
                 if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) {
@@ -918,17 +922,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const chartContainer = document.getElementById('main-overview-chart-container');
             const chart = this.charts.mainOverviewChart;
             const now = new Date();
-            const budgets = this.state.budgets;
+            const budgets = this.state.budgets.filter(b => b.amount > 0);
 
             if (budgets.length === 0) {
                 chart.data.labels = [];
                 chart.data.datasets = [];
                 chart.update();
-                chartContainer.innerHTML = '<canvas id="main-overview-chart"></canvas><div class="chart-placeholder"><p>Defina orçamentos na aba "Orçamentos" para ver este gráfico.</p></div>';
+                if (!chartContainer.querySelector('.chart-placeholder')) {
+                    chartContainer.innerHTML = '<canvas id="main-overview-chart"></canvas><div class="chart-placeholder"><p>Defina orçamentos na aba "Orçamentos" para ver este gráfico.</p></div>';
+                }
                 return;
             }
             
-            // Se houver orçamentos, garantir que o placeholder seja removido caso exista
             const placeholder = chartContainer.querySelector('.chart-placeholder');
             if (placeholder) placeholder.remove();
 
@@ -945,12 +950,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 {
                     label: 'Gasto',
                     data: spentData,
-                    backgroundColor: 'rgba(233, 69, 96, 0.7)', // accent-color
+                    backgroundColor: 'rgba(233, 69, 96, 0.7)',
                 },
                 {
                     label: 'Orçamento',
                     data: budgetData,
-                    backgroundColor: 'rgba(46, 204, 113, 0.5)', // success-color
+                    backgroundColor: 'rgba(46, 204, 113, 0.5)',
                 }
             ];
             chart.options = { ...chart.options, ...this.getChartOptions() };
