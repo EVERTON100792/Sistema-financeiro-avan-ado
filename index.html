@@ -130,85 +130,137 @@
         
         #menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; backdrop-filter: blur(2px); }
         #menu-overlay.visible { opacity: 1; visibility: visible; }
+        
+        /* ======================================================= */
+        /* === ESTILOS MODERNOS E MELHORADOS PARA O CALENDÁRIO === */
+        /* ======================================================= */
+        #tab-calendar .card {
+            background-color: var(--primary-color);
+            padding: 0; /* Removido para o calendário ir de ponta a ponta */
+            overflow: hidden; 
+        }
 
-        /* ======================================= */
-        /* === NOVOS ESTILOS PARA O CALENDÁRIO === */
-        /* ======================================= */
         #calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--secondary-color);
         }
+
         #month-year-display {
             border-bottom: none;
             margin-bottom: 0;
             text-transform: capitalize;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
+
+        #calendar-header .btn {
+            background-color: var(--secondary-color);
+        }
+
         #calendar-weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             text-align: center;
-            font-weight: 600;
-            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            padding: 15px 25px;
             color: var(--text-muted-color);
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--secondary-color);
+            text-transform: uppercase;
         }
+
         #calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            min-height: 60vh;
+            grid-auto-rows: minmax(130px, auto); /* Altura mínima para as células */
+            gap: 1px; 
+            background-color: var(--secondary-color); 
+            border-top: 1px solid var(--secondary-color);
         }
+
         .calendar-day {
             background-color: var(--primary-color);
-            border-radius: var(--border-radius);
             padding: 8px;
-            min-height: 120px;
-            transition: background-color 0.3s;
+            transition: background-color 0.2s ease-in-out;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            border: 2px solid transparent;
+            gap: 6px;
+            position: relative;
         }
+
+        .calendar-day:not(.other-month):hover {
+            background-color: var(--secondary-color);
+            cursor: pointer;
+        }
+
         .calendar-day.other-month {
-            opacity: 0.4;
+            background-color: var(--bg-color);
+            pointer-events: none;
         }
-        .calendar-day.current-day {
-            border-color: var(--accent-color);
+        body.light-mode .calendar-day.other-month {
+            background-color: #f0f2f5;
         }
+
         .day-number {
-            font-weight: 600;
-            align-self: flex-start;
-            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 4px;
+            z-index: 1;
         }
+
+        .calendar-day.current-day .day-number {
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
         .events-container {
             overflow-y: auto;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
         }
+
         .event-marker {
-            padding: 2px 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 5px;
             border-radius: 5px;
-            font-size: 0.75rem;
-            color: white;
+            font-size: 0.8rem;
+            background-color: var(--secondary-color);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            cursor: pointer;
         }
-        .event-marker.income { background-color: var(--success-color); }
-        .event-marker.expense-paid { background-color: var(--error-color); }
-        .event-marker.expense-due { background-color: var(--warning-color); color: #1a1a2e; }
-        .event-marker.expense-overdue {
+
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .event-marker.income .event-dot { background-color: var(--success-color); }
+        .event-marker.expense-paid .event-dot { background-color: var(--error-color); }
+        .event-marker.expense-due .event-dot { background-color: var(--warning-color); }
+        .event-marker.expense-overdue .event-dot {
             background-color: var(--error-color);
-            animation: blink 1.5s infinite;
+            animation: blink-dot 1.5s infinite;
         }
-        @keyframes blink {
-            50% { opacity: 0.6; }
+        @keyframes blink-dot {
+            50% { 
+                box-shadow: 0 0 8px color-mix(in srgb, var(--error-color) 70%, transparent);
+            }
         }
     </style>
 </head>
@@ -892,7 +944,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const eventsContainer = document.createElement('div'); eventsContainer.className = 'events-container'; dayCell.appendChild(eventsContainer);
                 const dayTransactions = monthTransactions.filter(t => new Date(t.date + 'T00:00:00').getDate() === day);
                 dayTransactions.forEach(t => {
-                    const eventMarker = document.createElement('div'); eventMarker.className = 'event-marker'; eventMarker.textContent = t.description; eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`;
+                    const eventMarker = document.createElement('div'); eventMarker.className = 'event-marker'; eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`;
+                    const eventDot = document.createElement('span'); eventDot.className = 'event-dot';
+                    const eventDesc = document.createElement('span'); eventDesc.className = 'event-desc'; eventDesc.textContent = t.description;
+                    eventMarker.appendChild(eventDot); eventMarker.appendChild(eventDesc);
                     if(t.type === 'income') { eventMarker.classList.add('income'); } 
                     else { if(t.isPaid) { eventMarker.classList.add('expense-paid'); } else { const dueDate = new Date(t.dueDate + 'T00:00:00'); if(dueDate < today) { eventMarker.classList.add('expense-overdue'); } else { eventMarker.classList.add('expense-due'); } } }
                     eventsContainer.appendChild(eventMarker);
@@ -904,6 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         handlePrevMonth() { this.state.currentCalendarDate.setMonth(this.state.currentCalendarDate.getMonth() - 1); this.renderCalendar(); },
         handleNextMonth() { this.state.currentCalendarDate.setMonth(this.state.currentCalendarDate.getMonth() + 1); this.renderCalendar(); },
+        
         updateAllRenders() {
             try {
                 this.toggleTransactionFormLock(); this.updateAccountBalances(); this.populateSelectors();
@@ -913,7 +969,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { console.error("Erro na renderização:", error); }
         },
         
-        // Funções de UI sem alteração na lógica interna
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         handleLogout() { if (confirm('Tem certeza?')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
