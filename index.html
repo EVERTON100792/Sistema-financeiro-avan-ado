@@ -109,7 +109,7 @@
         #transaction-form-blocker.hidden { opacity: 0; visibility: hidden; }
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--primary-color); }
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
-        .settings-actions { display: flex; flex-direction: column; gap: 15px; } /* NOVO ESTILO PARA BOTÕES DE CONFIGURAÇÃO */
+        .settings-actions { display: flex; flex-direction: column; gap: 15px; }
 
         /* === ESTILOS PARA O MENU LATERAL === */
         #menu-toggle { display: none; font-size: 1.5rem; padding: 5px 12px; }
@@ -158,7 +158,15 @@
 <body>
 
     <div id="login-container">
+        <div class="login-box card">
+            <h1>Acesso Seguro</h1>
+            <p style="margin-bottom: 20px; color: var(--text-muted-color);">Para começar, digite seu nome. Seus dados serão salvos localmente no seu navegador.</p>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Digite seu nome de usuário" required>
+            </div>
+            <button id="login-btn" class="btn btn-primary" style="width: 100%;">Entrar</button>
         </div>
+    </div>
 
     <div id="app-container" style="display: none;" class="container">
         <header>
@@ -187,14 +195,228 @@
 
             <main>
                 <div id="tab-dashboard" class="tab-content active">
+                    <section class="summary-section">
+                        <div class="summary-card card">
+                            <h3>Patrimônio Líquido</h3>
+                            <span id="balance" class="amount">R$ 0,00</span>
+                        </div>
+                        <div class="summary-card card">
+                            <h3>Receitas (Mês)</h3>
+                            <span id="total-income" class="amount">R$ 0,00</span>
+                        </div>
+                        <div class="summary-card card">
+                            <h3>Despesas Pagas (Mês)</h3>
+                            <span id="total-expense" class="amount">R$ 0,00</span>
+                        </div>
+                    </section>
+                    
+                    <section class="card" style="margin-bottom: 30px;">
+                        <h2>Visão Geral do Mês</h2>
+                        <div id="main-overview-chart-container">
+                            <canvas id="main-overview-chart"></canvas>
+                        </div>
+                    </section>
+                    
+                    <div class="dashboard-layout">
+                        <aside class="card">
+                            <div id="transaction-form-blocker">
+                                <div>
+                                    <h3>Primeiro Passo</h3>
+                                    <p>Cadastre uma conta na aba "Contas" para poder adicionar transações.</p>
+                                </div>
+                            </div>
+                            <h2 id="transaction-form-title">Nova Transação</h2>
+                            <form id="transaction-form">
+                                    <div class="form-group">
+                                        <label for="transaction-type">Tipo</label>
+                                        <select id="transaction-type" required>
+                                            <option value="expense">Despesa</option>
+                                            <option value="income">Receita</option>
+                                        </select>
+                                    </div>
+                                <div class="form-group">
+                                    <label for="description">Descrição</label>
+                                    <input type="text" id="description" placeholder="Ex: Aluguel, Salário" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="amount">Valor (R$)</label>
+                                    <input type="number" id="amount" step="0.01" placeholder="150.50" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="date">Data da Transação</label>
+                                    <input type="date" id="date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="account-select">Conta / Cartão</label>
+                                    <select id="account-select" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="category-select">Categoria</label>
+                                    <select id="category-select" required></select>
+                                </div>
+                                <div class="form-group" id="due-date-group">
+                                    <label for="due-date">Data de Vencimento</label>
+                                    <input type="date" id="due-date">
+                                </div>
+                                <div class="form-group" id="make-recurring-group" style="display: none;">
+                                    <label for="make-recurring-checkbox" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                        <input type="checkbox" id="make-recurring-checkbox" style="width: auto;">
+                                        <span>Tornar esta despesa recorrente (mensal)</span>
+                                    </label>
+                                </div>
+                                <div class="form-buttons" id="transaction-form-buttons">
+                                    <button type="submit" class="btn btn-primary">Adicionar Transação</button>
+                                </div>
+                            </form>
+                        </aside>
+                        <section class="card">
+                            <h2>Histórico de Transações</h2>
+                            <div class="filters-and-actions">
+                                <div class="form-group"> <select id="date-filter"> <option value="all">Todo o Período</option> <option value="7">Últimos 7 dias</option> <option value="30">Últimos 30 dias</option> <option value="month">Este Mês</option> </select> </div>
+                                <div class="form-group"> <select id="category-filter"></select> </div>
+                                <div class="form-group"> <select id="payment-status-filter"> <option value="all">Todos os Status</option> <option value="paid">Pagas</option> <option value="unpaid">A Pagar</option> </select> </div>
+                                <button id="export-csv" class="btn btn-secondary">CSV</button>
+                                <button id="export-pdf" class="btn btn-secondary">PDF</button>
+                            </div>
+                            <ul id="transaction-list"></ul>
+                        </section>
                     </div>
+                    <section class="card" style="margin-top: 30px;">
+                        <h2>Evolução do Patrimônio</h2>
+                        <div id="evolution-chart-container">
+                            <canvas id="evolution-chart"></canvas>
+                        </div>
+                    </section>
+                </div>
 
                 <div id="tab-calendar" class="tab-content">
+                    <div class="card">
+                        <div id="calendar-header">
+                            <button id="prev-month-btn" class="btn btn-secondary">‹ Mês Anterior</button>
+                            <h2 id="month-year-display"></h2>
+                            <button id="next-month-btn" class="btn btn-secondary">Próximo Mês ›</button>
+                        </div>
+                        <div id="calendar-weekdays">
+                            <div>Dom</div>
+                            <div>Seg</div>
+                            <div>Ter</div>
+                            <div>Qua</div>
+                            <div>Qui</div>
+                            <div>Sex</div>
+                            <div>Sáb</div>
+                        </div>
+                        <div id="calendar-grid"></div>
                     </div>
+                </div>
 
                 <div id="tab-accounts" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="account-form-title">Adicionar Conta/Cartão</h2>
+                            <form id="account-form">
+                                <div class="form-group"> <label for="account-name">Nome da Conta/Cartão</label> <input type="text" id="account-name" placeholder="Ex: Banco do Brasil, Nubank" required> </div>
+                                <div class="form-group"> <label for="account-type">Tipo</label> <select id="account-type" required> <option value="checking">Conta Corrente</option> <option value="savings">Poupança</option> <option value="cash">Dinheiro</option> <option value="credit_card">Cartão de Crédito</option> </select> </div>
+                                <div class="form-group"> <label for="initial-balance" id="initial-balance-label">Saldo Inicial</label> <input type="number" id="initial-balance" step="0.01" value="0" required> </div>
+                                <div class="form-buttons" id="account-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Conta</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Minhas Contas</h2>
+                            <div id="accounts-list"></div>
+                        </div>
                     </div>
-                
+                </div>
+
+                <div id="tab-categories" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="category-form-title">Adicionar Categoria</h2>
+                            <form id="category-form">
+                                <div class="form-group"> <label for="category-name">Nome da Categoria</label> <input type="text" id="category-name" placeholder="Ex: Supermercado" required> </div>
+                                <div class="form-buttons" id="category-form-buttons"> <button type="submit" class="btn btn-primary">Adicionar Categoria</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Minhas Categorias</h2>
+                            <div id="categories-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-transfers" class="tab-content">
+                    <div class="single-form-layout">
+                        <div class="card">
+                            <h2>Nova Transferência</h2>
+                            <form id="transfer-form">
+                                <div class="form-group"> <label for="transfer-amount">Valor (R$)</label> <input type="number" id="transfer-amount" step="0.01" placeholder="100.00" required> </div>
+                                <div class="form-group"> <label for="transfer-date">Data da Transferência</label> <input type="date" id="transfer-date" required> </div>
+                                <div class="form-group"> <label for="transfer-from-account">Da Conta (Origem)</label> <select id="transfer-from-account" required></select> </div>
+                                <div class="form-group"> <label for="transfer-to-account">Para a Conta (Destino)</label> <select id="transfer-to-account" required></select> </div>
+                                <div class="form-group"> <label for="transfer-description">Descrição (Opcional)</label> <input type="text" id="transfer-description" placeholder="Ex: Mover para poupança"> </div>
+                                <div class="form-buttons" id="transfer-form-buttons"> <button type="submit" class="btn btn-primary">Realizar Transferência</button> </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-budgets" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="budget-form-title">Definir Orçamento</h2>
+                            <form id="budget-form">
+                                <div class="form-group"> <label for="budget-category">Categoria</label> <select id="budget-category" required></select> </div>
+                                <div class="form-group"> <label for="budget-amount">Limite Mensal (R$)</label> <input type="number" id="budget-amount" step="0.01" placeholder="500.00" required> </div>
+                                <div class="form-buttons" id="budget-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Orçamento</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Acompanhamento dos Orçamentos</h2>
+                            <div id="budgets-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-goals" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="goal-form-title">Criar Nova Meta</h2>
+                            <form id="goal-form">
+                                <div class="form-group"> <label for="goal-name">Nome da Meta</label> <input type="text" id="goal-name" placeholder="Ex: Viagem para a Europa" required> </div>
+                                <div class="form-group"> <label for="goal-target">Valor Alvo (R$)</label> <input type="number" id="goal-target" step="0.01" placeholder="10000.00" required> </div>
+                                <div class="form-group"> <label for="goal-saved">Valor Já Guardado (R$)</label> <input type="number" id="goal-saved" step="0.01" value="0" required> </div>
+                                <div class="form-group"> <label for="goal-deadline">Prazo (Opcional)</label> <input type="date" id="goal-deadline"> </div>
+                                <div class="form-buttons" id="goal-form-buttons"> <button type="submit" class="btn btn-primary">Criar Meta</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Minhas Metas</h2>
+                            <div id="goals-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-recurrences" class="tab-content">
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2 id="recurrence-form-title">Adicionar Lançamento Recorrente</h2>
+                            <form id="recurrence-form">
+                                <div class="form-group"> <label for="recurrence-description">Descrição</label> <input type="text" id="recurrence-description" placeholder="Ex: Assinatura Spotify, Aluguel" required> </div>
+                                <div class="form-group"> <label for="recurrence-amount">Valor (R$)</label> <input type="number" id="recurrence-amount" step="0.01" required> </div>
+                                <div class="form-group"> <label for="recurrence-type">Tipo</label> <select id="recurrence-type" required> <option value="expense">Despesa</option> <option value="income">Receita</option> </select> </div>
+                                <div class="form-group"> <label for="recurrence-account">Conta / Cartão</label> <select id="recurrence-account" required></select> </div>
+                                <div class="form-group"> <label for="recurrence-category">Categoria</label> <select id="recurrence-category" required></select> </div>
+                                <div class="form-group"> <label for="recurrence-frequency">Frequência</label> <select id="recurrence-frequency" required> <option value="monthly">Mensal</option> <option value="weekly">Semanal</option> <option value="yearly">Anual</option> </select> </div>
+                                <div class="form-group"> <label for="recurrence-start-date">Data de Início</label> <input type="date" id="recurrence-start-date" required> </div>
+                                <div class="form-buttons" id="recurrence-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Recorrência</button> </div>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h2>Meus Lançamentos Recorrentes</h2>
+                            <div id="recurrences-list"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="tab-settings" class="tab-content">
                      <div class="grid-layout">
                         <div class="card">
@@ -210,14 +432,11 @@
                         </div>
                      </div>
                 </div>
-
-                 </main>
+            </main>
         </div>
     </div>
 
 <script>
-// O SCRIPT COMPLETO E ATUALIZADO VEM AQUI
-// (Nenhuma alteração na lógica do JavaScript é necessária para esta mudança)
 document.addEventListener('DOMContentLoaded', () => {
 
     const db = {
