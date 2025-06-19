@@ -111,7 +111,7 @@
         .report-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .report-card-header h3 { border-bottom: none; margin-bottom: 0; }
         .report-chart-container { min-height: 350px; margin-top: 20px; position: relative; }
-        .chart-placeholder { display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted-color); text-align: center; }
+        .chart-placeholder { display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted-color); text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 
         /* === ESTILOS PARA O MENU LATERAL === */
         #menu-toggle { display: none; font-size: 1.5rem; padding: 5px 12px; }
@@ -217,6 +217,9 @@
                         <h2>Acompanhamento de Orçamentos (Mês Atual)</h2>
                         <div id="main-overview-chart-container">
                             <canvas id="main-overview-chart"></canvas>
+                            <div id="main-chart-placeholder" class="chart-placeholder" style="display: none;">
+                                <p>Defina orçamentos na aba "Orçamentos" para ver este gráfico.</p>
+                            </div>
                         </div>
                     </section>
                     
@@ -919,23 +922,20 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         },
         renderDashboardBudgetChart() {
-            const chartContainer = document.getElementById('main-overview-chart-container');
+            const chartCanvas = document.getElementById('main-overview-chart');
+            const placeholder = document.getElementById('main-chart-placeholder');
             const chart = this.charts.mainOverviewChart;
             const now = new Date();
             const budgets = this.state.budgets.filter(b => b.amount > 0);
 
             if (budgets.length === 0) {
-                chart.data.labels = [];
-                chart.data.datasets = [];
-                chart.update();
-                if (!chartContainer.querySelector('.chart-placeholder')) {
-                    chartContainer.innerHTML = '<canvas id="main-overview-chart"></canvas><div class="chart-placeholder"><p>Defina orçamentos na aba "Orçamentos" para ver este gráfico.</p></div>';
-                }
+                chartCanvas.style.display = 'none';
+                placeholder.style.display = 'flex';
                 return;
             }
-            
-            const placeholder = chartContainer.querySelector('.chart-placeholder');
-            if (placeholder) placeholder.remove();
+
+            chartCanvas.style.display = 'block';
+            placeholder.style.display = 'none';
 
             const labels = budgets.map(b => b.category);
             const spentData = budgets.map(b => {
