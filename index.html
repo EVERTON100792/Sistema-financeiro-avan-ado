@@ -111,6 +111,7 @@
         .report-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .report-card-header h3 { border-bottom: none; margin-bottom: 0; }
         .report-chart-container { min-height: 350px; margin-top: 20px; position: relative; }
+        .chart-placeholder { display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted-color); text-align: center; }
 
         /* === ESTILOS PARA O MENU LATERAL === */
         #menu-toggle { display: none; font-size: 1.5rem; padding: 5px 12px; }
@@ -213,7 +214,7 @@
                     </section>
                     
                     <section class="card" style="margin-bottom: 30px;">
-                        <h2>Despesas do Mês por Categoria</h2>
+                        <h2>Acompanhamento de Orçamentos (Mês Atual)</h2>
                         <div id="main-overview-chart-container">
                             <canvas id="main-overview-chart"></canvas>
                         </div>
@@ -887,9 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy();
             const mainCtx = document.getElementById('main-overview-chart').getContext('2d');
             this.charts.mainOverviewChart = new Chart(mainCtx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: { labels: [], datasets: [] },
-                options: { ...commonOptions, responsive: true, maintainAspectRatio: false }
+                options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
             });
             
             if (this.charts.evolutionChart) this.charts.evolutionChart.destroy();
@@ -913,49 +914,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } }
             };
         },
-        renderDashboardExpenseChart() {
-            const now = new Date();
-            const monthlyExpenses = this.state.transactions.filter(t => 
-                t.type === 'expense' && 
-                t.isPaid && 
-                new Date(t.date).getMonth() === now.getMonth() && 
-                new Date(t.date).getFullYear() === now.getFullYear() &&
-                t.category !== 'Transferência'
-            );
-
-            const categoryTotals = monthlyExpenses.reduce((acc, t) => {
-                acc[t.category] = (acc[t.category] || 0) + t.amount;
-                return acc;
-            }, {});
-            
-            const sortedCategories = Object.entries(categoryTotals).sort(([,a],[,b]) => b - a);
-            const labels = sortedCategories.map(([name]) => name);
-            const data = sortedCategories.map(([,total]) => total);
-
+        renderDashboardBudgetChart() {
+            const chartContainer = document.getElementById('main-overview-chart-container');
             const chart = this.charts.mainOverviewChart;
-            chart.data.labels = labels;
-            chart.data.datasets = [{
-                label: 'Despesas do Mês',
-                data: data,
-                backgroundColor: ['#e94560', '#f1c40f', '#3498db', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c', '#34495e', '#7f8c8d', '#c0392b'],
-                hoverOffset: 4
-            }];
-            chart.options.plugins.legend.display = labels.length > 0;
-            chart.options.plugins.tooltip.callbacks = {
-                 label: function(context) {
-                    let label = context.label || '';
-                    if (label) label += ': ';
-                    if (context.parsed !== null) label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed);
-                    return label;
-                }
+            const now = new Date();
+            const budgets = this.state.budgets;
+
+            if (budgets.length === 0) {
+                chart.data.labels = [];
+                chart.data.datasets = [];
+                chart.update();
+                chartContainer.innerHTML = '<canvas id="main-overview-chart"></canvas><div class="chart-placeholder"><p>Defina orçamentos na aba "Orçamentos" para ver este gráfico.</p></div>';
+                return;
             }
+            
+            // Se houver orçamentos, garantir que o placeholder seja removido caso exista
+            const placeholder = chartContainer.querySelector('.chart-placeholder');
+            if (placeholder) placeholder.remove();
+
+            const labels = budgets.map(b => b.category);
+            const spentData = budgets.map(b => {
+                return this.state.transactions
+                    .filter(t => t.category === b.category && t.type === 'expense' && t.isPaid && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            const budgetData = budgets.map(b => b.amount);
+
+            chart.data.labels = labels;
+            chart.data.datasets = [
+                {
+                    label: 'Gasto',
+                    data: spentData,
+                    backgroundColor: 'rgba(233, 69, 96, 0.7)', // accent-color
+                },
+                {
+                    label: 'Orçamento',
+                    data: budgetData,
+                    backgroundColor: 'rgba(46, 204, 113, 0.5)', // success-color
+                }
+            ];
+            chart.options = { ...chart.options, ...this.getChartOptions() };
             chart.update();
         },
         updateDashboardCharts() {
             if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
             const commonOptions = this.getChartOptions();
 
-            this.renderDashboardExpenseChart();
+            this.renderDashboardBudgetChart();
             
             const sortedTransactions = [...this.state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
             const dailyNetWorth = new Map();
