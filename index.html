@@ -489,7 +489,7 @@
                          <div class="card">
                              <h2>Gerenciamento de Dados</h2>
                              <p style="color: var(--text-muted-color); margin-bottom: 25px;">
-                                 Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
+                                  Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
                              </p>
                              <div class="settings-actions">
                                  <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
@@ -617,40 +617,56 @@ document.addEventListener('DOMContentLoaded', () => {
         
         async handleLogin() { const username = this.elements.username.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); await this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
         
+        // =================================================================================================
+        // FUNÇÃO CORRIGIDA ABAIXO
+        // =================================================================================================
         async handleTransaction(e) {
             e.preventDefault();
             const form = e.target;
-            let accountId = form.elements['account-select'].value;
             let justCreatedAccount = false;
 
-            if (!accountId && this.state.accounts.length === 0) {
+            // Passo 1: Lidar com o caso de não haver contas.
+            // Se o usuário tentar criar uma transação sem ter nenhuma conta, crie uma padrão.
+            if (this.state.accounts.length === 0) {
+                alert("Nenhuma conta encontrada! Criando uma conta padrão 'Dinheiro' para você.");
                 const defaultAccount = { id: `acc-${Date.now()}`, name: 'Dinheiro', type: 'cash', initialBalance: 0, currentBalance: 0 };
                 await db.put('accounts', defaultAccount);
-                await this.loadData();
-                this.populateSelectors(); 
-                accountId = defaultAccount.id;
+                await this.loadData(); // Recarrega os dados do estado (this.state)
+                this.populateSelectors(); // Atualiza as listas de seleção na UI
                 justCreatedAccount = true;
-            }
-            
-            if (!accountId) {
-                alert("Por favor, selecione uma conta para a transação.");
-                return;
+                
+                // Força a seleção da nova conta no formulário
+                form.elements['account-select'].value = defaultAccount.id;
             }
 
+            // Passo 2: Agora que garantimos que há uma conta, lemos os valores do formulário.
+            const accountId = form.elements['account-select'].value;
+            const category = form.elements['category-select'].value;
+
+            // Passo 3: Validar se uma conta e categoria foram realmente selecionadas.
+            if (!accountId) {
+                alert("Por favor, selecione uma conta para a transação. Se não houver contas, crie uma na aba 'Contas'.");
+                return;
+            }
+            if (!category) {
+                alert("Por favor, selecione uma categoria. Se não houver categorias, o sistema criará as padrões ao recarregar a página.");
+                return;
+            }
+            
+            // Passo 4: Prosseguir com a criação da transação (lógica original que já estava correta).
             const id = this.state.editingItem?.id || Date.now().toString();
             const type = form.elements['transaction-type'].value;
             const description = form.elements['description'].value;
             const amount = parseFloat(form.elements['amount'].value);
             const date = form.elements['date'].value;
-            const category = form.elements['category-select'].value;
             const dueDate = form.elements['due-date'].value;
-            const existing = this.state.editingItem?.id ? this.state.transactions.find(t=>t.id===id) : null;
+            const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null;
             const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
-            
+
             await db.put('transactions', newT);
             
             if (justCreatedAccount) {
-                alert("Como esta é sua primeira transação, criamos uma conta inicial 'Dinheiro' para você. A transação foi salva nela.");
+                alert("Conta padrão criada e a transação foi salva nela com sucesso!");
             }
             
             if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
@@ -669,8 +685,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
             this.handleTransactionTypeChange();
         },
+        // =================================================================================================
+        // FIM DA FUNÇÃO CORRIGIDA
+        // =================================================================D================================
 
-        async deleteTransaction(id) { const toDelete = this.state.transactions.find(t => t.id === id); if (!toDelete) return; let confirmMsg = 'Tem certeza que deseja deletar esta transação?'; let otherId = null; if (toDelete.transferId) { confirmMsg = 'Esta é uma transação de transferência. Deletá-la também removerá a outra parte. Deseja continuar?'; const otherPart = this.state.transactions.find(t => t.transferId === toDelete.transferId && t.id !== id); if (otherPart) otherId = otherPart.id; } if (confirm(confirmMsg)) { await db.delete('transactions', id); if (otherId) await db.delete('transactions', otherId); await this.loadData(); this.updateAllRenders(); } },
+        async deleteTransaction(id) { const toDelete = this.state.transactions.find(t => t.id === id); if (!toDelete) return; let confirmMsg = 'Tem certeza que deseja deletar esta transação?'; let otherId = null; if (toDelete.transferId && toDelete.category === 'Transferência') { confirmMsg = 'Esta é uma transação de transferência. Deletá-la também removerá a outra parte. Deseja continuar?'; const otherPart = this.state.transactions.find(t => t.transferId === toDelete.transferId && t.id !== id); if (otherPart) otherId = otherPart.id; } if (confirm(confirmMsg)) { await db.delete('transactions', id); if (otherId) await db.delete('transactions', otherId); await this.loadData(); this.updateAllRenders(); } },
         async markAsPaid(id) { const t = this.state.transactions.find(t => t.id === id); if (t) { t.isPaid = true; await db.put('transactions', t); await this.loadData(); this.updateAllRenders(); } },
         async handleAccount(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || Date.now().toString(); const name = form.elements['account-name'].value; const type = form.elements['account-type'].value; const initialBalance = parseFloat(form.elements['initial-balance'].value); const account = { id, name, type, initialBalance, currentBalance: initialBalance }; await db.put('accounts', account); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
         async deleteAccount(id) { if (confirm('Atenção! Deletar uma conta também deletará TODAS as transações e recorrências associadas a ela. Esta ação não pode ser desfeita. Continuar?')) { const toDeleteT = this.state.transactions.filter(t => t.accountId === id); const toDeleteR = this.state.recurrences.filter(r => r.accountId === id); await Promise.all([ db.delete('accounts', id), ...toDeleteT.map(t => db.delete('transactions', t.id)), ...toDeleteR.map(r => db.delete('recurrences', r.id)), ]); await this.loadData(); this.updateAllRenders(); } },
@@ -1105,7 +1124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         exportFilteredReportToPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
             const transactions = this.getFilteredTransactions();
 
             if (transactions.length === 0) {
