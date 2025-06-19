@@ -734,8 +734,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         populateSelectors() { const categoryOptions = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(c => ({ value: c.name, text: c.name })); const allAccounts = this.state.accounts.map(a => ({ value: a.id, text: a.name })); const nonCreditAccounts = this.state.accounts.filter(a => a.type !== 'credit_card').map(a => ({ value: a.id, text: a.name })); const selectors = { 'account-select': allAccounts, 'transfer-from-account': allAccounts, 'transfer-to-account': nonCreditAccounts, 'category-select': categoryOptions, 'budget-category': categoryOptions, 'report-category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions], 'recurrence-account': allAccounts, 'recurrence-category': categoryOptions, }; for (const id in selectors) { const select = document.getElementById(id); if(select) { const currentValue = select.value; select.innerHTML = ''; selectors[id].forEach(opt => { const option = document.createElement('option'); option.value = opt.value; option.textContent = opt.text; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) { select.value = currentValue; } } } },
         
-        renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const balance = this.state.accounts.reduce((sum, acc) => { const currentVal = acc.currentBalance || 0; return acc.type === 'credit_card' ? sum - currentVal : sum + currentVal; }, 0); const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(balance); balanceEl.className = `amount ${balance >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
-        
         updateAccountBalances() { this.state.accounts.forEach(acc => { let balance = acc.initialBalance || 0; this.state.transactions.filter(t => t.accountId === acc.id).forEach(t => { const amount = t.amount || 0; if (acc.type === 'credit_card') { if (t.type === 'expense') balance += amount; if (t.type === 'income') balance -= amount; } else { if (t.type === 'income') balance += amount; if (t.type === 'expense' && t.isPaid) balance -= amount; } }); acc.currentBalance = balance; }); },
         
         renderTransactionItem(t) {
@@ -788,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="details-tag">${t.category}</span>
                             <span class="details-tag">${accountName}</span>
                             ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''}
-                            ${t.isPaid ? `<span class="details-tag paid-tag">PAGO</span>` : ''}
+                            ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''}
                         </div>
                     </div>
                     <div class="actions">
@@ -801,7 +799,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         },
 
-        renderTransactionList() { this.elements.transactionList.innerHTML = [...this.state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 20).map(t => this.renderTransactionItem(t)).join(''); },
+        renderTransactionList() { this.elements.transactionList.innerHTML = [...this.state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 50).map(t => this.renderTransactionItem(t)).join(''); },
+        renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const balance = this.state.accounts.reduce((sum, acc) => { const currentVal = acc.currentBalance || 0; return acc.type === 'credit_card' ? sum - currentVal : sum + currentVal; }, 0); const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(balance); balanceEl.className = `amount ${balance >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
         renderAccountsList() { this.elements.accountsList.innerHTML = this.state.accounts.map(acc => `
             <div class="list-item">
                 <div class="list-item-header">
@@ -1112,6 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         exportFilteredReportToPDF() {
             const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             const transactions = this.getFilteredTransactions();
 
             if (transactions.length === 0) {
