@@ -684,21 +684,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // To keep the initial block clean, adding detailed implementations here.
 
     Object.assign(financeApp, {
-        renderTransactionItem(t) {
+renderTransactionItem(t) {
             const accountName = this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A';
-            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
-            const isOverdue = t.type === 'expense' && !t.isPaid && dueDate && dueDate < today;
-            const isDueSoon = t.type === 'expense' && !t.isPaid && dueDate && !isOverdue && (dueDate - today <= 7 * 24 * 60 * 60 * 1000);
 
+            // --- Lógica de Status e Texto Dinâmico ---
             let itemClass = `transaction-item ${t.type}`;
-            if (t.category === 'Transferência') itemClass += ' transfer';
-            if (t.isPaid) itemClass += ' paid';
-            if (isOverdue) itemClass += ' overdue';
-            else if (isDueSoon) itemClass += ' due-soon';
+            let dueDateText = ''; // Variável para o texto de vencimento
 
+            if (t.type === 'expense' && !t.isPaid && dueDate) {
+                const diffTime = dueDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const isOverdue = diffDays < 0;
+
+                if (isOverdue) {
+                    itemClass += ' overdue';
+                    dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`;
+                } else {
+                    // Define o texto dinâmico
+                    if (diffDays === 0) {
+                        dueDateText = 'Vence hoje';
+                    } else if (diffDays === 1) {
+                        dueDateText = 'Vence amanhã';
+                    } else if (diffDays <= 3) {
+                        dueDateText = `Vence em ${diffDays} dias`;
+                    } else {
+                        dueDateText = `Vence em ${this.formatDate(t.dueDate)}`;
+                    }
+
+                    // Adiciona a classe de destaque apenas se vencer em até 3 dias
+                    if (diffDays <= 3) {
+                        itemClass += ' due-soon';
+                    }
+                }
+            } else if (t.isPaid) {
+                itemClass += ' paid';
+            }
+
+            if (t.category === 'Transferência') {
+                itemClass += ' transfer';
+            }
+            
             const amountClass = `amount ${t.category === 'Transferência' ? 'transfer' : t.type}`;
 
+            // --- Retorna o HTML do item da lista ---
             return `
                 <li class="${itemClass}" data-id="${t.id}">
                     <div class="info">
@@ -707,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="details-tag">${this.formatDate(t.date)}</span>
                             <span class="details-tag">${t.category}</span>
                             <span class="details-tag">${accountName}</span>
-                            ${t.type === 'expense' && !t.isPaid && dueDate ? `<span class="details-tag due-date-tag">${isOverdue ? 'Vencido em' : 'Vence em'} ${this.formatDate(t.dueDate)}</span>` : ''}
+                            ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''}
                             ${t.isPaid ? `<span class="details-tag paid-tag">PAGO</span>` : ''}
                         </div>
                     </div>
