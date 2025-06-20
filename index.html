@@ -322,7 +322,7 @@
                 <div id="tab-credit-cards" class="tab-content">
                     <div class="grid-layout">
                         <div class="card">
-                             <h2 id="credit-card-form-title">Adicionar Cartão de Crédito</h2>
+                               <h2 id="credit-card-form-title">Adicionar Cartão de Crédito</h2>
                             <form id="credit-card-form">
                                 <div class="grid-layout" style="grid-template-columns: 1fr 1fr; gap: 15px;">
                                     <div class="form-group"> <label for="credit-card-name">Nome do Cartão</label> <input type="text" id="credit-card-name" placeholder="Ex: Nubank Ultravioleta" required> </div>
@@ -437,78 +437,78 @@
                 </div>
                 
                 <div id="tab-reports" class="tab-content">
-                         <div class="grid-layout" style="gap: 30px;">
-                            <div class="card" style="grid-column: 1 / -1;">
-                                <h2>Relatório Detalhado de Transações</h2>
-                                <div class="report-filters">
-                                    <div class="form-group">
-                                        <label for="report-date-filter">Período</label>
-                                        <select id="report-date-filter">
-                                            <option value="all">Todo o Período</option>
-                                            <option value="today">Hoje</option>
-                                            <option value="7">Últimos 7 dias</option>
-                                            <option value="30" selected>Últimos 30 dias</option>
-                                            <option value="month">Este Mês</option>
-                                            <option value="year">Este Ano</option>
-                                        </select>
+                             <div class="grid-layout" style="gap: 30px;">
+                                <div class="card" style="grid-column: 1 / -1;">
+                                    <h2>Relatório Detalhado de Transações</h2>
+                                    <div class="report-filters">
+                                        <div class="form-group">
+                                            <label for="report-date-filter">Período</label>
+                                            <select id="report-date-filter">
+                                                <option value="all">Todo o Período</option>
+                                                <option value="today">Hoje</option>
+                                                <option value="7">Últimos 7 dias</option>
+                                                <option value="30" selected>Últimos 30 dias</option>
+                                                <option value="month">Este Mês</option>
+                                                <option value="year">Este Ano</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="report-category-filter">Categoria</label>
+                                            <select id="report-category-filter"></select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="report-payment-status-filter">Status</label>
+                                            <select id="report-payment-status-filter">
+                                                <option value="all">Todos os Status</option>
+                                                <option value="paid">Pagas/Recebidas</option>
+                                                <option value="unpaid">A Pagar</option>
+                                            </select>
+                                        </div>
+                                         <div class="form-group">
+                                            <label for="report-type-filter">Tipo</label>
+                                            <select id="report-type-filter">
+                                                <option value="all">Todos os Tipos</option>
+                                                <option value="expense">Despesas</option>
+                                                <option value="income">Receitas</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="report-category-filter">Categoria</label>
-                                        <select id="report-category-filter"></select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="report-payment-status-filter">Status</label>
-                                        <select id="report-payment-status-filter">
-                                            <option value="all">Todos os Status</option>
-                                            <option value="paid">Pagas/Recebidas</option>
-                                            <option value="unpaid">A Pagar</option>
-                                        </select>
-                                    </div>
-                                     <div class="form-group">
-                                        <label for="report-type-filter">Tipo</label>
-                                        <select id="report-type-filter">
-                                            <option value="all">Todos os Tipos</option>
-                                            <option value="expense">Despesas</option>
-                                            <option value="income">Receitas</option>
-                                        </select>
-                                    </div>
+                                    <button id="export-filtered-pdf-btn" class="btn btn-primary" style="margin-bottom: 20px;">Gerar PDF do Relatório</button>
+                                    <div id="filtered-report-results" class="transaction-list-container"></div>
                                 </div>
-                                <button id="export-filtered-pdf-btn" class="btn btn-primary" style="margin-bottom: 20px;">Gerar PDF do Relatório</button>
-                                <div id="filtered-report-results" class="transaction-list-container"></div>
+                                <div class="card">
+                                    <div class="report-card-header">
+                                        <h3>Despesas por Categoria</h3>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <select id="category-report-period" style="padding: 8px;">
+                                                <option value="month" selected>Este Mês</option>
+                                                <option value="30">Últimos 30 dias</option>
+                                                <option value="year">Este Ano</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="report-chart-container">
+                                        <canvas id="category-report-chart"></canvas>
+                                    </div>
+                                    <button id="export-category-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="report-card-header">
+                                        <h3>Fluxo de Caixa Mensal</h3>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <select id="cashflow-report-period" style="padding: 8px;">
+                                                <option value="6" selected>Últimos 6 Meses</option>
+                                                <option value="12">Últimos 12 Meses</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="report-chart-container">
+                                        <canvas id="cashflow-report-chart"></canvas>
+                                    </div>
+                                    <button id="export-cashflow-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
+                                </div>
                             </div>
-                            <div class="card">
-                                <div class="report-card-header">
-                                    <h3>Despesas por Categoria</h3>
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <select id="category-report-period" style="padding: 8px;">
-                                            <option value="month" selected>Este Mês</option>
-                                            <option value="30">Últimos 30 dias</option>
-                                            <option value="year">Este Ano</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="report-chart-container">
-                                    <canvas id="category-report-chart"></canvas>
-                                </div>
-                                <button id="export-category-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
-                            </div>
-                            
-                            <div class="card">
-                                <div class="report-card-header">
-                                    <h3>Fluxo de Caixa Mensal</h3>
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <select id="cashflow-report-period" style="padding: 8px;">
-                                            <option value="6" selected>Últimos 6 Meses</option>
-                                            <option value="12">Últimos 12 Meses</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="report-chart-container">
-                                    <canvas id="cashflow-report-chart"></canvas>
-                                </div>
-                                <button id="export-cashflow-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
-                            </div>
-                        </div>
                 </div>
 
                 <div id="tab-calendar" class="tab-content">
@@ -526,19 +526,19 @@
                 </div>
 
                 <div id="tab-settings" class="tab-content">
-                         <div class="grid-layout">
-                               <div class="card">
-                                      <h2>Gerenciamento de Dados</h2>
-                                      <p style="color: var(--text-muted-color); margin-bottom: 25px;">
-                                              Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
-                                      </p>
-                                      <div class="settings-actions">
-                                          <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
-                                          <button id="import-btn" class="btn btn-primary">Importar de um Backup 📤</button>
-                                          <input type="file" id="import-file-input" accept=".json" style="display: none;">
-                                      </div>
-                                </div>
-                         </div>
+                             <div class="grid-layout">
+                                   <div class="card">
+                                         <h2>Gerenciamento de Dados</h2>
+                                         <p style="color: var(--text-muted-color); margin-bottom: 25px;">
+                                                 Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
+                                         </p>
+                                         <div class="settings-actions">
+                                             <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
+                                             <button id="import-btn" class="btn btn-primary">Importar de um Backup 📤</button>
+                                             <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                                         </div>
+                                   </div>
+                            </div>
                 </div>
             </main>
         </div>
@@ -609,8 +609,12 @@
                     <input type="text" id="expense-description" placeholder="Ex: Jantar, Cinema" required>
                 </div>
                 <div class="form-group">
-                    <label for="expense-amount">Valor (R$)</label>
+                    <label for="expense-amount">Valor Total (R$)</label>
                     <input type="number" id="expense-amount" step="0.01" placeholder="75.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-installments">Número de Parcelas</label>
+                    <input type="number" id="expense-installments" step="1" min="1" value="1" required>
                 </div>
                 <div class="form-group">
                     <label for="expense-date">Data da Compra</label>
@@ -719,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const type = deleteButton.dataset.type;
                     
                     if (confirm(`Tem certeza que deseja deletar este item? A ação não pode ser desfeita.`)) {
-                         switch(type) {
+                        switch(type) {
                             case 'transaction': await this.deleteTransaction(id); break;
                             case 'account': await this.deleteAccount(id); break;
                             case 'creditCard': await this.deleteCreditCard(id); break;
@@ -727,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             case 'goal': await this.deleteGoal(id); break;
                             case 'recurrence': await this.deleteRecurrence(id); break;
                             case 'category': await this.deleteCategory(id); break;
-                         }
+                        }
                     }
                 }
             });
@@ -810,11 +814,116 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleLogin() { const username = this.elements.username.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); await this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
         
         // --- Handlers de Formulários ---
-        async handleTransaction(e) { e.preventDefault(); const form = e.target; const accountId = form.elements['account-select'].value; if (this.state.accounts.length > 0 && !accountId) { alert("Por favor, selecione uma conta para a transação."); return; } if (this.state.accounts.length === 0) { alert("Nenhuma conta encontrada! Por favor, adicione uma conta clicando na opção '+ Adicionar Nova Conta...' no seletor de contas."); return; } const category = form.elements['category-select'].value; if (!category) { alert("Por favor, selecione uma categoria."); return; } const id = this.state.editingItem?.id || Date.now().toString(); const type = form.elements['transaction-type'].value; const description = form.elements['description'].value; const amount = parseFloat(form.elements['amount'].value); const date = form.elements['date'].value; const dueDate = form.elements['due-date'].value; const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null; const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' }; await db.put('transactions', newT); if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) { if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) { const nextMonthDate = new Date(dueDate + 'T00:00:00'); nextMonthDate.setMonth(nextMonthDate.getMonth() + 1); const newR = { id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] }; await db.put('recurrences', newR); } } await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); document.getElementById('date').valueAsDate = new Date(); this.handleTransactionTypeChange(); },
+        async handleTransaction(e) {
+            e.preventDefault();
+            const form = e.target;
+            const accountId = form.elements['account-select'].value;
+
+            // BUG CORRIGIDO: Validação simplificada e corrigida.
+            if (!accountId || accountId === 'add_new_account') {
+                alert("Por favor, selecione uma conta válida para a transação.");
+                return;
+            }
+
+            const category = form.elements['category-select'].value;
+            if (!category) {
+                alert("Por favor, selecione uma categoria.");
+                return;
+            }
+            const id = this.state.editingItem?.id || Date.now().toString();
+            const type = form.elements['transaction-type'].value;
+            const description = form.elements['description'].value;
+            const amount = parseFloat(form.elements['amount'].value);
+            const date = form.elements['date'].value;
+            const dueDate = form.elements['due-date'].value;
+            const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null;
+            const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
+            await db.put('transactions', newT);
+            if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
+                if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) {
+                    const nextMonthDate = new Date(dueDate + 'T00:00:00');
+                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+                    const newR = { id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
+                    await db.put('recurrences', newR);
+                }
+            }
+            await this.loadData();
+            this.updateAllRenders();
+            this.cancelEditMode();
+            form.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            this.handleTransactionTypeChange();
+        },
         async handleAccount(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `acc-${Date.now()}`; const name = form.elements['account-name'].value; const type = form.elements['account-type'].value; const initialBalance = parseFloat(form.elements['initial-balance'].value); const initialBalanceDate = form.elements['initial-balance-date'].value; const isEditing = !!this.state.editingItem; const account = { id, name, type, initialBalance }; await db.put('accounts', account); if (!isEditing && initialBalance > 0) { const initialTransaction = { id: `trans-${Date.now()}`, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate }; await db.put('transactions', initialTransaction); } await this.loadData(); this.updateAllRenders(); if (this.state.selectToUpdateAfterAccountCreation && !isEditing) { document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id; this.state.selectToUpdateAfterAccountCreation = null; } this.closeAccountModal(); this.cancelEditMode(); },
-        async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateOpenInvoice(id); this.state.selectedCardId = id; await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
-        async handleCreditCardExpense(e) { e.preventDefault(); const form = e.target; const cardId = form.elements['expense-card-id'].value; const openInvoice = await this.getOrCreateOpenInvoice(cardId); if (!openInvoice) { alert("Não foi possível encontrar uma fatura aberta para este cartão."); return; } const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: form.elements['expense-description'].value, amount: parseFloat(form.elements['expense-amount'].value), date: form.elements['expense-date'].value, category: form.elements['expense-category'].value, isPaid: false, }; await db.put('transactions', expense); openInvoice.amount = (openInvoice.amount || 0) + expense.amount; await db.put('invoices', openInvoice); await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); this.closeCreditCardExpenseModal(); },
-        async handleBillPayment(e) { e.preventDefault(); const form = this.elements.billPaymentForm; const cardId = form.elements['payment-card-id'].value; const invoiceId = form.elements['payment-invoice-id'].value; const paymentAmount = parseFloat(form.elements['payment-amount'].value); const sourceAccountId = form.elements['payment-account-select'].value; const paymentDate = form.elements['payment-date'].value; const card = this.state.creditCards.find(c => c.id === cardId); const sourceAccount = this.state.accounts.find(acc => acc.id === sourceAccountId); const invoice = this.state.invoices.find(i => i.id === invoiceId); if (!card || !sourceAccount || !invoice || !paymentAmount || paymentAmount <= 0) { alert("Dados de pagamento inválidos."); return; } this.updateAllBalances(); if (sourceAccount.currentBalance < paymentAmount) { alert("Saldo insuficiente na conta de origem."); return; } const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate }; await db.put('transactions', expenseTransaction); invoice.status = 'paid'; await db.put('invoices', invoice); await this.getOrCreateOpenInvoice(cardId); await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); this.closeBillPaymentModal(); alert("Pagamento da fatura registrado com sucesso!"); },
+        async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateInvoiceForDate(id, new Date()); this.state.selectedCardId = id; await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
+        
+        // NOVA LÓGICA DE PARCELAMENTO
+        async handleCreditCardExpense(e) {
+            e.preventDefault();
+            const form = e.target;
+            const cardId = form.elements['expense-card-id'].value;
+            const totalAmount = parseFloat(form.elements['expense-amount'].value);
+            const originalDescription = form.elements['expense-description'].value;
+            const purchaseDate = form.elements['expense-date'].value;
+            const category = form.elements['expense-category'].value;
+            const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
+
+            if (installments === 1) {
+                // Lógica antiga para compra à vista
+                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
+                if (!openInvoice) { alert("Não foi possível encontrar ou criar uma fatura para este cartão."); return; }
+                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDate, category: category, isPaid: false, };
+                await db.put('transactions', expense);
+                openInvoice.amount = (openInvoice.amount || 0) + expense.amount;
+                await db.put('invoices', openInvoice);
+            } else {
+                // Nova lógica para compras parceladas
+                const purchaseGroupId = `p-${Date.now()}`;
+                
+                // Lógica para dividir os centavos corretamente
+                let installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
+                let totalCalculated = installmentAmount * installments;
+                let remainder = parseFloat((totalAmount - totalCalculated).toFixed(2));
+
+                for (let i = 0; i < installments; i++) {
+                    const installmentDate = new Date(purchaseDate + 'T00:00:00');
+                    installmentDate.setMonth(installmentDate.getMonth() + i);
+
+                    const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
+                    if (!invoice) {
+                        alert(`Não foi possível criar a fatura para a parcela ${i + 1}. A operação foi cancelada.`);
+                        return; // Interrompe se uma fatura não puder ser criada
+                    }
+
+                    let currentInstallmentAmount = installmentAmount;
+                    if (i === installments - 1) { // Adiciona o resto na última parcela
+                        currentInstallmentAmount = parseFloat((currentInstallmentAmount + remainder).toFixed(2));
+                    }
+                    
+                    const expense = {
+                        id: `${purchaseGroupId}-${i}`,
+                        type: 'expense',
+                        creditCardId: cardId,
+                        invoiceId: invoice.id,
+                        description: `${originalDescription} (${i + 1}/${installments})`,
+                        amount: currentInstallmentAmount,
+                        date: purchaseDate, // A data da compra é a mesma para todas as parcelas
+                        category: category,
+                        isPaid: false,
+                    };
+                    await db.put('transactions', expense);
+                    invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
+                    await db.put('invoices', invoice);
+                }
+            }
+            
+            await this.loadData();
+            this.renderCreditCardModule();
+            this.updateAllRenders();
+            this.closeCreditCardExpenseModal();
+        },
+
+        async handleBillPayment(e) { e.preventDefault(); const form = this.elements.billPaymentForm; const cardId = form.elements['payment-card-id'].value; const invoiceId = form.elements['payment-invoice-id'].value; const paymentAmount = parseFloat(form.elements['payment-amount'].value); const sourceAccountId = form.elements['payment-account-select'].value; const paymentDate = form.elements['payment-date'].value; const card = this.state.creditCards.find(c => c.id === cardId); const sourceAccount = this.state.accounts.find(acc => acc.id === sourceAccountId); const invoice = this.state.invoices.find(i => i.id === invoiceId); if (!card || !sourceAccount || !invoice || !paymentAmount || paymentAmount <= 0) { alert("Dados de pagamento inválidos."); return; } this.updateAllBalances(); if (sourceAccount.currentBalance < paymentAmount) { alert("Saldo insuficiente na conta de origem."); return; } const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate }; await db.put('transactions', expenseTransaction); invoice.status = 'paid'; await db.put('invoices', invoice); await this.getOrCreateInvoiceForDate(cardId, new Date()); await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); this.closeBillPaymentModal(); alert("Pagamento da fatura registrado com sucesso!"); },
         
         // --- Demais Handlers ---
         async handleCategorySubmit(e) { e.preventDefault(); const form = e.target, name = form.elements['category-name'].value.trim(); if (!name) return; const id = this.state.editingItem?.id || `cat-${Date.now()}`; await db.put('categories', { id, name }); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
@@ -833,43 +942,77 @@ document.addEventListener('DOMContentLoaded', () => {
         async deleteGoal(id) { await db.delete('goals', id); await this.loadData(); this.updateAllRenders(); },
         async deleteRecurrence(id) { await db.delete('recurrences', id); await this.loadData(); this.updateAllRenders(); },
 
-        // --- Lógica de Fatura (Invoice) ---
-        async getOrCreateOpenInvoice(cardId) {
-            let openInvoice = this.state.invoices.find(i => i.creditCardId === cardId && i.status === 'open');
-            if (openInvoice) {
-                return openInvoice;
-            }
+        // --- NOVA FUNÇÃO PARA BUSCAR/CRIAR FATURAS ---
+        async getOrCreateInvoiceForDate(cardId, targetDate) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             if (!card) return null;
-            const now = new Date();
-            let closingDate = new Date(now.getFullYear(), now.getMonth(), card.closingDay);
-            if (now.getDate() > card.closingDay) {
-                closingDate.setMonth(closingDate.getMonth() + 1);
+        
+            // Calcula a data de fechamento da fatura para o targetDate
+            let closingDateYear = targetDate.getFullYear();
+            let closingDateMonth = targetDate.getMonth();
+        
+            if (targetDate.getDate() > card.closingDay) {
+                closingDateMonth += 1;
+                if (closingDateMonth > 11) {
+                    closingDateMonth = 0;
+                    closingDateYear += 1;
+                }
             }
+            const closingDate = new Date(closingDateYear, closingDateMonth, card.closingDay);
+            const closingDateStr = closingDate.toISOString().split('T')[0];
+
+            // Procura por uma fatura existente com a mesma data de fechamento
+            let invoice = this.state.invoices.find(i => i.creditCardId === cardId && i.closingDate === closingDateStr);
+            if (invoice) {
+                return invoice;
+            }
+        
+            // Se não encontrar, cria uma nova fatura
             let dueDate = new Date(closingDate.getFullYear(), closingDate.getMonth(), card.dueDay);
-             if (card.dueDay < card.closingDay) {
+            if (card.dueDay <= card.closingDay) { // Se o vencimento é no mês seguinte ao fechamento
                 dueDate.setMonth(dueDate.getMonth() + 1);
             }
-
+            
             const newInvoice = {
-                id: `inv-${cardId}-${Date.now()}`,
+                id: `inv-${cardId}-${closingDateStr}`,
                 creditCardId: cardId,
                 status: 'open',
                 amount: 0,
-                closingDate: closingDate.toISOString().split('T')[0],
+                closingDate: closingDateStr,
                 dueDate: dueDate.toISOString().split('T')[0],
             };
+        
             await db.put('invoices', newInvoice);
-            this.state.invoices = await db.getAll('invoices');
+            this.state.invoices.push(newInvoice); // Atualiza o estado local para evitar recarregar tudo
             return newInvoice;
         },
         
         // --- Modals ---
         openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('initial-balance-date').valueAsDate = new Date(); },
         closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
-        openBillPaymentModal(cardId) { const card = this.state.creditCards.find(c => c.id === cardId); const invoice = this.state.invoices.find(i => i.creditCardId === cardId && i.status === 'open'); if (!card || !invoice) { alert("Nenhuma fatura aberta encontrada para este cartão."); return; } const form = this.elements.billPaymentForm; form.elements['payment-card-id'].value = card.id; form.elements['payment-invoice-id'].value = invoice.id; form.elements['payment-card-name'].value = card.name; form.elements['payment-bill-amount'].value = this.formatCurrency(invoice.amount); form.elements['payment-amount'].value = invoice.amount.toFixed(2); form.elements['payment-date'].valueAsDate = new Date(); this.populateSelectors(); this.elements.billPaymentModal.classList.add('visible'); },
+        openBillPaymentModal(cardId) {
+            const card = this.state.creditCards.find(c => c.id === cardId);
+            // Busca a fatura aberta mais próxima, que é a que deve ser paga.
+            const openInvoices = this.state.invoices
+                .filter(i => i.creditCardId === cardId && i.status === 'open')
+                .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            if (!card || openInvoices.length === 0) { alert("Nenhuma fatura aberta encontrada para este cartão."); return; }
+            
+            const invoiceToPay = openInvoices[0];
+            
+            const form = this.elements.billPaymentForm;
+            form.elements['payment-card-id'].value = card.id;
+            form.elements['payment-invoice-id'].value = invoiceToPay.id;
+            form.elements['payment-card-name'].value = card.name;
+            form.elements['payment-bill-amount'].value = this.formatCurrency(invoiceToPay.amount);
+            form.elements['payment-amount'].value = invoiceToPay.amount.toFixed(2);
+            form.elements['payment-date'].valueAsDate = new Date();
+            this.populateSelectors();
+            this.elements.billPaymentModal.classList.add('visible');
+        },
         closeBillPaymentModal() { this.elements.billPaymentModal.classList.remove('visible'); this.elements.billPaymentForm.reset(); },
-        openCreditCardExpenseModal(cardId) { const form = this.elements.creditCardExpenseForm; form.elements['expense-card-id'].value = cardId; document.getElementById('expense-date').valueAsDate = new Date(); this.populateSelectors(); this.elements.creditCardExpenseModal.classList.add('visible'); },
+        openCreditCardExpenseModal(cardId) { const form = this.elements.creditCardExpenseForm; form.elements['expense-card-id'].value = cardId; document.getElementById('expense-date').valueAsDate = new Date(); document.getElementById('expense-installments').value = 1; this.populateSelectors(); this.elements.creditCardExpenseModal.classList.add('visible'); },
         closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
         handleAccountSelectChange(e) { if (e.target.value === 'add_new_account') { const selectId = e.target.id; e.target.value = ''; this.openAccountModal(selectId); } },
         
@@ -921,19 +1064,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const openInvoice = this.state.invoices.find(i => i.creditCardId === selectedCard.id && i.status === 'open');
-            const invoiceAmount = openInvoice ? openInvoice.amount : 0;
-            const availableLimit = selectedCard.limit - invoiceAmount;
-            const invoiceTransactions = openInvoice ? this.state.transactions.filter(t => t.invoiceId === openInvoice.id) : [];
+            const openInvoices = this.state.invoices.filter(i => i.creditCardId === selectedCard.id && i.status === 'open');
+            const totalOpenAmount = openInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+            const availableLimit = selectedCard.limit - totalOpenAmount;
+            
+            const nextInvoiceToPay = openInvoices.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+            const invoiceAmount = nextInvoiceToPay ? nextInvoiceToPay.amount : 0;
+            const invoiceTransactions = nextInvoiceToPay ? this.state.transactions.filter(t => t.invoiceId === nextInvoiceToPay.id) : [];
 
             detailsContainer.innerHTML = `
                 <div class="card-header">
                     <h2>${selectedCard.name}</h2>
-                    <button class="delete-button" data-type="creditCard" data-id="${selectedCard.id}" title="Deletar Cartão">${this.getDeleteIconSVG()}</button>
+                    <div class="actions">
+                        <button class="edit-btn" data-type="creditCard" data-id="${selectedCard.id}" title="Editar Cartão">${this.getEditIconSVG()}</button>
+                        <button class="delete-button" data-type="creditCard" data-id="${selectedCard.id}" title="Deletar Cartão">${this.getDeleteIconSVG()}</button>
+                    </div>
                 </div>
                 <div class="credit-card-summary">
                     <div class="info-item">
-                        <div class="label">Fatura Aberta</div>
+                        <div class="label">Próxima Fatura</div>
                         <div class="value expense">${this.formatCurrency(invoiceAmount)}</div>
                     </div>
                     <div class="info-item">
@@ -942,17 +1091,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="info-item">
                         <div class="label">Vencimento</div>
-                        <div class="value">${openInvoice ? this.formatDate(openInvoice.dueDate) : 'N/A'}</div>
+                        <div class="value">${nextInvoiceToPay ? this.formatDate(nextInvoiceToPay.dueDate) : 'N/A'}</div>
                     </div>
                 </div>
                 <div class="progress-bar-container" title="Limite Total: ${this.formatCurrency(selectedCard.limit)}">
-                    <div class="progress-bar ${ (invoiceAmount / selectedCard.limit * 100) > 80 ? 'over' : ''}" style="width: ${Math.min(invoiceAmount / selectedCard.limit * 100, 100)}%;"></div>
+                    <div class="progress-bar ${ (totalOpenAmount / selectedCard.limit * 100) > 80 ? 'over' : ''}" style="width: ${Math.min(totalOpenAmount / selectedCard.limit * 100, 100)}%;"></div>
                 </div>
                 <div class="credit-card-actions">
                     <button class="btn btn-primary add-expense-btn" data-id="${selectedCard.id}">Adicionar Despesa</button>
                     <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}">Pagar Fatura</button>
                 </div>
-                <h3 style="margin-top: 30px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">Compras na Fatura</h3>
+                <h3 style="margin-top: 30px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">Compras na Próxima Fatura</h3>
                 <div class="transaction-list-container" style="margin-top: 15px;">
                     <ul>
                         ${invoiceTransactions.length > 0 ? invoiceTransactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => this.renderTransactionItem(t, true)).join('') : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma despesa nesta fatura.</p>'}
