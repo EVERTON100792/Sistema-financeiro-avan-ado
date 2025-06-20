@@ -704,7 +704,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
             document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
             
-            this.elements.accountSelectors.forEach(sel => sel.addEventListener('change', (e) => this.handleAccountSelectChange(e)));
+            // PARA (Novo código corrigido)
+this.elements.appContainer.addEventListener('change', (e) => {
+    // Lista de IDs dos seletores de conta que nos interessam
+    const accountSelectorIDs = ['account-select', 'transfer-from-account', 'transfer-to-account', 'recurrence-account'];
+
+    // Verifica se o elemento que mudou é um dos nossos seletores de conta
+    if (accountSelectorIDs.includes(e.target.id)) {
+        this.handleAccountSelectChange(e);
+    }
+});
 
             this.elements.appContainer.addEventListener('click', async (e) => {
                 const target = e.target;
