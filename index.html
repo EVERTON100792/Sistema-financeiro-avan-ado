@@ -307,6 +307,7 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%);
             }
             .login-wrapper {
                 grid-template-columns: 1fr;
@@ -316,6 +317,10 @@
             }
             .login-form-wrapper {
                 width: 100%;
+            }
+            .login-box {
+                width: 90%; 
+                max-width: 400px;
             }
         }
     </style>
@@ -982,10 +987,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         async handleLogin() {
             const username = this.elements.username.value.trim();
-            const loginBtn = this.elements.loginBtn; // Pega o botão
+            const loginBtn = this.elements.loginBtn;
 
             if (username) {
-                // Adiciona o efeito de loading
                 loginBtn.classList.add('loading');
                 loginBtn.disabled = true;
 
@@ -994,12 +998,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     await this.checkLogin();
                 } catch (error) {
                     console.error("Login failed:", error);
-                    // Remove o loading em caso de erro
                     loginBtn.classList.remove('loading');
                     loginBtn.disabled = false;
                 }
-                // O `checkLogin` já mostra a próxima tela, então não precisamos remover o loading no caso de sucesso.
-
             } else {
                 alert('Por favor, digite seu nome.');
             }
@@ -1007,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         async markAsPaid(transactionId) {
             const transaction = this.state.transactions.find(t => t.id === transactionId);
-            if (transaction && transaction.accountId) { // Só marca como pago se for de uma conta real
+            if (transaction && transaction.accountId) {
                 transaction.isPaid = true;
                 await db.put('transactions', transaction);
                 await this.loadData();
@@ -1253,11 +1254,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 t.category !== 'Saldo Inicial'
             ).reduce((sum, t) => sum + (t.amount || 0), 0);
             
-            // LÓGICA CORRIGIDA E FINAL
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
                        t.isPaid &&
-                       t.accountId && // Garante que a transação saiu de uma conta (e não é uma compra de cartão)
+                       t.accountId && 
                        new Date(t.date).getMonth() === currentMonth &&
                        new Date(t.date).getFullYear() === currentYear &&
                        t.category !== 'Transferência';
@@ -1265,10 +1265,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
             const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
-            
-            // O cálculo de Patrimônio Líquido (Ativos - Passivos) é mantido, pois é a forma correta de avaliar a saúde financeira.
-            // A correção na lógica de "Despesa (Mês)" já resolve a percepção incorreta do fluxo de caixa,
-            // pois compras no crédito não serão mais somadas como despesa do mês até a fatura ser paga.
             const netWorth = accountBalance - cardDebt; 
 
             const balanceEl = document.getElementById('balance');
@@ -1501,7 +1497,111 @@ document.addEventListener('DOMContentLoaded', () => {
         initCharts() { const commonOptions = this.getChartOptions(); if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); if (this.charts.categoryReportChart) this.charts.categoryReportChart.destroy(); const catCtx = document.getElementById('category-report-chart').getContext('2d'); this.charts.categoryReportChart = new Chart(catCtx, { type: 'doughnut', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false } }); if (this.charts.cashflowReportChart) this.charts.cashflowReportChart.destroy(); const cashCtx = document.getElementById('cashflow-report-chart').getContext('2d'); this.charts.cashflowReportChart = new Chart(cashCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { x: { ...commonOptions.scales.x }, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
         updateDashboardCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); this.renderDashboardBudgetChart(); const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); const initialAccountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.initialBalance || 0), 0); const initialCardDebt = 0; let runningNetWorth = initialAccountBalance - initialCardDebt; if (sortedTransactions.length > 0) { const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth); } else { dailyNetWorth.set(new Date().toISOString().split('T')[0], runningNetWorth); } sortedTransactions.forEach(t => { const amount = t.amount || 0; let impact = 0; if (t.type === 'income') impact = +amount; if (t.type === 'expense' && t.isPaid) impact = -amount; runningNetWorth += impact; dailyNetWorth.set(t.date, runningNetWorth); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
-        renderDashboardBudgetChart() { const chartCanvas = document.getElementById('main-overview-chart'); const placeholder = document.getElementById('main-chart-placeholder'); const chart = this.charts.mainOverviewChart; const now = new Date(); const budgets = this.state.budgets.filter(b => b.amount > 0); if (budgets.length === 0) { chartCanvas.style.display = 'none'; placeholder.style.display = 'flex'; return; } chartCanvas.style.display = 'block'; placeholder.style.display = 'none'; const labels = budgets.map(b => b.category); const spentData = budgets.map(b => { return this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear()) .reduce((sum, t) => sum + t.amount, 0); }); const budgetData = budgets.map(b => b.amount); chart.data.labels = labels; chart.data.datasets = [ { label: 'Gasto', data: spentData, backgroundColor: 'rgba(233, 69, 96, 0.7)', }, { label: 'Orçamento', data: budgetData, backgroundColor: 'rgba(46, 204, 113, 0.5)', } ]; chart.options = { ...chart.options, ...this.getChartOptions() }; chart.update(); },
+        
+        // ######################################################################
+        // #   FUNÇÃO DO GRÁFICO DE ORÇAMENTO CORRIGIDA E MELHORADA             #
+        // ######################################################################
+        renderDashboardBudgetChart() {
+            const chartCanvas = document.getElementById('main-overview-chart');
+            const placeholder = document.getElementById('main-chart-placeholder');
+            const chart = this.charts.mainOverviewChart;
+            const now = new Date();
+            const budgets = this.state.budgets.filter(b => b.amount > 0);
+
+            if (budgets.length === 0) {
+                chartCanvas.style.display = 'none';
+                placeholder.style.display = 'flex';
+                return;
+            }
+
+            chartCanvas.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            const labels = budgets.map(b => b.category);
+            const spentData = budgets.map(b => {
+                return this.state.transactions
+                    .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            const budgetData = budgets.map(b => b.amount);
+
+            // Transforma os dados para o formato [início, fim] para criar as barras flutuantes
+            const budgetDataFormatted = budgetData.map(b => [0, b]);
+            const spentDataFormatted = spentData.map(s => [0, s]);
+
+            chart.data.labels = labels;
+            // Define os novos datasets para sobreposição
+            chart.data.datasets = [
+                {
+                    label: 'Orçamento',
+                    data: budgetDataFormatted,
+                    backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.2)' : 'rgba(46, 204, 113, 0.2)',
+                    borderColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.4)' : 'rgba(46, 204, 113, 0.4)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                },
+                {
+                    label: 'Gasto',
+                    data: spentDataFormatted,
+                    backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.8)' : 'rgba(233, 69, 96, 0.8)',
+                    borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }
+            ];
+
+            // Atualiza as opções do gráfico para um visual mais limpo e tooltip personalizado
+            const commonOptions = this.getChartOptions();
+            chart.options = {
+                ...commonOptions,
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    ...commonOptions.scales,
+                    x: {
+                        ...commonOptions.scales.x,
+                        stacked: true, // Empilha as barras na mesma categoria
+                    },
+                    y: {
+                        ...commonOptions.scales.y,
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: {
+                        ...commonOptions.plugins.legend,
+                        display: false // Esconde a legenda, pois o gráfico agora é autoexplicativo
+                    },
+                    tooltip: {
+                        ...commonOptions.plugins.tooltip,
+                        // Callback para formatar o tooltip de forma personalizada
+                        callbacks: {
+                            label: (context) => {
+                                // Pega o valor do gasto e do orçamento para o item selecionado
+                                const spentValue = context.raw[1];
+                                const budgetValue = context.chart.data.datasets[0].data[context.dataIndex][1];
+                                const percentage = (budgetValue > 0) ? ((spentValue / budgetValue) * 100).toFixed(1) : 0;
+                                
+                                const spentFormatted = this.formatCurrency(spentValue);
+                                const budgetFormatted = this.formatCurrency(budgetValue);
+
+                                // Retorna um array de strings para criar múltiplas linhas no tooltip
+                                return [
+                                    `Gasto: ${spentFormatted}`,
+                                    `Orçamento: ${budgetFormatted}`,
+                                    `Progresso: ${percentage}%`
+                                ];
+                            }
+                        }
+                    }
+                }
+            };
+
+            chart.update();
+        },
     };
 
     financeApp.init();
