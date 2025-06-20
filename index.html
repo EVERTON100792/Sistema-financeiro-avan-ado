@@ -166,10 +166,15 @@
         .modal-close-btn { background: none; border: none; font-size: 1.8rem; color: var(--text-muted-color); cursor: pointer; }
 
         /* === ESTILOS PARA GRÁFICOS DAS CONTAS === */
-        .account-layout { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; margin-top: 10px; }
-        .account-chart-container { width: 200px; height: 80px; position: relative; }
-        @media (max-width: 600px) { .account-layout { grid-template-columns: 1fr; gap: 15px; } .account-chart-container { width: 100%; } }
-
+        #accounts-list-dashboard .list-item { flex-direction: row; }
+        #accounts-list-dashboard .list-item-header { flex-direction: column; align-items: flex-start; flex-grow: 1; }
+        #accounts-list-dashboard .actions { position: absolute; top: 15px; right: 15px; }
+        #accounts-list-dashboard .account-balance { font-size: 1.8rem; font-weight: 700; }
+        @media (max-width: 600px) { 
+            #accounts-list-dashboard .list-item { flex-direction: column; align-items: stretch; }
+            #accounts-list-dashboard .actions { position: relative; top: auto; right: auto; align-self: flex-end; margin-top: 10px; }
+        }
+        
         /* === MÓDULO CARTÃO DE CRÉDITO === */
         .credit-card-module-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: flex-start; }
         #credit-card-selector-list .list-item { flex-direction: row; cursor: pointer; border-left: 4px solid transparent; }
@@ -211,7 +216,6 @@
         <div class="app-layout">
             <aside class="sidebar-nav card">
                 <button class="tab-btn active" data-tab="dashboard">Painel</button>
-                <button class="tab-btn" data-tab="accounts">Contas</button>
                 <button class="tab-btn" data-tab="credit-cards">Cartões de Crédito</button>
                 <button class="tab-btn" data-tab="categories">Categorias</button>
                 <button class="tab-btn" data-tab="transfers">Transferências</button>
@@ -241,6 +245,11 @@
                     </section>
                     
                     <section class="card" style="margin-bottom: 30px;">
+                        <h2>Saldos das Contas</h2>
+                        <div id="accounts-list-dashboard"></div>
+                    </section>
+                    
+                    <section class="card" style="margin-bottom: 30px;">
                         <h2>Acompanhamento de Orçamentos (Mês Atual)</h2>
                         <div id="main-overview-chart-container">
                             <canvas id="main-overview-chart"></canvas>
@@ -252,7 +261,7 @@
                     
                     <div class="dashboard-layout">
                         <aside class="card">
-                            <h2 id="transaction-form-title">Nova Transação (Contas)</h2>
+                            <h2 id="transaction-form-title">Nova Transação</h2>
                             <form id="transaction-form">
                                 <div class="form-group">
                                     <label for="transaction-type">Tipo</label>
@@ -309,14 +318,6 @@
                             <canvas id="evolution-chart"></canvas>
                         </div>
                     </section>
-                </div>
-
-                <div id="tab-accounts" class="tab-content">
-                    <div class="card">
-                        <h2>Minhas Contas</h2>
-                        <p style="color:var(--text-muted-color); margin-top: -15px; margin-bottom: 15px;">Contas corrente, poupança e dinheiro. Para adicionar uma nova conta, inicie uma nova transação no Painel.</p>
-                        <div id="accounts-list"></div>
-                    </div>
                 </div>
 
                 <div id="tab-credit-cards" class="tab-content">
@@ -672,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
 
         cacheDOMElements() {
-            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter', 'filteredReportResults', 'exportFilteredPdfBtn', 'categoryReportPeriod', 'exportCategoryPdfBtn', 'cashflowReportPeriod', 'exportCashflowPdfBtn', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm' ];
+            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsListDashboard', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter', 'filteredReportResults', 'exportFilteredPdfBtn', 'categoryReportPeriod', 'exportCategoryPdfBtn', 'cashflowReportPeriod', 'exportCashflowPdfBtn', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm' ];
             elementIds.forEach(idCamel => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
@@ -710,6 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             this.elements.accountSelectors.forEach(sel => sel.addEventListener('change', (e) => this.handleAccountSelectChange(e)));
 
+            // Listener de cliques agora também gerencia a lista de contas no dashboard
             this.elements.appContainer.addEventListener('click', async (e) => {
                 const target = e.target;
                 const deleteButton = target.closest('.delete-button');
@@ -819,10 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = e.target;
             const accountId = form.elements['account-select'].value;
 
-            // ===== CÓDIGO CORRIGIDO =====
-            // A validação agora verifica se a conta selecionada realmente existe.
-            // Isso previne o erro quando "+ Adicionar Nova Conta..." é selecionado,
-            // permitindo que o modal de criação de conta seja aberto pelo evento 'change' sem conflitos.
             const account = this.state.accounts.find(a => a.id === accountId);
             if (!account) {
                 alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, selecione a opção no menu e salve-a antes de continuar.");
@@ -1010,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleLogout() { if (confirm('Tem certeza que deseja sair? Seus dados permanecerão salvos no navegador.')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
         toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
         applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderAllReports(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
+        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderAllReports(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
         formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
@@ -1034,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
         renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.accountId && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0); const cardDebt = this.state.invoices.filter(i=>i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0); const netWorth = accountBalance - cardDebt; const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(netWorth); balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
-        renderAccountsList() { this.elements.accountsList.innerHTML = this.state.accounts.map(acc => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${acc.name} <small style="color:var(--text-muted-color);font-weight:400;">(${acc.type === 'checking' ? 'C. Corrente' : (acc.type === 'savings' ? 'Poupança' : 'Dinheiro')})</small></h3> </div> <div class="actions"> <button class="edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="account" data-id="${acc.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="account-layout"> <span class="amount positive" style="font-size: 1.8rem; font-weight: 700;">${this.formatCurrency(acc.currentBalance)}</span> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma conta cadastrada.</p>'; },
+        renderAccountsList() { this.elements.accountsListDashboard.innerHTML = this.state.accounts.map(acc => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${acc.name} <small style="color:var(--text-muted-color);font-weight:400;">(${acc.type === 'checking' ? 'C. Corrente' : (acc.type === 'savings' ? 'Poupança' : 'Dinheiro')})</small></h3> <span class="account-balance positive">${this.formatCurrency(acc.currentBalance)}</span> </div> </div> <div class="actions"> <button class="edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="account" data-id="${acc.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma conta cadastrada. Adicione sua primeira conta no formulário de transação.</p>'; },
         renderCreditCardModule() {
             const selectorList = this.elements.creditCardSelectorList;
             selectorList.innerHTML = this.state.creditCards.map(c => `
@@ -1112,6 +1110,19 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.editingItem = { type, id };
             const form = document.getElementById(`${type}-form`);
             const item = this.state[`${type}s`].find(i => i.id === id);
+            
+            if(type === 'account') {
+                this.elements.accountModalTitle.textContent = 'Editar Conta';
+                Object.keys(item).forEach(key => {
+                    const formElement = this.elements.accountForm.elements[`account-${key}`];
+                    if(formElement) formElement.value = item[key];
+                });
+                document.getElementById('initial-balance').disabled = true;
+                document.getElementById('initial-balance-date').disabled = true;
+                this.openAccountModal();
+                return;
+            }
+
             if (!form || !item) return;
 
             document.querySelector(`.tab-btn[data-tab="${type}s"]`).click();
@@ -1129,6 +1140,16 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelEditMode(){ 
             if(!this.state.editingItem) return;
             const type = this.state.editingItem.type;
+
+            if(type === 'account'){
+                this.closeAccountModal();
+                this.elements.accountModalTitle.textContent = 'Adicionar Nova Conta';
+                document.getElementById('initial-balance').disabled = false;
+                document.getElementById('initial-balance-date').disabled = false;
+                this.state.editingItem = null;
+                return;
+            }
+
             const form = document.getElementById(`${type}-form`);
             if(form) form.reset();
 
