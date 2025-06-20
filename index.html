@@ -815,23 +815,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Handlers de Formulários ---
         async handleTransaction(e) {
-            e.preventDefault();
-            const form = e.target;
-            const accountId = form.elements['account-select'].value;
+    e.preventDefault();
+    const form = e.target;
+    const accountId = form.elements['account-select'].value;
 
-            // CORREÇÃO DEFINITIVA: A validação agora checa se o accountId corresponde a uma conta real.
-            // Isso permite que o evento 'change' funcione sem ser bloqueado pelo 'submit'.
-            const account = this.state.accounts.find(a => a.id === accountId);
-            if (!account) {
-                alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, selecione a opção no menu e salve-a antes de continuar.");
-                return;
-            }
+    // ↓↓↓ ESTA É A CORREÇÃO ↓↓↓
+    const account = this.state.accounts.find(a => a.id === accountId);
+    if (!account) {
+        alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, selecione a opção no menu e salve-a antes de continuar.");
+        return; // Interrompe a execução aqui, evitando o erro.
+    }
+    // ↑↑↑ FIM DA CORREÇÃO ↑↑↑
 
-            const category = form.elements['category-select'].value;
-            if (!category) {
-                alert("Por favor, selecione uma categoria.");
-                return;
-            }
+    const category = form.elements['category-select'].value;
+    if (!category) {
+        alert("Por favor, selecione uma categoria.");
+        return;
+    }
+    // ... resto da função ...
+}
             const id = this.state.editingItem?.id || Date.now().toString();
             const type = form.elements['transaction-type'].value;
             const description = form.elements['description'].value;
