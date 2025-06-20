@@ -135,35 +135,33 @@
         
         /* === ESTILOS DO CALENDÁRIO === */
         #tab-calendar .card { background-color: var(--primary-color); padding: 0; overflow: hidden; }
-        #calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--secondary-color); }
-        #month-year-display { border-bottom: none; margin-bottom: 0; text-transform: capitalize; font-size: 1.5rem; font-weight: 600; }
+        #calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--secondary-color); gap: 15px; }
+        #month-year-display { border-bottom: none; margin-bottom: 0; text-transform: capitalize; font-size: 1.5rem; font-weight: 600; flex-grow: 1; text-align: center; }
         #calendar-header .btn { background-color: var(--secondary-color); }
         #calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 500; font-size: 0.8rem; padding: 15px 25px; color: var(--text-muted-color); text-transform: uppercase; }
-        #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(130px, auto); gap: 1px; background-color: var(--secondary-color); border-top: 1px solid var(--secondary-color); }
-        .calendar-day { background-color: var(--primary-color); padding: 8px; transition: background-color 0.2s ease-in-out; display: flex; flex-direction: column; gap: 6px; position: relative; }
+        #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--secondary-color); border-left: 1px solid var(--secondary-color); }
+        .calendar-day { background-color: var(--primary-color); padding: 8px; transition: background-color 0.2s; display: flex; flex-direction: column; gap: 6px; position: relative; border-right: 1px solid var(--secondary-color); border-bottom: 1px solid var(--secondary-color); min-height: 140px; }
         .calendar-day:not(.other-month):hover { background-color: var(--secondary-color); cursor: pointer; }
         .calendar-day.other-month { background-color: var(--bg-color); pointer-events: none; }
         body.light-mode .calendar-day.other-month { background-color: #f0f2f5; }
         .day-number { font-weight: 500; font-size: 0.9rem; padding: 4px; z-index: 1; }
         .calendar-day.current-day .day-number { background-color: var(--accent-color); color: white; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
-        .events-container { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 5px; }
-        .event-marker { display: flex; align-items: center; gap: 6px; padding: 3px 5px; border-radius: 5px; font-size: 0.8rem; background-color: var(--secondary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .event-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .event-marker.income .event-dot { background-color: var(--success-color); }
-        .event-marker.expense-paid .event-dot { background-color: var(--error-color); }
-        .event-marker.expense-due .event-dot { background-color: var(--warning-color); }
-        .event-marker.expense-overdue .event-dot { background-color: var(--error-color); animation: blink-dot 1.5s infinite; }
-        @keyframes blink-dot { 50% { box-shadow: 0 0 8px color-mix(in srgb, var(--error-color) 70%, transparent); } }
+        .events-container { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 5px; padding-top: 4px; }
+        .event-marker { display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 5px; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid; color: var(--text-color); background-color: color-mix(in srgb, var(--secondary-color) 50%, transparent); }
+        .event-marker.income { background-color: color-mix(in srgb, var(--success-color) 25%, transparent); border-left-color: var(--success-color); }
+        .event-marker.expense-paid { background-color: color-mix(in srgb, var(--error-color) 25%, transparent); border-left-color: var(--error-color); }
+        .event-marker.expense-due { background-color: color-mix(in srgb, var(--warning-color) 25%, transparent); border-left-color: var(--warning-color); }
+        .event-marker.expense-overdue { background-color: color-mix(in srgb, var(--error-color) 40%, transparent); border-left-color: var(--error-color); animation: blink-background 1.5s infinite; }
+        @keyframes blink-background { 50% { background-color: color-mix(in srgb, var(--error-color) 15%, transparent); } }
+        .more-events-indicator { font-size: 0.8rem; font-weight: 500; color: var(--accent-color); margin-top: 4px; padding: 2px 8px; cursor: pointer; }
+        .more-events-indicator:hover { text-decoration: underline; }
+        .calendar-day.weekend { background-color: color-mix(in srgb, var(--primary-color) 95%, #808080 5%); }
+        body.light-mode .calendar-day.weekend { background-color: #f8f9fa; }
 
         /* === ESTILOS PARA MODAIS === */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1050; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(4px); }
         .modal-overlay.visible { display: flex; opacity: 1; }
-        .modal-content {
-            background-color: var(--card-bg-color); padding: 30px; border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow); width: 90%; max-width: 500px;
-            transform: scale(0.95); transition: transform 0.3s ease;
-            max-height: 90vh; overflow-y: auto;
-        }
+        .modal-content { background-color: var(--card-bg-color); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--secondary-color); padding-bottom: 15px; margin-bottom: 20px; }
         .modal-header h2 { margin-bottom: 0; border-bottom: none; }
@@ -179,7 +177,6 @@
         .account-chart-container { height: 80px; position: relative; }
         @media (max-width: 600px) { .account-details { grid-template-columns: 1fr; } .account-card-grid { grid-template-columns: 1fr; } }
 
-
         /* === MÓDULO CARTÃO DE CRÉDITO === */
         .credit-card-module-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: flex-start; }
         #credit-card-selector-list .list-item { flex-direction: row; cursor: pointer; border-left: 4px solid transparent; }
@@ -193,133 +190,28 @@
         @media (max-width: 992px) { .credit-card-module-layout { grid-template-columns: 1fr; } }
         
         /* === ESTILOS DA NOVA TELA DE LOGIN === */
-        #login-container {
-            display: block;
-            height: auto;
-            min-height: 100vh;
-        }
-        .login-wrapper {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            min-height: 100vh;
-            background-color: var(--card-bg-color);
-        }
-        .login-showcase {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 50px;
-            background: linear-gradient(-45deg, var(--bg-color), var(--primary-color), var(--secondary-color), var(--accent-color));
-            background-size: 400% 400%;
-            animation: animated-gradient 15s ease infinite;
-            color: white;
-        }
-        @keyframes animated-gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .login-showcase h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .login-showcase p {
-            font-size: 1.1rem;
-            max-width: 400px;
-            margin-top: 15px;
-            color: var(--text-muted-color);
-            line-height: 1.7;
-        }
-        .showcase-footer {
-            font-weight: 500;
-            color: var(--text-muted-color);
-            opacity: 0.7;
-        }
-        .login-form-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .login-box {
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-        }
-        .login-logo {
-            width: 60px;
-            height: 60px;
-            border-radius: var(--border-radius);
-            background-color: var(--accent-color);
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 700;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 20px auto;
-            box-shadow: 0 4px 15px color-mix(in srgb, var(--accent-color) 40%, transparent);
-        }
-        .form-group-with-icon {
-            position: relative;
-        }
-        .form-group-with-icon svg {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            color: var(--text-muted-color);
-            pointer-events: none;
-        }
-        .form-group-with-icon input {
-            padding-left: 45px;
-        }
-        #login-btn.loading {
-            color: transparent;
-            position: relative;
-            pointer-events: none;
-        }
-        #login-btn.loading::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.5);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: btn-spin 0.8s linear infinite;
-        }
-        @keyframes btn-spin {
-            to { transform: rotate(360deg); }
-        }
+        #login-container { display: block; height: auto; min-height: 100vh; }
+        .login-wrapper { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; background-color: var(--card-bg-color); }
+        .login-showcase { display: flex; flex-direction: column; justify-content: space-between; padding: 50px; background: linear-gradient(-45deg, var(--bg-color), var(--primary-color), var(--secondary-color), var(--accent-color)); background-size: 400% 400%; animation: animated-gradient 15s ease infinite; color: white; }
+        @keyframes animated-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .login-showcase h2 { font-size: 2.5rem; font-weight: 700; line-height: 1.2; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .login-showcase p { font-size: 1.1rem; max-width: 400px; margin-top: 15px; color: var(--text-muted-color); line-height: 1.7; }
+        .showcase-footer { font-weight: 500; color: var(--text-muted-color); opacity: 0.7; }
+        .login-form-wrapper { display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .login-box { text-align: center; width: 100%; max-width: 400px; }
+        .login-logo { width: 60px; height: 60px; border-radius: var(--border-radius); background-color: var(--accent-color); color: white; font-size: 2.5rem; font-weight: 700; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; box-shadow: 0 4px 15px color-mix(in srgb, var(--accent-color) 40%, transparent); }
+        .form-group-with-icon { position: relative; }
+        .form-group-with-icon svg { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-muted-color); pointer-events: none; }
+        .form-group-with-icon input { padding-left: 45px; }
+        #login-btn.loading { color: transparent; position: relative; pointer-events: none; }
+        #login-btn.loading::after { content: ''; position: absolute; left: 50%; top: 50%; margin-left: -10px; margin-top: -10px; width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.5); border-top-color: white; border-radius: 50%; animation: btn-spin 0.8s linear infinite; }
+        @keyframes btn-spin { to { transform: rotate(360deg); } }
         @media (max-width: 992px) {
-            #login-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%);
-            }
-            .login-wrapper {
-                grid-template-columns: 1fr;
-            }
-            .login-showcase {
-                display: none;
-            }
-            .login-form-wrapper {
-                width: 100%;
-            }
-            .login-box {
-                width: 90%; 
-                max-width: 400px;
-            }
+            #login-container { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%); }
+            .login-wrapper { grid-template-columns: 1fr; }
+            .login-showcase { display: none; }
+            .login-form-wrapper { width: 100%; }
+            .login-box { width: 90%; max-width: 400px; }
         }
     </style>
 </head>
@@ -679,6 +571,7 @@
                         <div id="calendar-header">
                             <button id="prev-month-btn" class="btn btn-secondary">‹ Mês Anterior</button>
                             <h2 id="month-year-display"></h2>
+                            <button id="today-btn" class="btn btn-secondary">Hoje</button>
                             <button id="next-month-btn" class="btn btn-secondary">Próximo Mês ›</button>
                         </div>
                         <div id="calendar-weekdays">
@@ -922,8 +815,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             this.elements.goalsList?.addEventListener('submit', (e) => { if (e.target.classList.contains('goal-contribution-form')) { this.handleGoalContribution(e); } });
-            this.elements.prevMonthBtn?.addEventListener('click', () => this.handlePrevMonth());
-            this.elements.nextMonthBtn?.addEventListener('click', () => this.handleNextMonth());
+            
+            this.elements.prevMonthBtn?.addEventListener('click', () => this.handleCalendarNav(-1));
+            this.elements.nextMonthBtn?.addEventListener('click', () => this.handleCalendarNav(1));
+            document.getElementById('today-btn')?.addEventListener('click', () => {
+                this.state.currentCalendarDate = new Date();
+                this.renderCalendar();
+            });
             
             const reportFilters = ['reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter'];
             reportFilters.forEach(id => this.elements[id]?.addEventListener('change', () => this.renderFilteredReport()));
@@ -1446,7 +1344,123 @@ document.addEventListener('DOMContentLoaded', () => {
         renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
         renderGoalsList() { this.elements.goalsList.innerHTML = this.state.goals.map(g => { const percentage = g.target > 0 ? (g.saved / g.target) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${g.name}</h3> <span>${this.formatCurrency(g.saved)} / ${this.formatCurrency(g.target)}</span> ${g.deadline ? `<small style="color:var(--text-muted-color);">Prazo: ${this.formatDate(g.deadline)}</small>` : ''} </div> <div class="actions"> <button class="edit-btn" data-type="goal" data-id="${g.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="goal" data-id="${g.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" class="contribution-amount" placeholder="Valor do aporte" step="0.01"> <select class="contribution-account">${this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select> <button type="submit" class="btn btn-success">Aportar</button> </form> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma meta criada.</p>'; },
         renderRecurrencesList() { this.elements.recurrencesList.innerHTML = this.state.recurrences.map(r => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${r.description} (${r.type === 'income' ? 'Receita' : 'Despesa'})</h3> <span>${this.formatCurrency(r.amount)} (${r.frequency === 'monthly' ? 'Mensal' : 'Anual'})</span> <small style="color:var(--text-muted-color);">Próximo Lançamento: ${this.formatDate(r.nextDueDate)}</small> </div> <div class="actions"> <button class="edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="recurrence" data-id="${r.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma recorrência cadastrada.</p>'; },
-        renderCalendar() { const grid = this.elements.calendarGrid; const header = this.elements.monthYearDisplay; if (!grid || !header) return; grid.innerHTML = ''; const today = new Date(); today.setHours(0, 0, 0, 0); const date = this.state.currentCalendarDate; const month = date.getMonth(); const year = date.getFullYear(); header.textContent = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(date); const firstDayOfMonth = new Date(year, month, 1); const lastDayOfMonth = new Date(year, month + 1, 0); const daysInMonth = lastDayOfMonth.getDate(); const startDayOfWeek = firstDayOfMonth.getDay(); const monthTransactions = this.state.transactions.filter(t => { const tDate = new Date(t.date + 'T00:00:00'); return tDate.getMonth() === month && tDate.getFullYear() === year; }); const lastDayOfPrevMonth = new Date(year, month, 0).getDate(); for (let i = startDayOfWeek; i > 0; i--) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day other-month'; dayCell.innerHTML = `<span class="day-number">${lastDayOfPrevMonth - i + 1}</span>`; grid.appendChild(dayCell); } for (let day = 1; day <= daysInMonth; day++) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day'; const currentDate = new Date(year, month, day); if (currentDate.getTime() === today.getTime()) { dayCell.classList.add('current-day'); } const dayNumber = document.createElement('span'); dayNumber.className = 'day-number'; dayNumber.textContent = day; dayCell.appendChild(dayNumber); const eventsContainer = document.createElement('div'); eventsContainer.className = 'events-container'; dayCell.appendChild(eventsContainer); const dayTransactions = monthTransactions.filter(t => new Date(t.date + 'T00:00:00').getDate() === day); dayTransactions.forEach(t => { const eventMarker = document.createElement('div'); eventMarker.className = 'event-marker'; eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`; const eventDot = document.createElement('span'); eventDot.className = 'event-dot'; const eventDesc = document.createElement('span'); eventDesc.className = 'event-desc'; eventDesc.textContent = t.description; eventMarker.appendChild(eventDot); eventMarker.appendChild(eventDesc); if(t.type === 'income') { eventMarker.classList.add('income'); } else { if(t.isPaid) { eventMarker.classList.add('expense-paid'); } else { const dueDate = new Date(t.dueDate + 'T00:00:00'); if(dueDate < today) { eventMarker.classList.add('expense-overdue'); } else { eventMarker.classList.add('expense-due'); } } } eventsContainer.appendChild(eventMarker); }); grid.appendChild(dayCell); } const totalCells = startDayOfWeek + daysInMonth; const nextMonthDays = (7 - (totalCells % 7)) % 7; for (let i = 1; i <= nextMonthDays; i++) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day other-month'; dayCell.innerHTML = `<span class="day-number">${i}</span>`; grid.appendChild(dayCell); } },
+        
+        handleCalendarNav(direction) {
+            this.state.currentCalendarDate.setMonth(this.state.currentCalendarDate.getMonth() + direction);
+            this.renderCalendar();
+        },
+
+        renderCalendar() {
+            const grid = this.elements.calendarGrid;
+            const header = this.elements.monthYearDisplay;
+            if (!grid || !header) return;
+
+            grid.innerHTML = '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const date = this.state.currentCalendarDate;
+            const month = date.getMonth();
+            const year = date.getFullYear();
+            
+            header.textContent = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(date);
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            const startDayOfWeek = firstDayOfMonth.getDay();
+
+            const transactionsThisMonth = this.state.transactions.filter(t => {
+                const tDate = new Date(t.date + 'T00:00:00');
+                return tDate.getFullYear() === year && tDate.getMonth() === month;
+            });
+            
+            const lastDayOfPrevMonth = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek; i > 0; i--) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day other-month';
+                dayCell.innerHTML = `<span class="day-number">${lastDayOfPrevMonth - i + 1}</span>`;
+                grid.appendChild(dayCell);
+            }
+
+            const MAX_VISIBLE_EVENTS = 3;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                const currentDate = new Date(year, month, day);
+                const dayOfWeek = currentDate.getDay();
+                
+                dayCell.className = 'calendar-day';
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    dayCell.classList.add('weekend');
+                }
+                if (currentDate.getTime() === today.getTime()) {
+                    dayCell.classList.add('current-day');
+                }
+                dayCell.dataset.date = currentDate.toISOString().split('T')[0];
+
+                const dayNumber = document.createElement('span');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayCell.appendChild(dayNumber);
+
+                const eventsContainer = document.createElement('div');
+                eventsContainer.className = 'events-container';
+                dayCell.appendChild(eventsContainer);
+
+                const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
+                                                            .sort((a,b) => a.amount - b.amount);
+
+                dayTransactions.forEach((t, index) => {
+                    if(index < MAX_VISIBLE_EVENTS) {
+                        const eventMarker = document.createElement('div');
+                        eventMarker.className = 'event-marker';
+                        eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`;
+                        
+                        const eventDesc = document.createElement('span');
+                        eventDesc.className = 'event-desc';
+                        eventDesc.textContent = t.description;
+                        eventMarker.appendChild(eventDesc);
+                        
+                        if (t.type === 'income') {
+                            eventMarker.classList.add('income');
+                        } else {
+                            if (t.isPaid) {
+                                eventMarker.classList.add('expense-paid');
+                            } else {
+                                const dueDate = new Date(t.dueDate + 'T00:00:00');
+                                if (dueDate < today) {
+                                    eventMarker.classList.add('expense-overdue');
+                                } else {
+                                    eventMarker.classList.add('expense-due');
+                                }
+                            }
+                        }
+                        eventsContainer.appendChild(eventMarker);
+                    }
+                });
+
+                if (dayTransactions.length > MAX_VISIBLE_EVENTS) {
+                    const hiddenCount = dayTransactions.length - MAX_VISIBLE_EVENTS;
+                    const moreIndicator = document.createElement('div');
+                    moreIndicator.className = 'more-events-indicator';
+                    moreIndicator.textContent = `+${hiddenCount} mais`;
+                    eventsContainer.appendChild(moreIndicator);
+                }
+
+                grid.appendChild(dayCell);
+            }
+
+            const totalCells = startDayOfWeek + daysInMonth;
+            const nextMonthDays = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= nextMonthDays; i++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day other-month';
+                dayCell.innerHTML = `<span class="day-number">${i}</span>`;
+                grid.appendChild(dayCell);
+            }
+        },
+
         renderAllReports() { this.renderFilteredReport(); this.renderCategoryExpenseChart(); this.renderCashflowChart(); },
         getFilteredTransactions() { const dateFilter = this.elements.reportDateFilter.value; const categoryFilter = this.elements.reportCategoryFilter.value; const statusFilter = this.elements.reportPaymentStatusFilter.value; const typeFilter = this.elements.reportTypeFilter.value; const now = new Date(); let startDate = new Date('1970-01-01'); let endDate = new Date('2999-12-31'); switch(dateFilter) { case 'today': startDate = new Date(now.setHours(0,0,0,0)); endDate = new Date(now.setHours(23,59,59,999)); break; case '7': startDate = new Date(new Date().setDate(now.getDate() - 7)); break; case '30': startDate = new Date(new Date().setDate(now.getDate() - 30)); break; case 'month': startDate = new Date(now.getFullYear(), now.getMonth(), 1); endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); break; case 'year': startDate = new Date(now.getFullYear(), 0, 1); endDate = new Date(now.getFullYear(), 11, 31); break; } return this.state.transactions.filter(t => { const tDate = new Date(t.date); if (dateFilter !== 'all' && (tDate < startDate || tDate > endDate)) return false; if (categoryFilter !== 'all' && t.category !== categoryFilter) return false; if (typeFilter !== 'all' && t.type !== typeFilter) return false; if (statusFilter !== 'all') { if(statusFilter === 'paid' && !t.isPaid) return false; if(statusFilter === 'unpaid' && (t.isPaid || t.type !== 'expense')) return false; } return true; }); },
         renderFilteredReport() { const filtered = this.getFilteredTransactions(); this.elements.filteredReportResults.innerHTML = filtered.length > 0 ? filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => this.renderTransactionItem(t)).join('') : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação encontrada com os filtros selecionados.</p>'; },
