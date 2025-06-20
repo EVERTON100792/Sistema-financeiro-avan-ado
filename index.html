@@ -96,8 +96,9 @@
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
         .single-form-layout { max-width: 500px; margin: 0 auto; }
         .list-item, .category-item { flex-direction: column; align-items: stretch; }
-        .list-item-header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-        .list-item .main-info { flex-grow: 1; }
+        .list-item-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .list-item .main-info { flex-grow: 1; display: flex; align-items: center; gap: 15px;}
+        .list-item .main-info .icon { font-size: 1.8rem; flex-shrink: 0; width: 40px; text-align: center;}
         .actions { display: flex; align-items: center; gap: 8px; position: relative; }
         .actions button { background: none; border: none; cursor: pointer; color: var(--text-muted-color); padding: 5px; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
         .actions button:hover { color: var(--accent-color); }
@@ -160,27 +161,26 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1050; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(4px); }
         .modal-overlay.visible { display: flex; opacity: 1; }
         .modal-content {
-            background-color: var(--card-bg-color);
-            padding: 30px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            width: 90%;
-            max-width: 500px;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-            /* CORREÇÃO: Adicionado max-height e overflow-y para telas pequenas */
-            max-height: 90vh;
-            overflow-y: auto;
+            background-color: var(--card-bg-color); padding: 30px; border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow); width: 90%; max-width: 500px;
+            transform: scale(0.95); transition: transform 0.3s ease;
+            max-height: 90vh; overflow-y: auto;
         }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--secondary-color); padding-bottom: 15px; margin-bottom: 20px; }
         .modal-header h2 { margin-bottom: 0; border-bottom: none; }
         .modal-close-btn { background: none; border: none; font-size: 1.8rem; color: var(--text-muted-color); cursor: pointer; }
 
-        /* === ESTILOS PARA GRÁFICOS DAS CONTAS === */
-        .account-layout { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; margin-top: 10px; }
-        .account-chart-container { width: 200px; height: 80px; position: relative; }
-        @media (max-width: 600px) { .account-layout { grid-template-columns: 1fr; gap: 15px; } .account-chart-container { width: 100%; } }
+        /* === NOVOS ESTILOS PARA ABA CONTAS === */
+        .account-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+        .account-details { display: grid; grid-template-columns: 1fr 140px; gap: 20px; align-items: center; margin-top: 15px; }
+        .account-main-balance { font-size: 2rem; font-weight: 700; color: var(--text-color); }
+        .account-monthly-summary { margin-top: 8px; font-size: 0.9rem; }
+        .account-monthly-summary .income { color: var(--success-color); }
+        .account-monthly-summary .expense { color: var(--error-color); }
+        .account-chart-container { height: 80px; position: relative; }
+        @media (max-width: 600px) { .account-details { grid-template-columns: 1fr; } .account-card-grid { grid-template-columns: 1fr; } }
+
 
         /* === MÓDULO CARTÃO DE CRÉDITO === */
         .credit-card-module-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: flex-start; }
@@ -333,7 +333,7 @@
                             <button id="add-account-btn-tab" class="btn btn-primary">Adicionar Conta</button>
                         </div>
                         <p style="color:var(--text-muted-color); margin-top: 10px; margin-bottom: 15px;">Abaixo estão suas contas correntes, poupanças e dinheiro.</p>
-                        <div id="accounts-list"></div>
+                        <div id="accounts-list" class="account-card-grid"></div>
                     </div>
                 </div>
 
@@ -1023,6 +1023,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderAllReports(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); } },
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
+        getAccountIcon(type) {
+            switch (type) {
+                case 'checking': return '🏦';
+                case 'savings': return '🐖';
+                case 'cash': return '💵';
+                default: return '💰';
+            }
+        },
         handleLogout() { if (confirm('Tem certeza que deseja sair? Seus dados permanecerão salvos no navegador.')) { localStorage.removeItem('financeAppUser'); window.location.reload(); } },
         toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
         applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
@@ -1050,12 +1058,144 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
         renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.accountId && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0); const cardDebt = this.state.invoices.filter(i=>i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0); const netWorth = accountBalance - cardDebt; const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(netWorth); balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
-        renderAccountsList() { this.elements.accountsList.innerHTML = this.state.accounts.map(acc => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${acc.name} <small style="color:var(--text-muted-color);font-weight:400;">(${acc.type === 'checking' ? 'C. Corrente' : (acc.type === 'savings' ? 'Poupança' : 'Dinheiro')})</small></h3> </div> <div class="actions"> <button class="edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="account" data-id="${acc.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="account-layout"> <span class="amount positive" style="font-size: 1.8rem; font-weight: 700;">${this.formatCurrency(acc.currentBalance)}</span> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma conta cadastrada.</p>'; },
+        
+        // --- NOVA FUNÇÃO RENDERACCOUNTSLIST ---
+        renderAccountsList() {
+            const accountsListEl = this.elements.accountsList;
+            accountsListEl.innerHTML = ''; // Limpa a lista antes de renderizar
+
+            if (this.state.accounts.length === 0) {
+                accountsListEl.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px; grid-column: 1 / -1;">Nenhuma conta cadastrada.</p>';
+                return;
+            }
+
+            this.state.accounts.forEach(acc => {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                const monthlyIncome = this.state.transactions
+                    .filter(t => t.accountId === acc.id && t.type === 'income' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const monthlyExpense = this.state.transactions
+                    .filter(t => t.accountId === acc.id && t.type === 'expense' && t.isPaid && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const cardHTML = `
+                    <div class="list-item card">
+                        <div class="list-item-header">
+                            <div class="main-info">
+                                <span class="icon">${this.getAccountIcon(acc.type)}</span>
+                                <div>
+                                    <h3>${acc.name}</h3>
+                                    <small style="color:var(--text-muted-color);font-weight:400; text-transform: capitalize;">${acc.type === 'checking' ? 'Conta Corrente' : acc.type}</small>
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <button class="edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button>
+                                <button class="delete-button" data-type="account" data-id="${acc.id}" title="Deletar">${this.getDeleteIconSVG()}</button>
+                            </div>
+                        </div>
+                        <div class="account-details">
+                            <div>
+                                <span class="account-main-balance">${this.formatCurrency(acc.currentBalance)}</span>
+                                <div class="account-monthly-summary">
+                                    <span class="income">▲ ${this.formatCurrency(monthlyIncome)}</span> | 
+                                    <span class="expense">▼ ${this.formatCurrency(monthlyExpense)}</span>
+                                </div>
+                            </div>
+                            <div class="account-chart-container">
+                                <canvas id="account-chart-${acc.id}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                accountsListEl.innerHTML += cardHTML;
+            });
+
+            // Renderiza os gráficos após os elementos canvas serem adicionados ao DOM
+            this.state.accounts.forEach(acc => {
+                const canvas = document.getElementById(`account-chart-${acc.id}`);
+                if(canvas) {
+                    this.renderAccountChart(acc, canvas);
+                }
+            });
+        },
+
+        // --- NOVA FUNÇÃO PARA RENDERIZAR O MINI-GRÁFICO ---
+        renderAccountChart(account, canvas) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const relevantTransactions = this.state.transactions
+                .filter(t => t.accountId === account.id && new Date(t.date) >= thirtyDaysAgo)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Calcula o saldo inicial de 30 dias atrás
+            let startingBalance = account.currentBalance;
+            this.state.transactions
+                .filter(t => t.accountId === account.id && new Date(t.date) > thirtyDaysAgo)
+                .forEach(t => {
+                    if (t.type === 'income') startingBalance -= t.amount;
+                    if (t.type === 'expense' && t.isPaid) startingBalance += t.amount;
+                });
+
+            const dailyBalances = new Map();
+            let runningBalance = startingBalance;
+            
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dailyBalances.set(date.toISOString().split('T')[0], null);
+            }
+            dailyBalances.set(thirtyDaysAgo.toISOString().split('T')[0], startingBalance);
+            
+            let lastKnownBalance = startingBalance;
+            relevantTransactions.forEach(t => {
+                if (t.type === 'income') runningBalance += t.amount;
+                if (t.type === 'expense' && t.isPaid) runningBalance -= t.amount;
+                dailyBalances.set(t.date, runningBalance);
+            });
+            
+            const chartData = [];
+            let previousBalance = startingBalance;
+            for (const [date, balance] of dailyBalances.entries()) {
+                if(balance !== null){
+                    chartData.push({ x: date, y: balance });
+                    previousBalance = balance;
+                } else {
+                    chartData.push({ x: date, y: previousBalance });
+                }
+            }
+            chartData.sort((a,b) => new Date(a.x) - new Date(b.x));
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        data: chartData,
+                        borderColor: account.currentBalance >= startingBalance ? 'var(--success-color)' : 'var(--error-color)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { display: false }, y: { display: false } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    animation: { duration: 500 }
+                }
+            });
+        },
+
         renderCreditCardModule() {
             const selectorList = this.elements.creditCardSelectorList;
             selectorList.innerHTML = this.state.creditCards.map(c => `
-                <div class="list-item ${c.id === this.state.selectedCardId ? 'selected' : ''}" data-id="${c.id}">
-                    <div class="main-info"><h3>${c.name}</h3></div>
+                <div class="list-item ${c.id === this.state.selectedCardId ? 'selected' : ''}" data-id="${c.id}" style="flex-direction: row; align-items: center; cursor: pointer;">
+                    <div class="main-info" style="flex-grow: 1;"><h3>${c.name}</h3></div>
                 </div>
             `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:10px 0;">Nenhum cartão cadastrado.</p>';
 
@@ -1114,9 +1254,9 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         renderCategoriesList() { this.elements.categoriesList.innerHTML = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(cat => ` <div class="category-item"> <div class="list-item-header"> <div class="main-info"><h3>${cat.name}</h3></div> <div class="actions"> <button class="edit-btn" data-type="category" data-id="${cat.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="category" data-id="${cat.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join(''); },
-        renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
-        renderGoalsList() { this.elements.goalsList.innerHTML = this.state.goals.map(g => { const percentage = g.target > 0 ? (g.saved / g.target) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${g.name}</h3> <span>${this.formatCurrency(g.saved)} / ${this.formatCurrency(g.target)}</span> ${g.deadline ? `<small style="color:var(--text-muted-color);">Prazo: ${this.formatDate(g.deadline)}</small>` : ''} </div> <div class="actions"> <button class="edit-btn" data-type="goal" data-id="${g.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="goal" data-id="${g.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" class="contribution-amount" placeholder="Valor do aporte" step="0.01"> <select class="contribution-account">${this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select> <button type="submit" class="btn btn-success">Aportar</button> </form> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma meta criada.</p>'; },
-        renderRecurrencesList() { this.elements.recurrencesList.innerHTML = this.state.recurrences.map(r => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${r.description} (${r.type === 'income' ? 'Receita' : 'Despesa'})</h3> <span>${this.formatCurrency(r.amount)} (${r.frequency === 'monthly' ? 'Mensal' : 'Anual'})</span> <small style="color:var(--text-muted-color);">Próximo Lançamento: ${this.formatDate(r.nextDueDate)}</small> </div> <div class="actions"> <button class="edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="recurrence" data-id="${r.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma recorrência cadastrada.</p>'; },
+        renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
+        renderGoalsList() { this.elements.goalsList.innerHTML = this.state.goals.map(g => { const percentage = g.target > 0 ? (g.saved / g.target) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${g.name}</h3> <span>${this.formatCurrency(g.saved)} / ${this.formatCurrency(g.target)}</span> ${g.deadline ? `<small style="color:var(--text-muted-color);">Prazo: ${this.formatDate(g.deadline)}</small>` : ''} </div> <div class="actions"> <button class="edit-btn" data-type="goal" data-id="${g.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="goal" data-id="${g.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" class="contribution-amount" placeholder="Valor do aporte" step="0.01"> <select class="contribution-account">${this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select> <button type="submit" class="btn btn-success">Aportar</button> </form> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma meta criada.</p>'; },
+        renderRecurrencesList() { this.elements.recurrencesList.innerHTML = this.state.recurrences.map(r => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${r.description} (${r.type === 'income' ? 'Receita' : 'Despesa'})</h3> <span>${this.formatCurrency(r.amount)} (${r.frequency === 'monthly' ? 'Mensal' : 'Anual'})</span> <small style="color:var(--text-muted-color);">Próximo Lançamento: ${this.formatDate(r.nextDueDate)}</small> </div> <div class="actions"> <button class="edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="recurrence" data-id="${r.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma recorrência cadastrada.</p>'; },
         renderCalendar() { const grid = this.elements.calendarGrid; const header = this.elements.monthYearDisplay; if (!grid || !header) return; grid.innerHTML = ''; const today = new Date(); today.setHours(0, 0, 0, 0); const date = this.state.currentCalendarDate; const month = date.getMonth(); const year = date.getFullYear(); header.textContent = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(date); const firstDayOfMonth = new Date(year, month, 1); const lastDayOfMonth = new Date(year, month + 1, 0); const daysInMonth = lastDayOfMonth.getDate(); const startDayOfWeek = firstDayOfMonth.getDay(); const monthTransactions = this.state.transactions.filter(t => { const tDate = new Date(t.date + 'T00:00:00'); return tDate.getMonth() === month && tDate.getFullYear() === year; }); const lastDayOfPrevMonth = new Date(year, month, 0).getDate(); for (let i = startDayOfWeek; i > 0; i--) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day other-month'; dayCell.innerHTML = `<span class="day-number">${lastDayOfPrevMonth - i + 1}</span>`; grid.appendChild(dayCell); } for (let day = 1; day <= daysInMonth; day++) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day'; const currentDate = new Date(year, month, day); if (currentDate.getTime() === today.getTime()) { dayCell.classList.add('current-day'); } const dayNumber = document.createElement('span'); dayNumber.className = 'day-number'; dayNumber.textContent = day; dayCell.appendChild(dayNumber); const eventsContainer = document.createElement('div'); eventsContainer.className = 'events-container'; dayCell.appendChild(eventsContainer); const dayTransactions = monthTransactions.filter(t => new Date(t.date + 'T00:00:00').getDate() === day); dayTransactions.forEach(t => { const eventMarker = document.createElement('div'); eventMarker.className = 'event-marker'; eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`; const eventDot = document.createElement('span'); eventDot.className = 'event-dot'; const eventDesc = document.createElement('span'); eventDesc.className = 'event-desc'; eventDesc.textContent = t.description; eventMarker.appendChild(eventDot); eventMarker.appendChild(eventDesc); if(t.type === 'income') { eventMarker.classList.add('income'); } else { if(t.isPaid) { eventMarker.classList.add('expense-paid'); } else { const dueDate = new Date(t.dueDate + 'T00:00:00'); if(dueDate < today) { eventMarker.classList.add('expense-overdue'); } else { eventMarker.classList.add('expense-due'); } } } eventsContainer.appendChild(eventMarker); }); grid.appendChild(dayCell); } const totalCells = startDayOfWeek + daysInMonth; const nextMonthDays = (7 - (totalCells % 7)) % 7; for (let i = 1; i <= nextMonthDays; i++) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day other-month'; dayCell.innerHTML = `<span class="day-number">${i}</span>`; grid.appendChild(dayCell); } },
         renderAllReports() { this.renderFilteredReport(); this.renderCategoryExpenseChart(); this.renderCashflowChart(); },
         getFilteredTransactions() { const dateFilter = this.elements.reportDateFilter.value; const categoryFilter = this.elements.reportCategoryFilter.value; const statusFilter = this.elements.reportPaymentStatusFilter.value; const typeFilter = this.elements.reportTypeFilter.value; const now = new Date(); let startDate = new Date('1970-01-01'); let endDate = new Date('2999-12-31'); switch(dateFilter) { case 'today': startDate = new Date(now.setHours(0,0,0,0)); endDate = new Date(now.setHours(23,59,59,999)); break; case '7': startDate = new Date(new Date().setDate(now.getDate() - 7)); break; case '30': startDate = new Date(new Date().setDate(now.getDate() - 30)); break; case 'month': startDate = new Date(now.getFullYear(), now.getMonth(), 1); endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); break; case 'year': startDate = new Date(now.getFullYear(), 0, 1); endDate = new Date(now.getFullYear(), 11, 31); break; } return this.state.transactions.filter(t => { const tDate = new Date(t.date); if (dateFilter !== 'all' && (tDate < startDate || tDate > endDate)) return false; if (categoryFilter !== 'all' && t.category !== categoryFilter) return false; if (typeFilter !== 'all' && t.type !== typeFilter) return false; if (statusFilter !== 'all') { if(statusFilter === 'paid' && !t.isPaid) return false; if(statusFilter === 'unpaid' && (t.isPaid || t.type !== 'expense')) return false; } return true; }); },
