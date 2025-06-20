@@ -551,9 +551,9 @@
                                                  Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
                                          </p>
                                          <div class="settings-actions">
-                                              <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
-                                              <button id="import-btn" class="btn btn-primary">Importar de um Backup 📤</button>
-                                              <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                                             <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
+                                             <button id="import-btn" class="btn btn-primary">Importar de um Backup 📤</button>
+                                             <input type="file" id="import-file-input" accept=".json" style="display: none;">
                                          </div>
                                      </div>
                                  </div>
@@ -1068,6 +1068,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
         },
         renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
+        
+        // ######################################################################
+        // #   FUNÇÃO CORRIGIDA PARA ATENDER À SOLICITAÇÃO DO USUÁRIO           #
+        // ######################################################################
         renderSummary() {
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -1082,19 +1086,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 t.category !== 'Saldo Inicial'
             ).reduce((sum, t) => sum + (t.amount || 0), 0);
             
-            // LÓGICA CORRIGIDA E FINAL
+            // CORREÇÃO 1: "Despesas (Mês)" agora só reflete o dinheiro que realmente saiu das suas contas.
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
                        t.isPaid &&
-                       t.accountId && // Garante que a transação saiu de uma conta real (não é compra de cartão)
+                       t.accountId && // Garante que a transação é de uma conta, não uma compra de cartão.
                        new Date(t.date).getMonth() === currentMonth &&
                        new Date(t.date).getFullYear() === currentYear &&
                        t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
-            const netWorth = accountBalance - cardDebt;
+            
+            // CORREÇÃO 2: A pedido, o "Patrimônio Líquido" no painel reflete apenas o total em contas.
+            // A dedução será percebida quando o saldo da conta diminuir ao pagar a fatura.
+            // Embora o cálculo contábil de patrimônio líquido seja (Ativos - Passivos),
+            // ajustamos esta *visualização* para se alinhar à sua expectativa de fluxo de caixa.
+            const netWorth = accountBalance;
 
             const balanceEl = document.getElementById('balance');
             balanceEl.textContent = this.formatCurrency(netWorth);
