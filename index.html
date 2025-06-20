@@ -834,6 +834,17 @@ document.addEventListener('DOMContentLoaded', () => {
         async checkLogin() { const user = localStorage.getItem('financeAppUser'); if (user) { this.state.user = user; await db.setDbName(user); this.elements.loginContainer.style.display = 'none'; this.elements.appContainer.style.display = 'block'; await this.initApp(); } else { this.elements.loginContainer.style.display = 'flex'; this.elements.appContainer.style.display = 'none'; } },
         async handleLogin() { const username = this.elements.username.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); await this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
         
+        // --- FUNÇÃO CORRIGIDA/RESTAURADA ---
+        async markAsPaid(transactionId) {
+            const transaction = this.state.transactions.find(t => t.id === transactionId);
+            if (transaction && transaction.accountId) { // Só marca como pago se for de uma conta real
+                transaction.isPaid = true;
+                await db.put('transactions', transaction);
+                await this.loadData();
+                this.updateAllRenders();
+            }
+        },
+
         async handleTransaction(e) {
             e.preventDefault();
             const form = e.target;
@@ -1057,7 +1068,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
         },
         renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
-        renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.accountId && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0); const cardDebt = this.state.invoices.filter(i=>i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0); const netWorth = accountBalance - cardDebt; const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(netWorth); balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
+        renderSummary() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const monthlyIncome = this.state.transactions.filter(t => 
+                new Date(t.date).getMonth() === currentMonth && 
+                new Date(t.date).getFullYear() === currentYear && 
+                t.type === 'income' && 
+                t.accountId && 
+                t.category !== 'Transferência' && 
+                t.category !== 'Saldo Inicial'
+            ).reduce((sum, t) => sum + (t.amount || 0), 0);
+            
+            // LÓGICA CORRIGIDA E FINAL
+            const monthlyExpense = this.state.transactions.filter(t => {
+                return t.type === 'expense' &&
+                       t.isPaid &&
+                       t.accountId && // Garante que a transação saiu de uma conta real (não é compra de cartão)
+                       new Date(t.date).getMonth() === currentMonth &&
+                       new Date(t.date).getFullYear() === currentYear &&
+                       t.category !== 'Transferência';
+            }).reduce((sum, t) => sum + (t.amount || 0), 0);
+
+            const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
+            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            const netWorth = accountBalance - cardDebt;
+
+            const balanceEl = document.getElementById('balance');
+            balanceEl.textContent = this.formatCurrency(netWorth);
+            balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome);
+            document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense);
+        },
         
         renderAccountsList() {
             const accountsListEl = this.elements.accountsList;
@@ -1123,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         },
-
+        
         renderAccountChart(account, canvas) {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -1155,15 +1199,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (new Date(t.date) >= thirtyDaysAgo) {
                     if (t.type === 'income') runningBalance += t.amount;
                     if (t.type === 'expense' && t.isPaid) runningBalance -= t.amount;
-                    dailyData.set(t.date, runningBalance);
+                    
+                    for (let d = new Date(t.date); d <= new Date(); d.setDate(d.getDate() + 1)) {
+                         const dateStr = d.toISOString().split('T')[0];
+                         if(dailyData.has(dateStr)) dailyData.set(dateStr, runningBalance);
+                    }
                 }
             });
             
-            let lastBalance = balance30DaysAgo;
-            const chartData = Array.from(dailyData.keys()).sort().map(date => {
-                lastBalance = dailyData.get(date) ?? lastBalance;
-                return { x: date, y: lastBalance };
-            });
+            const chartData = Array.from(dailyData.entries()).map(([date, balance]) => ({x: date, y: balance}));
 
             this.charts.accountCharts[account.id] = new Chart(canvas, {
                 type: 'line',
