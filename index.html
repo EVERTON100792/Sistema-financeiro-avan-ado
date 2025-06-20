@@ -819,9 +819,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = e.target;
             const accountId = form.elements['account-select'].value;
 
-            // BUG CORRIGIDO: Validação simplificada e corrigida.
-            if (!accountId || accountId === 'add_new_account') {
-                alert("Por favor, selecione uma conta válida para a transação.");
+            // CORREÇÃO DEFINITIVA: A validação agora checa se o accountId corresponde a uma conta real.
+            // Isso permite que o evento 'change' funcione sem ser bloqueado pelo 'submit'.
+            const account = this.state.accounts.find(a => a.id === accountId);
+            if (!account) {
+                alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, selecione a opção no menu e salve-a antes de continuar.");
                 return;
             }
 
@@ -857,7 +859,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleAccount(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `acc-${Date.now()}`; const name = form.elements['account-name'].value; const type = form.elements['account-type'].value; const initialBalance = parseFloat(form.elements['initial-balance'].value); const initialBalanceDate = form.elements['initial-balance-date'].value; const isEditing = !!this.state.editingItem; const account = { id, name, type, initialBalance }; await db.put('accounts', account); if (!isEditing && initialBalance > 0) { const initialTransaction = { id: `trans-${Date.now()}`, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate }; await db.put('transactions', initialTransaction); } await this.loadData(); this.updateAllRenders(); if (this.state.selectToUpdateAfterAccountCreation && !isEditing) { document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id; this.state.selectToUpdateAfterAccountCreation = null; } this.closeAccountModal(); this.cancelEditMode(); },
         async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateInvoiceForDate(id, new Date()); this.state.selectedCardId = id; await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
         
-        // NOVA LÓGICA DE PARCELAMENTO
         async handleCreditCardExpense(e) {
             e.preventDefault();
             const form = e.target;
@@ -869,7 +870,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
 
             if (installments === 1) {
-                // Lógica antiga para compra à vista
                 const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
                 if (!openInvoice) { alert("Não foi possível encontrar ou criar uma fatura para este cartão."); return; }
                 const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDate, category: category, isPaid: false, };
@@ -877,13 +877,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 openInvoice.amount = (openInvoice.amount || 0) + expense.amount;
                 await db.put('invoices', openInvoice);
             } else {
-                // Nova lógica para compras parceladas
                 const purchaseGroupId = `p-${Date.now()}`;
                 
-                // Lógica para dividir os centavos corretamente
-                let installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
-                let totalCalculated = installmentAmount * installments;
-                let remainder = parseFloat((totalAmount - totalCalculated).toFixed(2));
+                let installmentAmount = Math.floor((totalAmount * 100) / installments) / 100;
+                let sumOfInstallments = 0;
 
                 for (let i = 0; i < installments; i++) {
                     const installmentDate = new Date(purchaseDate + 'T00:00:00');
@@ -892,12 +889,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
                     if (!invoice) {
                         alert(`Não foi possível criar a fatura para a parcela ${i + 1}. A operação foi cancelada.`);
-                        return; // Interrompe se uma fatura não puder ser criada
+                        return;
                     }
 
                     let currentInstallmentAmount = installmentAmount;
-                    if (i === installments - 1) { // Adiciona o resto na última parcela
-                        currentInstallmentAmount = parseFloat((currentInstallmentAmount + remainder).toFixed(2));
+                    if (i === installments - 1) {
+                        currentInstallmentAmount = parseFloat((totalAmount - sumOfInstallments).toFixed(2));
                     }
                     
                     const expense = {
@@ -907,13 +904,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         invoiceId: invoice.id,
                         description: `${originalDescription} (${i + 1}/${installments})`,
                         amount: currentInstallmentAmount,
-                        date: purchaseDate, // A data da compra é a mesma para todas as parcelas
+                        date: purchaseDate,
                         category: category,
                         isPaid: false,
                     };
                     await db.put('transactions', expense);
                     invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
                     await db.put('invoices', invoice);
+                    sumOfInstallments += currentInstallmentAmount;
                 }
             }
             
@@ -925,7 +923,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async handleBillPayment(e) { e.preventDefault(); const form = this.elements.billPaymentForm; const cardId = form.elements['payment-card-id'].value; const invoiceId = form.elements['payment-invoice-id'].value; const paymentAmount = parseFloat(form.elements['payment-amount'].value); const sourceAccountId = form.elements['payment-account-select'].value; const paymentDate = form.elements['payment-date'].value; const card = this.state.creditCards.find(c => c.id === cardId); const sourceAccount = this.state.accounts.find(acc => acc.id === sourceAccountId); const invoice = this.state.invoices.find(i => i.id === invoiceId); if (!card || !sourceAccount || !invoice || !paymentAmount || paymentAmount <= 0) { alert("Dados de pagamento inválidos."); return; } this.updateAllBalances(); if (sourceAccount.currentBalance < paymentAmount) { alert("Saldo insuficiente na conta de origem."); return; } const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate }; await db.put('transactions', expenseTransaction); invoice.status = 'paid'; await db.put('invoices', invoice); await this.getOrCreateInvoiceForDate(cardId, new Date()); await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); this.closeBillPaymentModal(); alert("Pagamento da fatura registrado com sucesso!"); },
         
-        // --- Demais Handlers ---
         async handleCategorySubmit(e) { e.preventDefault(); const form = e.target, name = form.elements['category-name'].value.trim(); if (!name) return; const id = this.state.editingItem?.id || `cat-${Date.now()}`; await db.put('categories', { id, name }); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
         async handleTransfer(e) { e.preventDefault(); const form = e.target; const fromId = form.elements['transfer-from-account'].value; const toId = form.elements['transfer-to-account'].value; const amount = parseFloat(form.elements['transfer-amount'].value); const date = form.elements['transfer-date'].value; const desc = form.elements['transfer-description'].value; if (fromId === toId || !amount || !date) { alert("Dados inválidos. Verifique se as contas de origem e destino são diferentes e se o valor e a data estão preenchidos."); return; } const tId = `transfer-${Date.now()}`; const fromName = this.state.accounts.find(a=>a.id===fromId)?.name; const toName = this.state.accounts.find(a=>a.id===toId)?.name; const descriptionText = desc ? `: ${desc}` : ''; const exp = { id: Date.now() + '-out', type: 'expense', description: `Transferência para ${toName}${descriptionText}`, amount, date, accountId: fromId, category: 'Transferência', isPaid: true, dueDate: date, transferId: tId }; const inc = { id: Date.now() + '-in', type: 'income', description: `Transferência de ${fromName}${descriptionText}`, amount, date, accountId: toId, category: 'Transferência', isPaid: true, dueDate: date, transferId: tId }; await Promise.all([db.put('transactions', exp), db.put('transactions', inc)]); await this.loadData(); this.updateAllRenders(); form.reset(); alert("Transferência realizada com sucesso!"); },
         async handleBudget(e) { e.preventDefault(); const form = e.target; const category = form.elements['budget-category'].value; const amount = parseFloat(form.elements['budget-amount'].value); const id = this.state.editingItem?.id || this.state.budgets.find(b => b.category === category)?.id || `bud-${Date.now()}`; await db.put('budgets', { id, category, amount }); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
@@ -933,7 +930,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleGoalContribution(e) { e.preventDefault(); const form = e.target; const goalId = form.dataset.goalId; const amount = parseFloat(form.querySelector('.contribution-amount').value) || 0; const accountId = form.querySelector('.contribution-account').value; const goal = this.state.goals.find(g => g.id === goalId); this.updateAllBalances(); const account = this.state.accounts.find(a => a.id === accountId); if (amount <= 0 || !accountId || !goal || !account) { alert("Dados inválidos para a contribuição."); return; } if (account.currentBalance < amount) { alert("Saldo insuficiente na conta selecionada para fazer esta contribuição."); return; } goal.saved = (goal.saved || 0) + amount; const today = new Date().toISOString().split('T')[0]; const newT = { id: `trans-${Date.now()}`, type: 'expense', description: `Aporte para meta: ${goal.name}`, amount, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today }; await Promise.all([db.put('goals', goal), db.put('transactions', newT)]); await this.loadData(); this.updateAllRenders(); form.querySelector('.contribution-amount').value = ''; },
         async handleRecurrence(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `rec-${Date.now()}`; const description = form.elements['recurrence-description'].value; const amount = parseFloat(form.elements['recurrence-amount'].value); const type = form.elements['recurrence-type'].value; const accountId = form.elements['recurrence-account'].value; const category = form.elements['recurrence-category'].value; const frequency = form.elements['recurrence-frequency'].value; const startDate = form.elements['recurrence-start-date'].value; const existing = this.state.editingItem?.id ? this.state.recurrences.find(r=>r.id===id) : null; const recurrence = { id, description, amount, type, accountId, category, frequency, startDate, nextDueDate: existing ? existing.nextDueDate : startDate }; await db.put('recurrences', recurrence); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
         
-        // --- Lógica de Deleção ---
         async deleteTransaction(id) { const t = this.state.transactions.find(t=>t.id===id); if(!t) return; if(t.creditCardId) { const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); if(invoice) { invoice.amount -= t.amount; await db.put('invoices', invoice); } } await db.delete('transactions', id); await this.loadData(); this.updateAllRenders(); this.renderCreditCardModule(); },
         async deleteAccount(id) { const toDeleteT = this.state.transactions.filter(t => t.accountId === id); await Promise.all([ db.delete('accounts', id), ...toDeleteT.map(t => db.delete('transactions', t.id)) ]); await this.loadData(); this.updateAllRenders(); },
         async deleteCreditCard(id) { const toDeleteT = this.state.transactions.filter(t => t.creditCardId === id); const toDeleteI = this.state.invoices.filter(i => i.creditCardId === id); await Promise.all([ db.delete('creditCards', id), ...toDeleteT.map(t => db.delete('transactions', t.id)), ...toDeleteI.map(i => db.delete('invoices', i.id)) ]); this.state.selectedCardId = null; await this.loadData(); this.updateAllRenders(); this.renderCreditCardModule(); },
@@ -942,34 +938,26 @@ document.addEventListener('DOMContentLoaded', () => {
         async deleteGoal(id) { await db.delete('goals', id); await this.loadData(); this.updateAllRenders(); },
         async deleteRecurrence(id) { await db.delete('recurrences', id); await this.loadData(); this.updateAllRenders(); },
 
-        // --- NOVA FUNÇÃO PARA BUSCAR/CRIAR FATURAS ---
         async getOrCreateInvoiceForDate(cardId, targetDate) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             if (!card) return null;
         
-            // Calcula a data de fechamento da fatura para o targetDate
             let closingDateYear = targetDate.getFullYear();
             let closingDateMonth = targetDate.getMonth();
         
             if (targetDate.getDate() > card.closingDay) {
                 closingDateMonth += 1;
-                if (closingDateMonth > 11) {
-                    closingDateMonth = 0;
-                    closingDateYear += 1;
-                }
             }
             const closingDate = new Date(closingDateYear, closingDateMonth, card.closingDay);
             const closingDateStr = closingDate.toISOString().split('T')[0];
 
-            // Procura por uma fatura existente com a mesma data de fechamento
             let invoice = this.state.invoices.find(i => i.creditCardId === cardId && i.closingDate === closingDateStr);
             if (invoice) {
                 return invoice;
             }
         
-            // Se não encontrar, cria uma nova fatura
             let dueDate = new Date(closingDate.getFullYear(), closingDate.getMonth(), card.dueDay);
-            if (card.dueDay <= card.closingDay) { // Se o vencimento é no mês seguinte ao fechamento
+            if (card.dueDay <= card.closingDay) {
                 dueDate.setMonth(dueDate.getMonth() + 1);
             }
             
@@ -983,16 +971,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         
             await db.put('invoices', newInvoice);
-            this.state.invoices.push(newInvoice); // Atualiza o estado local para evitar recarregar tudo
+            this.state.invoices.push(newInvoice);
             return newInvoice;
         },
         
-        // --- Modals ---
         openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('initial-balance-date').valueAsDate = new Date(); },
         closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
         openBillPaymentModal(cardId) {
             const card = this.state.creditCards.find(c => c.id === cardId);
-            // Busca a fatura aberta mais próxima, que é a que deve ser paga.
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === cardId && i.status === 'open')
                 .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -1016,7 +1002,6 @@ document.addEventListener('DOMContentLoaded', () => {
         closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
         handleAccountSelectChange(e) { if (e.target.value === 'add_new_account') { const selectId = e.target.id; e.target.value = ''; this.openAccountModal(selectId); } },
         
-        // --- Lógica de Renderização ---
         updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderAllReports(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); } },
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
@@ -1121,7 +1106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCategoryExpenseChart() { const period = this.elements.categoryReportPeriod.value; const now = new Date(); let startDate = new Date('1970-01-01'); if (period === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); if (period === '30') startDate = new Date(new Date().setDate(now.getDate() - 30)); if (period === 'year') startDate = new Date(now.getFullYear(), 0, 1); const expenses = this.state.transactions.filter(t => t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date) >= startDate && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura'); const categoryTotals = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {}); const sortedCategories = Object.entries(categoryTotals).sort(([,a],[,b]) => b - a); const labels = sortedCategories.map(([name]) => name); const data = sortedCategories.map(([,total]) => total); this.charts.categoryReportChart.data.labels = labels; this.charts.categoryReportChart.data.datasets = [{ label: 'Despesas por Categoria', data: data, backgroundColor: ['#e94560', '#f1c40f', '#3498db', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c', '#34495e', '#7f8c8d', '#c0392b'], hoverOffset: 4 }]; this.charts.categoryReportChart.options = { ...this.charts.categoryReportChart.options, ...this.getChartOptions() }; this.charts.categoryReportChart.update(); },
         renderCashflowChart() { const monthsCount = parseInt(this.elements.cashflowReportPeriod.value, 10); const now = new Date(); const labels = []; const incomeData = []; const expenseData = []; for (let i = monthsCount - 1; i >= 0; i--) { const date = new Date(now.getFullYear(), now.getMonth() - i, 1); const month = date.getMonth(); const year = date.getFullYear(); labels.push(new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(date)); const monthIncome = this.state.transactions.filter(t => t.type === 'income' && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').reduce((sum, t) => sum + t.amount, 0); const monthExpense = this.state.transactions.filter(t => t.type === 'expense' && t.isPaid && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência').reduce((sum, t) => sum + t.amount, 0); incomeData.push(monthIncome); expenseData.push(monthExpense); } this.charts.cashflowReportChart.data.labels = labels; this.charts.cashflowReportChart.data.datasets = [ { label: 'Receitas', data: incomeData, backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas', data: expenseData, backgroundColor: 'rgba(231, 76, 60, 0.7)' } ]; this.charts.cashflowReportChart.options = { ...this.charts.cashflowReportChart.options, ...this.getChartOptions() }; this.charts.cashflowReportChart.update(); },
         
-        // --- Funções de Edição ---
         startEditMode(type, id){ 
             this.state.editingItem = { type, id };
             const form = document.getElementById(`${type}-form`);
@@ -1153,11 +1137,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.editingItem = null;
         },
         
-        // --- Funções de Exportação ---
-        exportFilteredReportToPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); const transactions = this.getFilteredTransactions(); if (transactions.length === 0) { alert("Nenhuma transação para exportar com os filtros atuais."); return; } const head = [['Data', 'Descrição', 'Categoria', 'Conta', 'Status', 'Valor']]; const body = transactions.map(t => [ this.formatDate(t.date), t.description, t.category, this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A', t.type === 'income' ? 'Recebido' : (t.isPaid ? 'Pago' : 'A Pagar'), `${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}` ]); doc.setFontSize(18); doc.text(`Relatório de Transações - ${this.state.user}`, 14, 22); doc.setFontSize(11); doc.setTextColor(100); doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, 14, 29); doc.autoTable({ head, body, startY: 35, headStyles: { fillColor: [41, 128, 185] }, theme: 'striped' }); doc.save(`Relatorio_Transacoes_${this.state.user}_${new Date().toISOString().split('T')[0]}.pdf`); },
-        async exportChartToPDF(title, chartInstance, getDataForTable) { const { jsPDF } = window.jspdf; if (!chartInstance || chartInstance.data.labels.length === 0) { alert(`Não há dados para gerar o relatório de "${title}".`); return; } const doc = new jsPDF(); const imgData = chartInstance.toBase64Image('image/png', 1.0); doc.setFontSize(18); doc.text(title, 14, 22); doc.addImage(imgData, 'PNG', 15, 40, 180, 90); const tableData = getDataForTable(); if (tableData) { doc.autoTable({ head: tableData.head, body: tableData.body, startY: 140, headStyles: { fillColor: [41, 128, 185] }, theme: 'striped' }); } doc.save(`Relatorio_${title.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`); },
-        getCategoryExpenseDataForPDF() { const data = this.charts.categoryReportChart.data; const head = [['Categoria', 'Valor Gasto']]; const body = data.labels.map((label, index) => [label, this.formatCurrency(data.datasets[0].data[index])]); return { head, body }; },
-        getCashflowDataForPDF() { const data = this.charts.cashflowReportChart.data; const head = [['Mês', 'Receitas', 'Despesas', 'Saldo']]; const body = data.labels.map((label, index) => { const income = data.datasets[0].data[index]; const expense = data.datasets[1].data[index]; const balance = income - expense; return [ label, this.formatCurrency(income), this.formatCurrency(expense), this.formatCurrency(balance) ]; }); return { head, body }; },
         async exportBackup() { try { const data = {}; for (const storeName of db.STORES) { data[storeName] = await db.getAll(storeName); } data.lastBackup = new Date().toISOString(); const json = JSON.stringify(data, null, 2); const blob = new Blob([json], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; const date = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`; link.download = `financeApp_backup_${this.state.user}_${date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); alert('Backup exportado com sucesso!'); } catch (error) { console.error("Erro ao exportar:", error); alert("Erro ao exportar dados."); } },
         async importBackup(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const data = JSON.parse(e.target.result); if (data && data.transactions && data.accounts) { if (confirm('Atenção! Isso substituirá TODOS os dados atuais. Deseja continuar?')) { await Promise.all(db.STORES.map(s => db.clear(s))); for (const storeName of db.STORES) { if (data[storeName]) await Promise.all(data[storeName].map(item => db.put(storeName, item))); } await this.loadData(); this.updateAllRenders(); alert('Backup restaurado com sucesso!'); } } else { alert('Arquivo de backup inválido ou corrompido.'); } } catch (error) { console.error("Erro ao importar:", error); alert('Erro ao ler o arquivo de backup.'); } finally { event.target.value = null; } }; reader.readAsText(file); },
 
