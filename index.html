@@ -159,7 +159,19 @@
         /* === ESTILOS PARA MODAIS === */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1050; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(4px); }
         .modal-overlay.visible { display: flex; opacity: 1; }
-        .modal-content { background-color: var(--card-bg-color); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-content {
+            background-color: var(--card-bg-color);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            /* CORREÇÃO: Adicionado max-height e overflow-y para telas pequenas */
+            max-height: 90vh;
+            overflow-y: auto;
+        }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--secondary-color); padding-bottom: 15px; margin-bottom: 20px; }
         .modal-header h2 { margin-bottom: 0; border-bottom: none; }
@@ -865,7 +877,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleAccount(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `acc-${Date.now()}`; const name = form.elements['account-name'].value; const type = form.elements['account-type'].value; const initialBalance = parseFloat(form.elements['initial-balance'].value); const initialBalanceDate = form.elements['initial-balance-date'].value; const isEditing = !!this.state.editingItem; const account = { id, name, type, initialBalance }; await db.put('accounts', account); if (!isEditing && initialBalance > 0) { const initialTransaction = { id: `trans-${Date.now()}`, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate }; await db.put('transactions', initialTransaction); } await this.loadData(); this.updateAllRenders(); if (this.state.selectToUpdateAfterAccountCreation && !isEditing) { document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id; this.state.selectToUpdateAfterAccountCreation = null; } this.closeAccountModal(); this.cancelEditMode(); },
         async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateInvoiceForDate(id, new Date()); this.state.selectedCardId = id; await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
         
-        // --- LÓGICA DE PARCELAMENTO ATUALIZADA ---
         async handleCreditCardExpense(e) {
             e.preventDefault();
             const form = e.target;
@@ -877,7 +888,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
 
             if (installments === 1) {
-                // Lógica para parcela única (como era antes)
                 const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
                 if (!openInvoice) { alert("Não foi possível encontrar ou criar uma fatura para este cartão."); return; }
                 const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDate, category: category, isPaid: false, };
@@ -885,10 +895,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 openInvoice.amount = (openInvoice.amount || 0) + expense.amount;
                 await db.put('invoices', openInvoice);
             } else {
-                // Lógica para múltiplas parcelas
                 const purchaseGroupId = `p-${Date.now()}`;
                 
-                // Calcula valor da parcela com precisão
                 let installmentAmount = Math.floor((totalAmount * 100) / installments) / 100;
                 let sumOfInstallments = 0;
 
@@ -899,10 +907,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
                     if (!invoice) {
                         alert(`Não foi possível criar a fatura para a parcela ${i + 1}. A operação foi cancelada.`);
-                        return; // Aborta se não conseguir criar uma fatura
+                        return;
                     }
 
-                    // Ajusta a última parcela para bater o valor total
                     let currentInstallmentAmount = installmentAmount;
                     if (i === installments - 1) {
                         currentInstallmentAmount = parseFloat((totalAmount - sumOfInstallments).toFixed(2));
@@ -915,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         invoiceId: invoice.id,
                         description: `${originalDescription} (${i + 1}/${installments})`,
                         amount: currentInstallmentAmount,
-                        date: purchaseDate, // A data da compra é a mesma para todas as parcelas
+                        date: purchaseDate,
                         category: category,
                         isPaid: false,
                     };
