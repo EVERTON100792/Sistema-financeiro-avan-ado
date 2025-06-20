@@ -698,7 +698,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.menuToggle.addEventListener('click', () => { this.elements.sidebarNav.classList.toggle('visible'); this.elements.menuOverlay.classList.toggle('visible'); });
             this.elements.menuOverlay.addEventListener('click', () => { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); });
             
-            // --- NOVO: Listeners para os botões de adicionar conta ---
             this.elements.addAccountBtnTab.addEventListener('click', () => this.openAccountModal());
             this.elements.addAccountBtnForm.addEventListener('click', () => this.openAccountModal('account-select'));
             
@@ -866,6 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleAccount(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `acc-${Date.now()}`; const name = form.elements['account-name'].value; const type = form.elements['account-type'].value; const initialBalance = parseFloat(form.elements['initial-balance'].value); const initialBalanceDate = form.elements['initial-balance-date'].value; const isEditing = !!this.state.editingItem; const account = { id, name, type, initialBalance }; await db.put('accounts', account); if (!isEditing && initialBalance > 0) { const initialTransaction = { id: `trans-${Date.now()}`, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate }; await db.put('transactions', initialTransaction); } await this.loadData(); this.updateAllRenders(); if (this.state.selectToUpdateAfterAccountCreation && !isEditing) { document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id; this.state.selectToUpdateAfterAccountCreation = null; } this.closeAccountModal(); this.cancelEditMode(); },
         async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateInvoiceForDate(id, new Date()); this.state.selectedCardId = id; await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
         
+        // --- LÓGICA DE PARCELAMENTO ATUALIZADA ---
         async handleCreditCardExpense(e) {
             e.preventDefault();
             const form = e.target;
@@ -877,6 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
 
             if (installments === 1) {
+                // Lógica para parcela única (como era antes)
                 const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
                 if (!openInvoice) { alert("Não foi possível encontrar ou criar uma fatura para este cartão."); return; }
                 const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDate, category: category, isPaid: false, };
@@ -884,8 +885,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 openInvoice.amount = (openInvoice.amount || 0) + expense.amount;
                 await db.put('invoices', openInvoice);
             } else {
+                // Lógica para múltiplas parcelas
                 const purchaseGroupId = `p-${Date.now()}`;
                 
+                // Calcula valor da parcela com precisão
                 let installmentAmount = Math.floor((totalAmount * 100) / installments) / 100;
                 let sumOfInstallments = 0;
 
@@ -896,9 +899,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
                     if (!invoice) {
                         alert(`Não foi possível criar a fatura para a parcela ${i + 1}. A operação foi cancelada.`);
-                        return;
+                        return; // Aborta se não conseguir criar uma fatura
                     }
 
+                    // Ajusta a última parcela para bater o valor total
                     let currentInstallmentAmount = installmentAmount;
                     if (i === installments - 1) {
                         currentInstallmentAmount = parseFloat((totalAmount - sumOfInstallments).toFixed(2));
@@ -911,7 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         invoiceId: invoice.id,
                         description: `${originalDescription} (${i + 1}/${installments})`,
                         amount: currentInstallmentAmount,
-                        date: purchaseDate,
+                        date: purchaseDate, // A data da compra é a mesma para todas as parcelas
                         category: category,
                         isPaid: false,
                     };
