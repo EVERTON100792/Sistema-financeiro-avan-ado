@@ -275,7 +275,7 @@
                                 <div class="form-group">
                                     <label for="account-select">Conta</label>
                                     <select id="account-select" name="account-select"></select>
-                      _B_R_         </div>
+                                </div>
                                 <div class="form-group">
                                     <label for="category-select">Categoria</label>
                                     <select id="category-select" name="category-select" required></select>
@@ -350,7 +350,7 @@
                         <div class="card">
                             <h2 id="category-form-title">Adicionar Categoria</h2>
                             <form id="category-form">
-                                <div class="form-group"> <label for="category-name">Nome da Categoria</label> <input type="text" id="category-name" placeholder="Ex: Supermercado" required> </div>
+                                <div class="form-group"> <label for="category-name">Nome da Categoria</label> <input type="text" id="category-name" name="category-name" placeholder="Ex: Supermercado" required> </div>
                                 <div class="form-buttons" id="category-form-buttons"> <button type="submit" class="btn btn-primary">Adicionar Categoria</button> </div>
                             </form>
                         </div>
@@ -366,11 +366,11 @@
                         <div class="card">
                             <h2>Nova Transferência entre Contas</h2>
                             <form id="transfer-form">
-                                <div class="form-group"> <label for="transfer-amount">Valor (R$)</label> <input type="number" id="transfer-amount" step="0.01" placeholder="100.00" required> </div>
-                                <div class="form-group"> <label for="transfer-date">Data da Transferência</label> <input type="date" id="transfer-date" required> </div>
-                                <div class="form-group"> <label for="transfer-from-account">Da Conta (Origem)</label> <select id="transfer-from-account" required></select> </div>
-                                <div class="form-group"> <label for="transfer-to-account">Para a Conta (Destino)</label> <select id="transfer-to-account" required></select> </div>
-                                <div class="form-group"> <label for="transfer-description">Descrição (Opcional)</label> <input type="text" id="transfer-description" placeholder="Ex: Mover para poupança"> </div>
+                                <div class="form-group"> <label for="transfer-amount">Valor (R$)</label> <input type="number" id="transfer-amount" name="transfer-amount" step="0.01" placeholder="100.00" required> </div>
+                                <div class="form-group"> <label for="transfer-date">Data da Transferência</label> <input type="date" id="transfer-date" name="transfer-date" required> </div>
+                                <div class="form-group"> <label for="transfer-from-account">Da Conta (Origem)</label> <select id="transfer-from-account" name="transfer-from-account" required></select> </div>
+                                <div class="form-group"> <label for="transfer-to-account">Para a Conta (Destino)</label> <select id="transfer-to-account" name="transfer-to-account" required></select> </div>
+                                <div class="form-group"> <label for="transfer-description">Descrição (Opcional)</label> <input type="text" id="transfer-description" name="transfer-description" placeholder="Ex: Mover para poupança"> </div>
                                 <div class="form-buttons" id="transfer-form-buttons"> <button type="submit" class="btn btn-primary">Realizar Transferência</button> </div>
                             </form>
                         </div>
@@ -382,8 +382,8 @@
                         <div class="card">
                             <h2 id="budget-form-title">Definir Orçamento</h2>
                             <form id="budget-form">
-                                <div class="form-group"> <label for="budget-category">Categoria</label> <select id="budget-category" required></select> </div>
-                                <div class="form-group"> <label for="budget-amount">Limite Mensal (R$)</label> <input type="number" id="budget-amount" step="0.01" placeholder="500.00" required> </div>
+                                <div class="form-group"> <label for="budget-category">Categoria</label> <select id="budget-category" name="budget-category" required></select> </div>
+                                <div class="form-group"> <label for="budget-amount">Limite Mensal (R$)</label> <input type="number" id="budget-amount" name="budget-amount" step="0.01" placeholder="500.00" required> </div>
                                 <div class="form-buttons" id="budget-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Orçamento</button> </div>
                             </form>
                         </div>
@@ -399,10 +399,10 @@
                         <div class="card">
                             <h2 id="goal-form-title">Criar Nova Meta</h2>
                             <form id="goal-form">
-                                <div class="form-group"> <label for="goal-name">Nome da Meta</label> <input type="text" id="goal-name" placeholder="Ex: Viagem para a Europa" required> </div>
-                                <div class="form-group"> <label for="goal-target">Valor Alvo (R$)</label> <input type="number" id="goal-target" step="0.01" placeholder="10000.00" required> </div>
-                                <div class="form-group"> <label for="goal-saved">Valor Já Guardado (R$)</label> <input type="number" id="goal-saved" step="0.01" value="0" required> </div>
-                                <div class="form-group"> <label for="goal-deadline">Prazo (Opcional)</label> <input type="date" id="goal-deadline"> </div>
+                                <div class="form-group"> <label for="goal-name">Nome da Meta</label> <input type="text" id="goal-name" name="goal-name" placeholder="Ex: Viagem para a Europa" required> </div>
+                                <div class="form-group"> <label for="goal-target">Valor Alvo (R$)</label> <input type="number" id="goal-target" name="goal-target" step="0.01" placeholder="10000.00" required> </div>
+                                <div class="form-group"> <label for="goal-saved">Valor Já Guardado (R$)</label> <input type="number" id="goal-saved" name="goal-saved" step="0.01" value="0" required> </div>
+                                <div class="form-group"> <label for="goal-deadline">Prazo (Opcional)</label> <input type="date" id="goal-deadline" name="goal-deadline"> </div>
                                 <div class="form-buttons" id="goal-form-buttons"> <button type="submit" class="btn btn-primary">Criar Meta</button> </div>
                             </form>
                         </div>
@@ -418,13 +418,13 @@
                         <div class="card">
                             <h2 id="recurrence-form-title">Adicionar Lançamento Recorrente</h2>
                             <form id="recurrence-form">
-                                <div class="form-group"> <label for="recurrence-description">Descrição</label> <input type="text" id="recurrence-description" placeholder="Ex: Assinatura Spotify, Aluguel" required> </div>
-                                <div class="form-group"> <label for="recurrence-amount">Valor (R$)</label> <input type="number" id="recurrence-amount" step="0.01" required> </div>
-                                <div class="form-group"> <label for="recurrence-type">Tipo</label> <select id="recurrence-type" required> <option value="expense">Despesa</option> <option value="income">Receita</option> </select> </div>
-                                <div class="form-group"> <label for="recurrence-account">Conta</label> <select id="recurrence-account" required></select> </div>
-                                <div class="form-group"> <label for="recurrence-category">Categoria</label> <select id="recurrence-category" required></select> </div>
-                                <div class="form-group"> <label for="recurrence-frequency">Frequência</label> <select id="recurrence-frequency" required> <option value="monthly">Mensal</option> <option value="weekly">Semanal</option> <option value="yearly">Anual</option> </select> </div>
-                                <div class="form-group"> <label for="recurrence-start-date">Data de Início</label> <input type="date" id="recurrence-start-date" required> </div>
+                                <div class="form-group"> <label for="recurrence-description">Descrição</label> <input type="text" id="recurrence-description" name="recurrence-description" placeholder="Ex: Assinatura Spotify, Aluguel" required> </div>
+                                <div class="form-group"> <label for="recurrence-amount">Valor (R$)</label> <input type="number" id="recurrence-amount" name="recurrence-amount" step="0.01" required> </div>
+                                <div class="form-group"> <label for="recurrence-type">Tipo</label> <select id="recurrence-type" name="recurrence-type" required> <option value="expense">Despesa</option> <option value="income">Receita</option> </select> </div>
+                                <div class="form-group"> <label for="recurrence-account">Conta</label> <select id="recurrence-account" name="recurrence-account" required></select> </div>
+                                <div class="form-group"> <label for="recurrence-category">Categoria</label> <select id="recurrence-category" name="recurrence-category" required></select> </div>
+                                <div class="form-group"> <label for="recurrence-frequency">Frequência</label> <select id="recurrence-frequency" name="recurrence-frequency" required> <option value="monthly">Mensal</option> <option value="weekly">Semanal</option> <option value="yearly">Anual</option> </select> </div>
+                                <div class="form-group"> <label for="recurrence-start-date">Data de Início</label> <input type="date" id="recurrence-start-date" name="recurrence-start-date" required> </div>
                                 <div class="form-buttons" id="recurrence-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Recorrência</button> </div>
                             </form>
                         </div>
@@ -443,72 +443,71 @@
                                 <div class="form-group">
                                     <label for="report-date-filter">Período</label>
                                     <select id="report-date-filter">
-                         `
-                                    <option value="all">Todo o Período</option>
-                                    <option value="today">Hoje</option>
-                                    <option value="7">Últimos 7 dias</option>
-                                    <option value="30" selected>Últimos 30 dias</option>
-                                    <option value="month">Este Mês</option>
-                                    <option value="year">Este Ano</option>
-                                </select>
+                                        <option value="all">Todo o Período</option>
+                                        <option value="today">Hoje</option>
+                                        <option value="7">Últimos 7 dias</option>
+                                        <option value="30" selected>Últimos 30 dias</option>
+                                        <option value="month">Este Mês</option>
+                                        <option value="year">Este Ano</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="report-category-filter">Categoria</label>
+                                    <select id="report-category-filter"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="report-payment-status-filter">Status</label>
+                                    <select id="report-payment-status-filter">
+                                        <option value="all">Todos os Status</option>
+                                        <option value="paid">Pagas/Recebidas</option>
+                                        <option value="unpaid">A Pagar</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="report-type-filter">Tipo</label>
+                                    <select id="report-type-filter">
+                                        <option value="all">Todos os Tipos</option>
+                                        <option value="expense">Despesas</option>
+                                        <option value="income">Receitas</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="report-category-filter">Categoria</label>
-                                <select id="report-category-filter"></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="report-payment-status-filter">Status</label>
-                                <select id="report-payment-status-filter">
-                                    <option value="all">Todos os Status</option>
-                                    <option value="paid">Pagas/Recebidas</option>
-                                    <option value="unpaid">A Pagar</option>
-                                </select>
-                            </div>
-                             <div class="form-group">
-                                <label for="report-type-filter">Tipo</label>
-                                <select id="report-type-filter">
-                                    <option value="all">Todos os Tipos</option>
-                                    <option value="expense">Despesas</option>
-                                    <option value="income">Receitas</option>
-                                </select>
-                            </div>
+                            <button id="export-filtered-pdf-btn" class="btn btn-primary" style="margin-bottom: 20px;">Gerar PDF do Relatório</button>
+                            <div id="filtered-report-results" class="transaction-list-container"></div>
                         </div>
-                        <button id="export-filtered-pdf-btn" class="btn btn-primary" style="margin-bottom: 20px;">Gerar PDF do Relatório</button>
-                        <div id="filtered-report-results" class="transaction-list-container"></div>
-                    </div>
-                    <div class="card">
-                        <div class="report-card-header">
-                            <h3>Despesas por Categoria</h3>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <select id="category-report-period" style="padding: 8px;">
-                                    <option value="month" selected>Este Mês</option>
-                                    <option value="30">Últimos 30 dias</option>
-                                    <option value="year">Este Ano</option>
-                                </select>
+                        <div class="card">
+                            <div class="report-card-header">
+                                <h3>Despesas por Categoria</h3>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <select id="category-report-period" style="padding: 8px;">
+                                        <option value="month" selected>Este Mês</option>
+                                        <option value="30">Últimos 30 dias</option>
+                                        <option value="year">Este Ano</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="report-chart-container">
-                            <canvas id="category-report-chart"></canvas>
-                        </div>
-                        <button id="export-category-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
-                    </div>
-                    <div class="card">
-                        <div class="report-card-header">
-                            <h3>Fluxo de Caixa Mensal</h3>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <select id="cashflow-report-period" style="padding: 8px;">
-                                    <option value="6" selected>Últimos 6 Meses</option>
-                                    <option value="12">Últimos 12 Meses</option>
-                                </select>
+                            <div class="report-chart-container">
+                                <canvas id="category-report-chart"></canvas>
                             </div>
+                            <button id="export-category-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
                         </div>
-                        <div class="report-chart-container">
-                            <canvas id="cashflow-report-chart"></canvas>
+                        <div class="card">
+                            <div class="report-card-header">
+                                <h3>Fluxo de Caixa Mensal</h3>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <select id="cashflow-report-period" style="padding: 8px;">
+                                        <option value="6" selected>Últimos 6 Meses</option>
+                                        <option value="12">Últimos 12 Meses</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="report-chart-container">
+                                <canvas id="cashflow-report-chart"></canvas>
+                            </div>
+                            <button id="export-cashflow-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
                         </div>
-                        <button id="export-cashflow-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
                     </div>
                 </div>
-            </div>
 
                 <div id="tab-calendar" class="tab-content">
                     <div class="card">
@@ -525,19 +524,19 @@
                 </div>
 
                 <div id="tab-settings" class="tab-content">
-                         <div class="grid-layout">
-                               <div class="card">
-                                      <h2>Gerenciamento de Dados</h2>
-                                      <p style="color: var(--text-muted-color); margin-bottom: 25px;">
-                                              Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
-                                      </p>
-                                      <div class="settings-actions">
-                                          <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
-                                          <button id="import-btn" class="btn btn-primary">Importar de um Backup 📤</button>
-                                          <input type="file" id="import-file-input" accept=".json" style="display: none;">
-                                      </div>
-                                </div>
-                         </div>
+                    <div class="grid-layout">
+                        <div class="card">
+                            <h2>Gerenciamento de Dados</h2>
+                            <p style="color: var(--text-muted-color); margin-bottom: 25px;">
+                                Exporte todos os seus dados para um arquivo de backup seguro ou importe um backup para restaurar suas informações.
+                            </p>
+                            <div class="settings-actions">
+                                <button id="export-btn" class="btn btn-secondary">Exportar Backup Completo 📥</button>
+                                <button id="import-btn" class="btn btn-primary">Importar de um Backup 📤</button>
+                                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -962,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         renderCategoriesList() { this.elements.categoriesList.innerHTML = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(cat => ` <div class="category-item"> <div class="list-item-header"> <div class="main-info"><h3>${cat.name}</h3></div> <div class="actions"> <button class="edit-btn" data-type="category" data-id="${cat.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="category" data-id="${cat.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join(''); },
         renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
-        renderGoalsList() { this.elements.goalsList.innerHTML = this.state.goals.map(g => { const percentage = g.target > 0 ? (g.saved / g.target) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${g.name}</h3> <span>${this.formatCurrency(g.saved)} / ${this.formatCurrency(g.target)}</span> ${g.deadline ? `<small style="color:var(--text-muted-color);">Prazo: ${this.formatDate(g.deadline)}</small>` : ''} </div> <div class="actions"> <button class="edit-btn" data-type="goal" data-id="${g.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="goal" data-id="${g.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" class="contribution-amount" placeholder="Valor do aporte" step="0.01"> <select class="contribution-account">${this.state.accounts.map(a => `<option value="<span class="math-inline">\{a\.id\}"\></span>{a.name}</option>`).join('')}</select> <button type="submit" class="btn btn-success">Aportar</button> </form> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma meta criada.</p>'; },
+        renderGoalsList() { this.elements.goalsList.innerHTML = this.state.goals.map(g => { const percentage = g.target > 0 ? (g.saved / g.target) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${g.name}</h3> <span>${this.formatCurrency(g.saved)} / ${this.formatCurrency(g.target)}</span> ${g.deadline ? `<small style="color:var(--text-muted-color);">Prazo: ${this.formatDate(g.deadline)}</small>` : ''} </div> <div class="actions"> <button class="edit-btn" data-type="goal" data-id="${g.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="goal" data-id="${g.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="number" class="contribution-amount" placeholder="Valor do aporte" step="0.01"> <select class="contribution-account">${this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select> <button type="submit" class="btn btn-success">Aportar</button> </form> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma meta criada.</p>'; },
         renderRecurrencesList() { this.elements.recurrencesList.innerHTML = this.state.recurrences.map(r => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info"> <h3>${r.description} (${r.type === 'income' ? 'Receita' : 'Despesa'})</h3> <span>${this.formatCurrency(r.amount)} (${r.frequency === 'monthly' ? 'Mensal' : 'Anual'})</span> <small style="color:var(--text-muted-color);">Próximo Lançamento: ${this.formatDate(r.nextDueDate)}</small> </div> <div class="actions"> <button class="edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="recurrence" data-id="${r.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma recorrência cadastrada.</p>'; },
         renderCalendar() { const grid = this.elements.calendarGrid; const header = this.elements.monthYearDisplay; if (!grid || !header) return; grid.innerHTML = ''; const today = new Date(); today.setHours(0, 0, 0, 0); const date = this.state.currentCalendarDate; const month = date.getMonth(); const year = date.getFullYear(); header.textContent = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(date); const firstDayOfMonth = new Date(year, month, 1); const lastDayOfMonth = new Date(year, month + 1, 0); const daysInMonth = lastDayOfMonth.getDate(); const startDayOfWeek = firstDayOfMonth.getDay(); const monthTransactions = this.state.transactions.filter(t => { const tDate = new Date(t.date + 'T00:00:00'); return tDate.getMonth() === month && tDate.getFullYear() === year; }); const lastDayOfPrevMonth = new Date(year, month, 0).getDate(); for (let i = startDayOfWeek; i > 0; i--) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day other-month'; dayCell.innerHTML = `<span class="day-number">${lastDayOfPrevMonth - i + 1}</span>`; grid.appendChild(dayCell); } for (let day = 1; day <= daysInMonth; day++) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day'; const currentDate = new Date(year, month, day); if (currentDate.getTime() === today.getTime()) { dayCell.classList.add('current-day'); } const dayNumber = document.createElement('span'); dayNumber.className = 'day-number'; dayNumber.textContent = day; dayCell.appendChild(dayNumber); const eventsContainer = document.createElement('div'); eventsContainer.className = 'events-container'; dayCell.appendChild(eventsContainer); const dayTransactions = monthTransactions.filter(t => new Date(t.date + 'T00:00:00').getDate() === day); dayTransactions.forEach(t => { const eventMarker = document.createElement('div'); eventMarker.className = 'event-marker'; eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`; const eventDot = document.createElement('span'); eventDot.className = 'event-dot'; const eventDesc = document.createElement('span'); eventDesc.className = 'event-desc'; eventDesc.textContent = t.description; eventMarker.appendChild(eventDot); eventMarker.appendChild(eventDesc); if(t.type === 'income') { eventMarker.classList.add('income'); } else { if(t.isPaid) { eventMarker.classList.add('expense-paid'); } else { const dueDate = new Date(t.dueDate + 'T00:00:00'); if(dueDate < today) { eventMarker.classList.add('expense-overdue'); } else { eventMarker.classList.add('expense-due'); } } } eventsContainer.appendChild(eventMarker); }); grid.appendChild(dayCell); } const totalCells = startDayOfWeek + daysInMonth; const nextMonthDays = (7 - (totalCells % 7)) % 7; for (let i = 1; i <= nextMonthDays; i++) { const dayCell = document.createElement('div'); dayCell.className = 'calendar-day other-month'; dayCell.innerHTML = `<span class="day-number">${i}</span>`; grid.appendChild(dayCell); } },
         renderAllReports() { this.renderFilteredReport(); this.renderCategoryExpenseChart(); this.renderCashflowChart(); },
