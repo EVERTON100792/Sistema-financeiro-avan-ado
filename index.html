@@ -171,7 +171,7 @@
         .modal-header h2 { margin-bottom: 0; border-bottom: none; }
         .modal-close-btn { background: none; border: none; font-size: 1.8rem; color: var(--text-muted-color); cursor: pointer; }
 
-        /* === NOVOS ESTILOS PARA ABA CONTAS === */
+        /* === ESTILOS PARA ABA CONTAS === */
         .account-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
         .account-details { display: grid; grid-template-columns: 1fr 140px; gap: 20px; align-items: center; margin-top: 15px; }
         .account-main-balance { font-size: 2rem; font-weight: 700; color: var(--text-color); }
@@ -666,7 +666,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
         elements: {},
-        charts: { mainOverviewChart: null, evolutionChart: null, categoryReportChart: null, cashflowReportChart: null },
+        charts: { mainOverviewChart: null, evolutionChart: null, categoryReportChart: null, cashflowReportChart: null, accountCharts: {} },
         state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null },
 
         async init() {
@@ -1059,10 +1059,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
         renderSummary() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); const monthlyIncome = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'income' && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial').reduce((sum, t) => sum + (t.amount || 0), 0); const monthlyExpense = this.state.transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.type === 'expense' && t.isPaid && t.accountId && t.category !== 'Transferência').reduce((sum, t) => sum + (t.amount || 0), 0); const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0); const cardDebt = this.state.invoices.filter(i=>i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0); const netWorth = accountBalance - cardDebt; const balanceEl = document.getElementById('balance'); balanceEl.textContent = this.formatCurrency(netWorth); balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`; document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome); document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense); },
         
-        // --- NOVA FUNÇÃO RENDERACCOUNTSLIST ---
         renderAccountsList() {
             const accountsListEl = this.elements.accountsList;
-            accountsListEl.innerHTML = ''; // Limpa a lista antes de renderizar
+            accountsListEl.innerHTML = ''; 
 
             if (this.state.accounts.length === 0) {
                 accountsListEl.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px; grid-column: 1 / -1;">Nenhuma conta cadastrada.</p>';
@@ -1114,83 +1113,65 @@ document.addEventListener('DOMContentLoaded', () => {
                 accountsListEl.innerHTML += cardHTML;
             });
 
-            // Renderiza os gráficos após os elementos canvas serem adicionados ao DOM
             this.state.accounts.forEach(acc => {
                 const canvas = document.getElementById(`account-chart-${acc.id}`);
-                if(canvas) {
+                if (canvas) {
+                    if (this.charts.accountCharts[acc.id]) {
+                        this.charts.accountCharts[acc.id].destroy();
+                    }
                     this.renderAccountChart(acc, canvas);
                 }
             });
         },
 
-        // --- NOVA FUNÇÃO PARA RENDERIZAR O MINI-GRÁFICO ---
         renderAccountChart(account, canvas) {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            thirtyDaysAgo.setHours(0,0,0,0);
             
             const relevantTransactions = this.state.transactions
-                .filter(t => t.accountId === account.id && new Date(t.date) >= thirtyDaysAgo)
+                .filter(t => t.accountId === account.id)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Calcula o saldo inicial de 30 dias atrás
-            let startingBalance = account.currentBalance;
-            this.state.transactions
-                .filter(t => t.accountId === account.id && new Date(t.date) > thirtyDaysAgo)
-                .forEach(t => {
-                    if (t.type === 'income') startingBalance -= t.amount;
-                    if (t.type === 'expense' && t.isPaid) startingBalance += t.amount;
-                });
+            let balance30DaysAgo = account.initialBalance;
+            relevantTransactions.forEach(t => {
+                if(new Date(t.date) < thirtyDaysAgo){
+                    if (t.type === 'income') balance30DaysAgo += t.amount;
+                    if (t.type === 'expense' && t.isPaid) balance30DaysAgo -= t.amount;
+                }
+            });
 
-            const dailyBalances = new Map();
-            let runningBalance = startingBalance;
+            const dailyData = new Map();
+            let runningBalance = balance30DaysAgo;
             
             for (let i = 30; i >= 0; i--) {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
-                dailyBalances.set(date.toISOString().split('T')[0], null);
+                const dateString = date.toISOString().split('T')[0];
+                dailyData.set(dateString, runningBalance);
             }
-            dailyBalances.set(thirtyDaysAgo.toISOString().split('T')[0], startingBalance);
             
-            let lastKnownBalance = startingBalance;
             relevantTransactions.forEach(t => {
-                if (t.type === 'income') runningBalance += t.amount;
-                if (t.type === 'expense' && t.isPaid) runningBalance -= t.amount;
-                dailyBalances.set(t.date, runningBalance);
+                if (new Date(t.date) >= thirtyDaysAgo) {
+                    if (t.type === 'income') runningBalance += t.amount;
+                    if (t.type === 'expense' && t.isPaid) runningBalance -= t.amount;
+                    dailyData.set(t.date, runningBalance);
+                }
             });
             
-            const chartData = [];
-            let previousBalance = startingBalance;
-            for (const [date, balance] of dailyBalances.entries()) {
-                if(balance !== null){
-                    chartData.push({ x: date, y: balance });
-                    previousBalance = balance;
-                } else {
-                    chartData.push({ x: date, y: previousBalance });
-                }
-            }
-            chartData.sort((a,b) => new Date(a.x) - new Date(b.x));
+            let lastBalance = balance30DaysAgo;
+            const chartData = Array.from(dailyData.keys()).sort().map(date => {
+                lastBalance = dailyData.get(date) ?? lastBalance;
+                return { x: date, y: lastBalance };
+            });
 
-            new Chart(canvas, {
+            this.charts.accountCharts[account.id] = new Chart(canvas, {
                 type: 'line',
-                data: {
-                    datasets: [{
-                        data: chartData,
-                        borderColor: account.currentBalance >= startingBalance ? 'var(--success-color)' : 'var(--error-color)',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { display: false }, y: { display: false } },
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    animation: { duration: 500 }
-                }
+                data: { datasets: [{ data: chartData, borderColor: account.currentBalance >= balance30DaysAgo ? 'var(--success-color)' : 'var(--error-color)', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
             });
         },
-
+        
         renderCreditCardModule() {
             const selectorList = this.elements.creditCardSelectorList;
             selectorList.innerHTML = this.state.creditCards.map(c => `
