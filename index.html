@@ -814,50 +814,57 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleLogin() { const username = this.elements.username.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); await this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
         
         // --- Handlers de Formulários ---
-        async handleTransaction(e) {
-            e.preventDefault();
-            const form = e.target;
-            const accountId = form.elements['account-select'].value;
+        <script>
+// ... (todo o código anterior)
 
-            // ===== CÓDIGO CORRIGIDO =====
-            // A validação agora verifica se a conta selecionada realmente existe.
-            // Isso previne o erro quando "+ Adicionar Nova Conta..." é selecionado,
-            // permitindo que o modal de criação de conta seja aberto pelo evento 'change' sem conflitos.
-            const account = this.state.accounts.find(a => a.id === accountId);
-            if (!account) {
-                alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, selecione a opção no menu e salve-a antes de continuar.");
-                return;
-            }
+        // --- Handlers de Formulários ---
+        async handleTransaction(e) {
+            e.preventDefault();
+            const form = e.target;
+            const accountId = form.elements['account-select'].value;
 
-            const category = form.elements['category-select'].value;
-            if (!category) {
-                alert("Por favor, selecione uma categoria.");
-                return;
-            }
-            const id = this.state.editingItem?.id || Date.now().toString();
-            const type = form.elements['transaction-type'].value;
-            const description = form.elements['description'].value;
-            const amount = parseFloat(form.elements['amount'].value);
-            const date = form.elements['date'].value;
-            const dueDate = form.elements['due-date'].value;
-            const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null;
-            const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
-            await db.put('transactions', newT);
-            if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
-                if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) {
-                    const nextMonthDate = new Date(dueDate + 'T00:00:00');
-                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-                    const newR = { id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
-                    await db.put('recurrences', newR);
-                }
-            }
-            await this.loadData();
-            this.updateAllRenders();
-            this.cancelEditMode();
-            form.reset();
-            document.getElementById('date').valueAsDate = new Date();
-            this.handleTransactionTypeChange();
-        },
+            // ===== INÍCIO DA CORREÇÃO =====
+            // Verificamos se a intenção do usuário era adicionar uma nova conta.
+            // O valor pode ser 'add_new_account' ou vazio (se o evento 'change' já o limpou).
+            // Se for o caso, simplesmente interrompemos a submissão do formulário para permitir
+            // que o modal de criação de conta seja aberto sem conflitos.
+            if (accountId === 'add_new_account' || !accountId) {
+                return;
+            }
+            // ===== FIM DA CORREÇÃO =====
+
+            const category = form.elements['category-select'].value;
+            if (!category) {
+                alert("Por favor, selecione uma categoria.");
+                return;
+            }
+            const id = this.state.editingItem?.id || Date.now().toString();
+            const type = form.elements['transaction-type'].value;
+            const description = form.elements['description'].value;
+            const amount = parseFloat(form.elements['amount'].value);
+            const date = form.elements['date'].value;
+            const dueDate = form.elements['due-date'].value;
+            const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null;
+            const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
+            await db.put('transactions', newT);
+            if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
+                if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) {
+                    const nextMonthDate = new Date(dueDate + 'T00:00:00');
+                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+                    const newR = { id: Date.now().toString(), description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
+                    await db.put('recurrences', newR);
+                }
+            }
+            await this.loadData();
+            this.updateAllRenders();
+            this.cancelEditMode();
+            form.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            this.handleTransactionTypeChange();
+        },
+
+// ... (restante do código)
+</script>
         async handleAccount(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `acc-${Date.now()}`; const name = form.elements['account-name'].value; const type = form.elements['account-type'].value; const initialBalance = parseFloat(form.elements['initial-balance'].value); const initialBalanceDate = form.elements['initial-balance-date'].value; const isEditing = !!this.state.editingItem; const account = { id, name, type, initialBalance }; await db.put('accounts', account); if (!isEditing && initialBalance > 0) { const initialTransaction = { id: `trans-${Date.now()}`, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate }; await db.put('transactions', initialTransaction); } await this.loadData(); this.updateAllRenders(); if (this.state.selectToUpdateAfterAccountCreation && !isEditing) { document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id; this.state.selectToUpdateAfterAccountCreation = null; } this.closeAccountModal(); this.cancelEditMode(); },
         async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateInvoiceForDate(id, new Date()); this.state.selectedCardId = id; await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
         
