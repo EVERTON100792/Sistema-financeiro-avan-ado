@@ -252,7 +252,7 @@
                     
                     <div class="dashboard-layout">
                         <aside class="card">
-                            <h2 id="transaction-form-title">Nova Transação (Contas)</h2>
+                            <h2 id="transaction-form-title">Nova Transação</h2>
                             <form id="transaction-form">
                                 <div class="form-group">
                                     <label for="transaction-type">Tipo</label>
@@ -274,7 +274,10 @@
                                     <input type="date" id="date" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="account-select">Conta</label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <label for="account-select">Conta</label>
+                                        <button type="button" id="add-account-btn-form" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.9rem; line-height: 1;">+</button>
+                                    </div>
                                     <select id="account-select"></select>
                                 </div>
                                 <div class="form-group">
@@ -313,8 +316,11 @@
 
                 <div id="tab-accounts" class="tab-content">
                     <div class="card">
-                        <h2>Minhas Contas</h2>
-                        <p style="color:var(--text-muted-color); margin-top: -15px; margin-bottom: 15px;">Contas corrente, poupança e dinheiro. Para adicionar uma nova conta, inicie uma nova transação no Painel.</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <h2 style="margin-bottom: 0; border-bottom: none;">Minhas Contas</h2>
+                            <button id="add-account-btn-tab" class="btn btn-primary">Adicionar Conta</button>
+                        </div>
+                        <p style="color:var(--text-muted-color); margin-top: 10px; margin-bottom: 15px;">Abaixo estão suas contas correntes, poupanças e dinheiro.</p>
                         <div id="accounts-list"></div>
                     </div>
                 </div>
@@ -672,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
 
         cacheDOMElements() {
-            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter', 'filteredReportResults', 'exportFilteredPdfBtn', 'categoryReportPeriod', 'exportCategoryPdfBtn', 'cashflowReportPeriod', 'exportCashflowPdfBtn', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm' ];
+            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter', 'filteredReportResults', 'exportFilteredPdfBtn', 'categoryReportPeriod', 'exportCategoryPdfBtn', 'cashflowReportPeriod', 'exportCashflowPdfBtn', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm' ];
             elementIds.forEach(idCamel => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
@@ -691,6 +697,10 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.tabButtons.forEach(tab => tab.addEventListener('click', (e) => this.handleTabClick(e)));
             this.elements.menuToggle.addEventListener('click', () => { this.elements.sidebarNav.classList.toggle('visible'); this.elements.menuOverlay.classList.toggle('visible'); });
             this.elements.menuOverlay.addEventListener('click', () => { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); });
+            
+            // --- NOVO: Listeners para os botões de adicionar conta ---
+            this.elements.addAccountBtnTab.addEventListener('click', () => this.openAccountModal());
+            this.elements.addAccountBtnForm.addEventListener('click', () => this.openAccountModal('account-select'));
             
             this.elements.transactionForm.addEventListener('submit', (e) => this.handleTransaction(e));
             this.elements.accountForm.addEventListener('submit', (e) => this.handleAccount(e));
@@ -813,7 +823,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async checkLogin() { const user = localStorage.getItem('financeAppUser'); if (user) { this.state.user = user; await db.setDbName(user); this.elements.loginContainer.style.display = 'none'; this.elements.appContainer.style.display = 'block'; await this.initApp(); } else { this.elements.loginContainer.style.display = 'flex'; this.elements.appContainer.style.display = 'none'; } },
         async handleLogin() { const username = this.elements.username.value.trim(); if (username) { localStorage.setItem('financeAppUser', username); await this.checkLogin(); } else { alert('Por favor, digite seu nome.'); } },
         
-        // --- Handlers de Formulários ---
         async handleTransaction(e) {
             e.preventDefault();
             const form = e.target;
@@ -821,7 +830,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const account = this.state.accounts.find(a => a.id === accountId);
             if (!account) {
-                alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, selecione a opção no menu e salve-a antes de continuar.");
+                alert("Por favor, selecione uma conta válida. Se precisar criar uma nova, clique no botão '+' ao lado do campo.");
                 return;
             }
 
