@@ -194,7 +194,7 @@
         
         /* === ESTILOS DA NOVA TELA DE LOGIN === */
         #login-container {
-            display: block; /* Alterado de 'flex' */
+            display: block;
             height: auto;
             min-height: 100vh;
         }
@@ -237,14 +237,17 @@
             color: var(--text-muted-color);
             opacity: 0.7;
         }
-
         .login-form-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
-        
+        .login-box {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
         .login-logo {
             width: 60px;
             height: 60px;
@@ -259,7 +262,6 @@
             margin: 0 auto 20px auto;
             box-shadow: 0 4px 15px color-mix(in srgb, var(--accent-color) 40%, transparent);
         }
-
         .form-group-with-icon {
             position: relative;
         }
@@ -271,13 +273,11 @@
             width: 20px;
             height: 20px;
             color: var(--text-muted-color);
-            pointer-events: none; /* Para não atrapalhar o clique no input */
+            pointer-events: none;
         }
         .form-group-with-icon input {
             padding-left: 45px;
         }
-        
-        /* Efeito de Loading no botão */
         #login-btn.loading {
             color: transparent;
             position: relative;
@@ -300,8 +300,6 @@
         @keyframes btn-spin {
             to { transform: rotate(360deg); }
         }
-
-        /* Responsividade da tela de login */
         @media (max-width: 992px) {
             #login-container {
                 display: flex;
@@ -313,7 +311,7 @@
                 grid-template-columns: 1fr;
             }
             .login-showcase {
-                display: none; /* Em telas pequenas, focamos no formulário */
+                display: none;
             }
             .login-form-wrapper {
                 width: 100%;
@@ -329,7 +327,6 @@
 
     <div id="login-container">
         <div class="login-wrapper">
-            
             <div class="login-showcase">
                 <div class="showcase-content">
                     <h2>Seu Dinheiro, Suas Regras.</h2>
@@ -339,24 +336,20 @@
                     </div>
                 </div>
             </div>
-
             <div class="login-form-wrapper">
                 <div class="login-box card">
                     <div class="login-logo">S</div>
                     <h1>Acesso Seguro</h1>
                     <p style="margin-bottom: 25px; color: var(--text-muted-color);">Para começar, digite seu nome. Seus dados são salvos localmente.</p>
-                    
                     <div class="form-group form-group-with-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.095a1.23 1.23 0 00.41-1.412A9.99 9.99 0 0010 12a9.99 9.99 0 00-6.535 2.493z" />
                         </svg>
                         <input type="text" id="username" placeholder="Seu nome de usuário" required>
                     </div>
-                    
                     <button id="login-btn" class="btn btn-primary" style="width: 100%;">Entrar</button>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -1498,9 +1491,6 @@ document.addEventListener('DOMContentLoaded', () => {
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
         updateDashboardCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); this.renderDashboardBudgetChart(); const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); const initialAccountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.initialBalance || 0), 0); const initialCardDebt = 0; let runningNetWorth = initialAccountBalance - initialCardDebt; if (sortedTransactions.length > 0) { const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth); } else { dailyNetWorth.set(new Date().toISOString().split('T')[0], runningNetWorth); } sortedTransactions.forEach(t => { const amount = t.amount || 0; let impact = 0; if (t.type === 'income') impact = +amount; if (t.type === 'expense' && t.isPaid) impact = -amount; runningNetWorth += impact; dailyNetWorth.set(t.date, runningNetWorth); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
         
-        // ######################################################################
-        // #   FUNÇÃO DO GRÁFICO DE ORÇAMENTO CORRIGIDA E MELHORADA             #
-        // ######################################################################
         renderDashboardBudgetChart() {
             const chartCanvas = document.getElementById('main-overview-chart');
             const placeholder = document.getElementById('main-chart-placeholder');
@@ -1525,12 +1515,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const budgetData = budgets.map(b => b.amount);
 
-            // Transforma os dados para o formato [início, fim] para criar as barras flutuantes
             const budgetDataFormatted = budgetData.map(b => [0, b]);
             const spentDataFormatted = spentData.map(s => [0, s]);
 
             chart.data.labels = labels;
-            // Define os novos datasets para sobreposição
             chart.data.datasets = [
                 {
                     label: 'Orçamento',
@@ -1552,7 +1540,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             ];
 
-            // Atualiza as opções do gráfico para um visual mais limpo e tooltip personalizado
             const commonOptions = this.getChartOptions();
             chart.options = {
                 ...commonOptions,
@@ -1562,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ...commonOptions.scales,
                     x: {
                         ...commonOptions.scales.x,
-                        stacked: true, // Empilha as barras na mesma categoria
+                        stacked: true,
                     },
                     y: {
                         ...commonOptions.scales.y,
@@ -1573,14 +1560,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     ...commonOptions.plugins,
                     legend: {
                         ...commonOptions.plugins.legend,
-                        display: false // Esconde a legenda, pois o gráfico agora é autoexplicativo
+                        display: false
                     },
                     tooltip: {
                         ...commonOptions.plugins.tooltip,
-                        // Callback para formatar o tooltip de forma personalizada
                         callbacks: {
                             label: (context) => {
-                                // Pega o valor do gasto e do orçamento para o item selecionado
                                 const spentValue = context.raw[1];
                                 const budgetValue = context.chart.data.datasets[0].data[context.dataIndex][1];
                                 const percentage = (budgetValue > 0) ? ((spentValue / budgetValue) * 100).toFixed(1) : 0;
@@ -1588,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const spentFormatted = this.formatCurrency(spentValue);
                                 const budgetFormatted = this.formatCurrency(budgetValue);
 
-                                // Retorna um array de strings para criar múltiplas linhas no tooltip
                                 return [
                                     `Gasto: ${spentFormatted}`,
                                     `Orçamento: ${budgetFormatted}`,
@@ -1599,8 +1583,131 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             };
-
             chart.update();
+        },
+
+        exportFilteredReportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const filteredTransactions = this.getFilteredTransactions().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('Relatório Detalhado de Transações', 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Relatório gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 29);
+
+            const columns = [
+                { header: 'Data', dataKey: 'date' },
+                { header: 'Descrição', dataKey: 'description' },
+                { header: 'Categoria', dataKey: 'category' },
+                { header: 'Tipo', dataKey: 'type' },
+                { header: 'Valor (R$)', dataKey: 'amount' },
+            ];
+
+            const body = filteredTransactions.map(t => ({
+                date: this.formatDate(t.date),
+                description: t.description,
+                category: t.category,
+                type: t.type === 'income' ? 'Receita' : 'Despesa',
+                amount: this.formatCurrency(t.amount).replace('R$', '').trim()
+            }));
+
+            doc.autoTable({
+                columns,
+                body,
+                startY: 35,
+                headStyles: { fillColor: [15, 52, 96] },
+                styles: { font: 'helvetica', fontSize: 9 },
+            });
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            doc.save(`relatorio_transacoes_${dateStr}.pdf`);
+        },
+
+        getCategoryExpenseDataForPDF() {
+            const period = this.elements.categoryReportPeriod.value;
+            const now = new Date();
+            let startDate = new Date('1970-01-01');
+            if (period === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            if (period === '30') startDate = new Date(new Date().setDate(now.getDate() - 30));
+            if (period === 'year') startDate = new Date(now.getFullYear(), 0, 1);
+
+            const expenses = this.state.transactions.filter(t => t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date) >= startDate && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura');
+            const categoryTotals = expenses.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
+
+            const totalSpent = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+            const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
+            
+            const columns = ['Categoria', 'Valor Gasto (R$)', '% do Total'];
+            const body = sortedCategories.map(([name, total]) => {
+                const percentage = totalSpent > 0 ? ((total / totalSpent) * 100).toFixed(2) + '%' : '0.00%';
+                return [name, this.formatCurrency(total).replace('R$', '').trim(), percentage];
+            });
+
+            return { columns, body };
+        },
+
+        getCashflowDataForPDF() {
+            const monthsCount = parseInt(this.elements.cashflowReportPeriod.value, 10);
+            const now = new Date();
+            
+            const columns = ['Mês/Ano', 'Receitas (R$)', 'Despesas (R$)', 'Saldo (R$)'];
+            const body = [];
+
+            for (let i = monthsCount - 1; i >= 0; i--) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                const label = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(date);
+
+                const monthIncome = this.state.transactions.filter(t => t.type === 'income' && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').reduce((sum, t) => sum + t.amount, 0);
+                const monthExpense = this.state.transactions.filter(t => t.type === 'expense' && t.isPaid && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência').reduce((sum, t) => sum + t.amount, 0);
+                const balance = monthIncome - monthExpense;
+
+                body.push([
+                    label,
+                    this.formatCurrency(monthIncome).replace('R$', '').trim(),
+                    this.formatCurrency(monthExpense).replace('R$', '').trim(),
+                    this.formatCurrency(balance).replace('R$', '').trim()
+                ]);
+            }
+            return { columns, body };
+        },
+        
+        exportChartToPDF(title, chart, getDataForTable) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text(title, 105, 22, { align: 'center' });
+            
+            const chartImage = chart.toBase64Image('image/png', 1.0);
+            const aspectRatio = chart.width / chart.height;
+            const imgWidth = 180;
+            const imgHeight = imgWidth / aspectRatio;
+            doc.addImage(chartImage, 'PNG', 15, 35, imgWidth, imgHeight);
+
+            const { columns, body } = getDataForTable();
+            const tableStartY = 35 + imgHeight + 10;
+            
+            doc.autoTable({
+                head: [columns],
+                body: body,
+                startY: tableStartY,
+                headStyles: { fillColor: [15, 52, 96] },
+                styles: { font: 'helvetica', fontSize: 9 },
+            });
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `${title.toLowerCase().replace(/ /g, '_')}_${dateStr}.pdf`;
+            doc.save(filename);
         },
     };
 
