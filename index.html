@@ -254,37 +254,24 @@
         .toast.error { background-color: var(--error-color); }
         @keyframes slideIn { to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
-
-        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR === */
-        @media (max-width: 768px) {
-            body { line-height: 1.5; }
-            .container { padding: 10px; }
-            .card { padding: 15px; }
-            h2 { font-size: 1.5rem; }
-            
-            #login-container { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%); }
-            .login-wrapper { grid-template-columns: 1fr; }
-            .login-showcase { display: none; }
-            .login-form-wrapper { width: 100%; }
-            .login-box { width: 90%; max-width: 400px; }
-
-            #menu-toggle { display: block; }
-            .app-layout { position: relative; }
-            .sidebar-nav { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; background-color: var(--card-bg-color); transform: translateX(-100%); transition: transform 0.3s ease-in-out; border-radius: 0 var(--border-radius) var(--border-radius) 0; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
-            .sidebar-nav.visible { transform: translateX(0); }
-
-            .grid-layout, .dashboard-layout, .report-summary, .account-card-grid, .account-details, .credit-card-module-layout { 
-                grid-template-columns: 1fr; 
+        
+        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR (V2) === */
+        @media (max-width: 992px) {
+            .dashboard-layout, .credit-card-module-layout, .login-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .login-showcase { 
+                display: none;
             }
         }
-        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR V2 === */
+
         @media (max-width: 768px) {
             body { 
                 line-height: 1.5; 
                 -webkit-text-size-adjust: 100%; /* Previne zoom automático de fontes em iPhones */
             }
             .container { 
-                padding: 15px; /* Reduz o espaçamento lateral da página */
+                padding: 10px; /* Reduz o espaçamento lateral da página */
             }
             .card { 
                 padding: 15px; /* Reduz o espaçamento interno dos cards */
@@ -292,19 +279,18 @@
             h1 { font-size: 1.8rem; }
             h2 { font-size: 1.4rem; }
 
-            /* Força todos os principais layouts de grid a terem uma única coluna e aumenta o espaço entre eles */
-            .summary-section, .grid-layout, .dashboard-layout, .account-card-grid, .account-details, .credit-card-module-layout, .report-filters {
+            .summary-section, .grid-layout, .report-summary, .credit-card-summary, .account-card-grid, .account-details, .report-filters {
                 grid-template-columns: 1fr;
-                gap: 20px; /* Aumenta o espaço vertical entre os itens */
+                gap: 20px; /* Espaço vertical consistente entre itens empilhados */
             }
-
-            /* Trata especificamente os cards de resumo dos relatórios */
+            
             .report-summary, .credit-card-summary {
-                display: block; /* Remove o grid e faz os itens se comportarem como blocos */
+                display: block; /* Garante que os itens de resumo empilhem corretamente */
             }
             .report-summary .summary-item, .credit-card-summary .info-item {
-                text-align: left; /* Alinha o texto à esquerda para melhor leitura */
-                padding: 10px 0;
+                text-align: left;
+                padding-bottom: 15px;
+                margin-bottom: 15px;
                 border-bottom: 1px solid var(--secondary-color);
             }
              .report-summary .summary-item:last-child, .credit-card-summary .info-item:last-child {
@@ -312,13 +298,22 @@
                 padding-bottom: 0;
                 margin-bottom: 0;
             }
-             .report-summary .summary-item:not(:last-child), .credit-card-summary .info-item:not(:last-child) {
-                margin-bottom: 10px;
-            }
              
             header, .report-header { 
-                row-gap: 10px; 
+                gap: 10px; /* Adiciona espaço quando os itens do cabeçalho quebram a linha */
             }
+
+            #menu-toggle { display: block; }
+            .app-layout { position: relative; }
+            .sidebar-nav {
+                position: fixed; left: 0; top: 0; bottom: 0;
+                height: 100vh; z-index: 1000; background-color: var(--card-bg-color);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                border-radius: 0 var(--border-radius) var(--border-radius) 0;
+                box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            }
+            .sidebar-nav.visible { transform: translateX(0); }
         }
 
     </style>
@@ -1872,23 +1867,32 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         buildReportFilters(reportId) {
-            // CORREÇÃO DEFINITIVA: Gera a string YYYY-MM-DD a partir da data local, evitando erros de fuso horário.
             const todayDate = new Date();
             const year = todayDate.getFullYear();
             const month = String(todayDate.getMonth() + 1).padStart(2, '0');
             const day = String(todayDate.getDate()).padStart(2, '0');
             const today = `${year}-${month}-${day}`;
+            
+            const thirtyDaysAgoDate = new Date();
+            thirtyDaysAgoDate.setDate(todayDate.getDate() - 30);
+            const year30 = thirtyDaysAgoDate.getFullYear();
+            const month30 = String(thirtyDaysAgoDate.getMonth() + 1).padStart(2, '0');
+            const day30 = String(thirtyDaysAgoDate.getDate()).padStart(2, '0');
+            const thirtyDaysAgoStr = `${year30}-${month30}-${day30}`;
 
             const accountOptions = this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 
             switch (reportId) {
                 case 'accountStatement':
+                     return `
+                        <div class="form-group"><label for="filter-account">Conta</label><select id="filter-account">${accountOptions}</select></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${thirtyDaysAgoStr}"></div>
+                        <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
                 case 'categoryExpense':
                 case 'cashflow':
                 case 'paymentStatus':
                      return `
-                        <div class="form-group"><label for="filter-account">Conta</label><select id="filter-account">${accountOptions}</select></div>
-                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${today}"></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${thirtyDaysAgoStr}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
                 case 'annualSummary':
                     const currentYear = new Date().getFullYear();
