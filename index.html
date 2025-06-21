@@ -36,8 +36,9 @@
         .card { background-color: var(--card-bg-color); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); transition: background-color 0.3s; position: relative; }
         h1, h2, h3 { color: var(--text-color); transition: color 0.3s; }
         h2 { margin-bottom: 20px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px; }
-        .btn { padding: 10px 20px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .btn { padding: 10px 20px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .btn:disabled { background-color: var(--secondary-color) !important; color: var(--text-muted-color) !important; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.6; }
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-secondary { background-color: var(--secondary-color); color: var(--text-color); }
         .btn-success { background-color: var(--success-color); color: white; }
@@ -400,7 +401,7 @@
                         <h2>Acompanhamento de Orçamentos (Mês Atual)</h2>
                         <div id="main-overview-chart-container">
                             <canvas id="main-overview-chart"></canvas>
-                            <div id="main-chart-placeholder" class="chart-placeholder" style="display: none;">
+                            <div id="main-chart-placeholder" style="display: none; justify-content: center; align-items: center; color: var(--text-muted-color); position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
                                 <p>Defina orçamentos na aba "Orçamentos" para ver este gráfico.</p>
                             </div>
                         </div>
@@ -434,7 +435,7 @@
                                         <label for="account-select">Conta</label>
                                         <button type="button" id="add-account-btn-form" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.9rem; line-height: 1;">+</button>
                                     </div>
-                                    <select id="account-select"></select>
+                                    <select id="account-select" required></select>
                                 </div>
                                 <div class="form-group">
                                     <label for="category-select">Categoria</label>
@@ -457,7 +458,7 @@
                         </aside>
                         <section class="card">
                             <h2>Últimas Transações</h2>
-                            <div class="transaction-list-container">
+                            <div id="transaction-list-container" class="transaction-list-container">
                                 <ul id="transaction-list"></ul>
                             </div>
                         </section>
@@ -498,7 +499,7 @@
                     </div>
                     <div class="card" style="margin-top: 20px;">
                         <h2>Gerenciar Cartões</h2>
-                        <div id="credit-card-module-layout" style="margin-top: 20px;">
+                        <div id="credit-card-module-layout" class="credit-card-module-layout" style="margin-top: 20px;">
                             <div id="credit-card-selector-list">
                             </div>
                             <div id="selected-card-details">
@@ -601,9 +602,9 @@
                 <div id="tab-reports" class="tab-content">
                     <div class="card">
                         <div id="reports-menu">
-                            </div>
+                        </div>
                         <div id="report-view-container" style="display: none;">
-                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -684,11 +685,21 @@
                 <button id="account-modal-close-btn" class="modal-close-btn">&times;</button>
             </div>
             <form id="account-form">
-                <div class="form-group"> <label for="account-name">Nome da Conta</label> <input type="text" id="account-name" placeholder="Ex: Banco do Brasil" required> </div>
-                <div class="form-group"> <label for="account-type">Tipo</label> <select id="account-type" required> <option value="checking">Conta Corrente</option> <option value="savings">Poupança</option> <option value="cash">Dinheiro</option> </select> </div>
-                <div class="form-group"> <label for="initial-balance">Saldo Inicial</label> <input type="text" id="initial-balance" inputmode="decimal" value="0,00" required> </div>
-                <div class="form-group"> <label for="initial-balance-date">Data do Saldo Inicial</label> <input type="date" id="initial-balance-date" required> </div>
-                <div class="form-buttons" id="account-form-buttons"> <button type="submit" class="btn btn-primary">Salvar Conta</button> </div>
+                <div class="form-group">
+                    <label for="account-name">Nome da Conta</label>
+                    <input type="text" id="account-name" placeholder="Ex: Banco do Brasil" required>
+                </div>
+                <div class="form-group">
+                    <label for="account-type">Tipo</label>
+                    <select id="account-type" required>
+                        <option value="checking">Conta Corrente</option>
+                        <option value="savings">Poupança</option>
+                        <option value="cash">Dinheiro</option>
+                    </select>
+                </div>
+                <div class="form-buttons" id="account-form-buttons">
+                    <button type="submit" class="btn btn-primary">Salvar Conta</button>
+                </div>
             </form>
         </div>
     </div>
@@ -773,7 +784,18 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllRenders();
         },
         
-        async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
+        async createDefaultCategories() { 
+            const cats = [ 
+                { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, 
+                { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, 
+                { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, 
+                { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, 
+                { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, 
+                { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, 
+                { id: 'cat11', name: 'Outros' } 
+            ]; 
+            await Promise.all(cats.map(c => db.put('categories', c))); 
+        },
 
         cacheDOMElements() {
             const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportsMenu', 'reportViewContainer', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm' ];
@@ -816,7 +838,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
             document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
             
-            this.elements.accountSelectors.forEach(sel => sel.addEventListener('change', (e) => this.handleAccountSelectChange(e)));
+            this.elements.accountSelectors.forEach(sel => sel.addEventListener('change', (e) => {
+                this.handleAccountSelectChange(e);
+                if (e.target.id === 'account-select') {
+                    this.validateTransactionForm();
+                }
+            }));
             
             this.elements.currencyInputs.forEach(input => {
                 input.addEventListener('input', (e) => this.formatCurrencyInput(e.target));
@@ -933,7 +960,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.showToast('Falha ao carregar os dados.', 'error');
             }
         },
-        async generateRecurringTransactions() { const today = new Date(); today.setHours(0, 0, 0, 0); let hasChanges = false; for (const r of this.state.recurrences) { if (!r.nextDueDate) continue; let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); while (nextDueDate <= today) { const newT = { id: `trans-${Date.now()}${Math.random()}`, type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; await db.put('transactions', newT); hasChanges = true; if (r.frequency === 'monthly') { nextDueDate.setMonth(nextDueDate.getMonth() + 1); } else if (r.frequency === 'weekly') { nextDueDate.setDate(nextDueDate.getDate() + 7); } else if (r.frequency === 'yearly') { nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); } r.nextDueDate = nextDueDate.toISOString().split('T')[0]; await db.put('recurrences', r); } } if (hasChanges) await this.loadData(); },
+
+        async generateRecurringTransactions() {
+             const today = new Date(); today.setHours(0, 0, 0, 0); 
+             let hasChanges = false; 
+             for (const r of this.state.recurrences) { 
+                 if (!r.nextDueDate) continue; 
+                 let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); 
+                 while (nextDueDate <= today) { 
+                     const newT = { id: `trans-${Date.now()}${Math.random()}`, type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; 
+                     await db.put('transactions', newT); 
+                     hasChanges = true; 
+                     if (r.frequency === 'monthly') { 
+                         nextDueDate.setMonth(nextDueDate.getMonth() + 1); 
+                        } else if (r.frequency === 'weekly') { 
+                            nextDueDate.setDate(nextDueDate.getDate() + 7); 
+                        } else if (r.frequency === 'yearly') { 
+                            nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
+                        } 
+                        r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
+                        await db.put('recurrences', r); 
+                    } 
+                } 
+                if (hasChanges) await this.loadData(); 
+            },
+
         async checkLogin() {
             const user = localStorage.getItem('financeAppUser');
             if (user) {
@@ -1018,39 +1069,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = this.state.editingItem?.id || `acc-${Date.now()}`;
             const name = form.elements['account-name'].value;
             const type = form.elements['account-type'].value;
-            const initialBalance = this.parseCurrency(form.elements['initial-balance'].value);
-            const initialBalanceDate = form.elements['initial-balance-date'].value;
-            if (!name || !type || !initialBalanceDate) { this.showToast('Por favor, preencha todos os campos da conta.', 'error'); return; }
+            
+            if (!name || !type) { this.showToast('Por favor, preencha todos os campos da conta.', 'error'); return; }
+            
             const isEditing = !!this.state.editingItem;
             const account = { id, name, type };
             await db.put('accounts', account);
-            
-            const initialTransactionId = `trans-initial-${id}`;
-            const existingInitialTransaction = this.state.transactions.find(t => t.id === initialTransactionId);
-
-            if (initialBalance > 0) {
-                const initialTransaction = {
-                    id: initialTransactionId,
-                    type: 'income',
-                    description: `Saldo Inicial - ${name}`,
-                    amount: initialBalance,
-                    date: initialBalanceDate,
-                    accountId: id,
-                    category: 'Saldo Inicial',
-                    isPaid: true,
-                    dueDate: initialBalanceDate
-                };
-                await db.put('transactions', initialTransaction);
-            } else if (existingInitialTransaction) {
-                await db.delete('transactions', initialTransactionId);
-            }
             
             this.showToast(isEditing ? 'Conta atualizada!' : 'Conta adicionada!', 'success');
             await this.loadData();
             this.updateAllRenders();
             
             if (this.state.selectToUpdateAfterAccountCreation && !isEditing) {
-                document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id;
+                const selectEl = document.getElementById(this.state.selectToUpdateAfterAccountCreation);
+                if(selectEl) selectEl.value = id;
+                this.validateTransactionForm(); // Re-validar o formulário de transação
                 this.state.selectToUpdateAfterAccountCreation = null;
             }
             
@@ -1139,20 +1172,187 @@ document.addEventListener('DOMContentLoaded', () => {
             this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
         },
         
-        async handleCategorySubmit(e) { e.preventDefault(); const form = e.target, name = form.elements['category-name'].value.trim(); if (!name) return; const id = this.state.editingItem?.id || `cat-${Date.now()}`; await db.put('categories', { id, name }); this.showToast(this.state.editingItem ? 'Categoria atualizada!' : 'Categoria adicionada!', 'success'); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-        async handleTransfer(e) { e.preventDefault(); const form = e.target; const fromId = form.elements['transfer-from-account'].value; const toId = form.elements['transfer-to-account'].value; const amount = this.parseCurrency(form.elements['transfer-amount'].value); const date = form.elements['transfer-date'].value; const desc = form.elements['transfer-description'].value; if (fromId === toId || !amount || !date) { this.showToast("Contas de origem e destino devem ser diferentes.", 'error'); return; } const tId = `transfer-${Date.now()}`; const fromName = this.state.accounts.find(a=>a.id===fromId)?.name; const toName = this.state.accounts.find(a=>a.id===toId)?.name; const descriptionText = desc ? `: ${desc}` : ''; const exp = { id: `trans-${Date.now()}-out`, type: 'expense', description: `Transferência para ${toName}${descriptionText}`, amount, date, accountId: fromId, category: 'Transferência', isPaid: true, dueDate: date, transferId: tId }; const inc = { id: `trans-${Date.now()}-in`, type: 'income', description: `Transferência de ${fromName}${descriptionText}`, amount, date, accountId: toId, category: 'Transferência', isPaid: true, dueDate: date, transferId: tId }; await Promise.all([db.put('transactions', exp), db.put('transactions', inc)]); this.showToast("Transferência realizada com sucesso!", 'success'); await this.loadData(); this.updateAllRenders(); form.reset(); },
-        async handleBudget(e) { e.preventDefault(); const form = e.target; const category = form.elements['budget-category'].value; const amount = this.parseCurrency(form.elements['budget-amount'].value); const id = this.state.editingItem?.id || this.state.budgets.find(b => b.category === category)?.id || `bud-${Date.now()}`; await db.put('budgets', { id, category, amount }); this.showToast('Orçamento salvo!', 'success'); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-        async handleGoal(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `goal-${Date.now()}`; const name = form.elements['goal-name'].value; const target = this.parseCurrency(form.elements['goal-target'].value); const saved = this.parseCurrency(form.elements['goal-saved'].value); const deadline = form.elements['goal-deadline'].value; await db.put('goals', { id, name, target, saved, deadline: deadline || null }); this.showToast('Meta salva!', 'success'); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
-        async handleGoalContribution(e) { e.preventDefault(); const form = e.target; const goalId = form.dataset.goalId; const amount = this.parseCurrency(form.querySelector('.contribution-amount').value) || 0; const accountId = form.querySelector('.contribution-account').value; const goal = this.state.goals.find(g => g.id === goalId); this.updateAllBalances(); const account = this.state.accounts.find(a => a.id === accountId); if (amount <= 0 || !accountId || !goal || !account) { this.showToast("Dados inválidos para a contribuição.", 'error'); return; } if (account.currentBalance < amount) { this.showToast("Saldo insuficiente na conta selecionada.", 'error'); return; } goal.saved = (goal.saved || 0) + amount; const today = new Date().toISOString().split('T')[0]; const newT = { id: `trans-${Date.now()}`, type: 'expense', description: `Aporte para meta: ${goal.name}`, amount, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today }; await Promise.all([db.put('goals', goal), db.put('transactions', newT)]); this.showToast('Aporte para meta realizado!', 'success'); await this.loadData(); this.updateAllRenders(); form.querySelector('.contribution-amount').value = ''; },
-        async handleRecurrence(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `rec-${Date.now()}`; const description = form.elements['recurrence-description'].value; const amount = this.parseCurrency(form.elements['recurrence-amount'].value); const type = form.elements['recurrence-type'].value; const accountId = form.elements['recurrence-account'].value; const category = form.elements['recurrence-category'].value; const frequency = form.elements['recurrence-frequency'].value; const startDate = form.elements['recurrence-start-date'].value; const existing = this.state.editingItem?.id ? this.state.recurrences.find(r=>r.id===id) : null; const recurrence = { id, description, amount, type, accountId, category, frequency, startDate, nextDueDate: existing ? existing.nextDueDate : startDate }; await db.put('recurrences', recurrence); this.showToast('Recorrência salva!', 'success'); await this.loadData(); this.updateAllRenders(); this.cancelEditMode(); form.reset(); },
+        async handleCategorySubmit(e) { 
+            e.preventDefault(); 
+            const form = e.target, name = form.elements['category-name'].value.trim(); 
+            if (!name) return; 
+            const id = this.state.editingItem?.id || `cat-${Date.now()}`; 
+            await db.put('categories', { id, name }); 
+            this.showToast(this.state.editingItem ? 'Categoria atualizada!' : 'Categoria adicionada!', 'success'); 
+            await this.loadData(); this.updateAllRenders(); 
+            this.cancelEditMode(); 
+            form.reset(); 
+        },
+
+        async handleTransfer(e) { 
+            e.preventDefault(); 
+            const form = e.target; 
+            const fromId = form.elements['transfer-from-account'].value; 
+            const toId = form.elements['transfer-to-account'].value; 
+            const amount = this.parseCurrency(form.elements['transfer-amount'].value); 
+            const date = form.elements['transfer-date'].value; 
+            const desc = form.elements['transfer-description'].value; 
+            if (fromId === toId || !amount || !date) { this.showToast("Contas de origem e destino devem ser diferentes.", 'error'); return; } 
+            const tId = `transfer-${Date.now()}`; 
+            const fromName = this.state.accounts.find(a=>a.id===fromId)?.name; 
+            const toName = this.state.accounts.find(a=>a.id===toId)?.name; 
+            const descriptionText = desc ? `: ${desc}` : ''; 
+            const exp = { id: `trans-${Date.now()}-out`, type: 'expense', description: `Transferência para ${toName}${descriptionText}`, amount, date, accountId: fromId, category: 'Transferência', isPaid: true, dueDate: date, transferId: tId }; 
+            const inc = { id: `trans-${Date.now()}-in`, type: 'income', description: `Transferência de ${fromName}${descriptionText}`, amount, date, accountId: toId, category: 'Transferência', isPaid: true, dueDate: date, transferId: tId }; 
+            await Promise.all([db.put('transactions', exp), db.put('transactions', inc)]); 
+            this.showToast("Transferência realizada com sucesso!", 'success'); 
+            await this.loadData(); 
+            this.updateAllRenders(); 
+            form.reset(); 
+        },
+
+        async handleBudget(e) { 
+            e.preventDefault(); 
+            const form = e.target; 
+            const category = form.elements['budget-category'].value; 
+            const amount = this.parseCurrency(form.elements['budget-amount'].value); 
+            const id = this.state.editingItem?.id || this.state.budgets.find(b => b.category === category)?.id || `bud-${Date.now()}`; 
+            await db.put('budgets', { id, category, amount }); 
+            this.showToast('Orçamento salvo!', 'success'); 
+            await this.loadData(); 
+            this.updateAllRenders(); 
+            this.cancelEditMode(); 
+            form.reset(); 
+        },
+
+        async handleGoal(e) { 
+            e.preventDefault(); 
+            const form = e.target; 
+            const id = this.state.editingItem?.id || `goal-${Date.now()}`; 
+            const name = form.elements['goal-name'].value; 
+            const target = this.parseCurrency(form.elements['goal-target'].value); 
+            const saved = this.parseCurrency(form.elements['goal-saved'].value); 
+            const deadline = form.elements['goal-deadline'].value; 
+            await db.put('goals', { id, name, target, saved, deadline: deadline || null }); 
+            this.showToast('Meta salva!', 'success'); 
+            await this.loadData(); 
+            this.updateAllRenders(); 
+            this.cancelEditMode(); 
+            form.reset(); 
+        },
+
+        async handleGoalContribution(e) { 
+            e.preventDefault(); 
+            const form = e.target; 
+            const goalId = form.dataset.goalId; 
+            const amount = this.parseCurrency(form.querySelector('.contribution-amount').value) || 0; 
+            const accountId = form.querySelector('.contribution-account').value; 
+            const goal = this.state.goals.find(g => g.id === goalId); 
+            this.updateAllBalances(); 
+            const account = this.state.accounts.find(a => a.id === accountId); 
+            if (amount <= 0 || !accountId || !goal || !account) { this.showToast("Dados inválidos para a contribuição.", 'error'); return; } 
+            if (account.currentBalance < amount) { this.showToast("Saldo insuficiente na conta selecionada.", 'error'); return; } 
+            goal.saved = (goal.saved || 0) + amount; 
+            const today = new Date().toISOString().split('T')[0]; 
+            const newT = { id: `trans-${Date.now()}`, type: 'expense', description: `Aporte para meta: ${goal.name}`, amount, date: today, accountId, category: 'Metas', isPaid: true, dueDate: today }; 
+            await Promise.all([db.put('goals', goal), db.put('transactions', newT)]); 
+            this.showToast('Aporte para meta realizado!', 'success'); 
+            await this.loadData(); 
+            this.updateAllRenders(); 
+            form.querySelector('.contribution-amount').value = ''; 
+        },
+
+        async handleRecurrence(e) { 
+            e.preventDefault(); 
+            const form = e.target; 
+            const id = this.state.editingItem?.id || `rec-${Date.now()}`; 
+            const description = form.elements['recurrence-description'].value; 
+            const amount = this.parseCurrency(form.elements['recurrence-amount'].value); 
+            const type = form.elements['recurrence-type'].value; 
+            const accountId = form.elements['recurrence-account'].value; 
+            const category = form.elements['recurrence-category'].value; 
+            const frequency = form.elements['recurrence-frequency'].value; 
+            const startDate = form.elements['recurrence-start-date'].value; 
+            const existing = this.state.editingItem?.id ? this.state.recurrences.find(r=>r.id===id) : null; 
+            const recurrence = { id, description, amount, type, accountId, category, frequency, startDate, nextDueDate: existing ? existing.nextDueDate : startDate }; 
+            await db.put('recurrences', recurrence); 
+            this.showToast('Recorrência salva!', 'success'); 
+            await this.loadData(); 
+            this.updateAllRenders(); 
+            this.cancelEditMode(); 
+            form.reset(); 
+        },
         
-        async deleteTransaction(id) { const t = this.state.transactions.find(t=>t.id===id); if(!t) return; if(t.creditCardId) { const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); if(invoice) { invoice.amount -= t.amount; await db.put('invoices', invoice); } } await db.delete('transactions', id); await this.loadData(); this.showToast('Transação deletada.', 'success'); this.updateAllRenders(); this.renderCreditCardModule(); },
-        async deleteAccount(id) { const toDeleteT = this.state.transactions.filter(t => t.accountId === id); await Promise.all([ db.delete('accounts', id), ...toDeleteT.map(t => db.delete('transactions', t.id)) ]); await this.loadData(); this.showToast('Conta e suas transações deletadas.', 'success'); this.updateAllRenders(); },
-        async deleteCreditCard(id) { const toDeleteT = this.state.transactions.filter(t => t.creditCardId === id); const toDeleteI = this.state.invoices.filter(i => i.creditCardId === id); await Promise.all([ db.delete('creditCards', id), ...toDeleteT.map(t => db.delete('transactions', t.id)), ...toDeleteI.map(i => db.delete('invoices', i.id)) ]); this.state.selectedCardId = null; await this.loadData(); this.showToast('Cartão e suas transações deletados.', 'success'); this.updateAllRenders(); this.renderCreditCardModule(); },
-        async deleteCategory(id) { const catName = this.state.categories.find(c=>c.id===id)?.name; if (this.state.transactions.some(t => t.category === catName)) { this.showToast("Não é possível deletar uma categoria em uso.", 'error'); return; } await db.delete('categories', id); await this.loadData(); this.showToast('Categoria deletada.', 'success'); this.updateAllRenders(); },
-        async deleteBudget(id) { await db.delete('budgets', id); await this.loadData(); this.showToast('Orçamento deletado.', 'success'); this.updateAllRenders(); },
-        async deleteGoal(id) { await db.delete('goals', id); await this.loadData(); this.showToast('Meta deletada.', 'success'); this.updateAllRenders(); },
-        async deleteRecurrence(id) { await db.delete('recurrences', id); await this.loadData(); this.showToast('Recorrência deletada.', 'success'); this.updateAllRenders(); },
+        async deleteTransaction(id) { 
+            const t = this.state.transactions.find(t=>t.id===id); 
+            if(!t) return; 
+            if(t.creditCardId) { 
+                const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); 
+                if(invoice) { 
+                    invoice.amount -= t.amount; 
+                    await db.put('invoices', invoice); 
+                } 
+            } 
+            await db.delete('transactions', id); 
+            await this.loadData(); 
+            this.showToast('Transação deletada.', 'success'); 
+            this.updateAllRenders(); 
+            this.renderCreditCardModule(); 
+        },
+
+        async deleteAccount(id) {
+            const accountName = this.state.accounts.find(a => a.id === id)?.name || '';
+            const associatedRecurrences = this.state.recurrences.filter(r => r.accountId === id);
+
+            await Promise.all([
+                db.delete('accounts', id),
+                ...this.state.transactions.filter(t => t.accountId === id).map(t => db.delete('transactions', t.id)),
+                ...associatedRecurrences.map(r => db.delete('recurrences', r.id))
+            ]);
+
+            await this.loadData();
+            this.showToast(`Conta "${accountName}" e todas as suas transações e recorrências foram deletadas.`, 'success');
+            this.updateAllRenders();
+        },
+
+        async deleteCreditCard(id) { 
+            const toDeleteT = this.state.transactions.filter(t => t.creditCardId === id); 
+            const toDeleteI = this.state.invoices.filter(i => i.creditCardId === id); 
+            await Promise.all([ db.delete('creditCards', id), ...toDeleteT.map(t => db.delete('transactions', t.id)), ...toDeleteI.map(i => db.delete('invoices', i.id)) ]); 
+            this.state.selectedCardId = null; 
+            await this.loadData(); 
+            this.showToast('Cartão e suas transações deletados.', 'success'); 
+            this.updateAllRenders(); 
+            this.renderCreditCardModule(); 
+        },
+
+        async deleteCategory(id) {
+            const catName = this.state.categories.find(c => c.id === id)?.name;
+            if (this.state.transactions.some(t => t.category === catName)) { this.showToast("Não é possível deletar. Categoria em uso por transações.", 'error'); return; }
+            if (this.state.budgets.some(b => b.category === catName)) { this.showToast("Não é possível deletar. Categoria em uso por orçamentos.", 'error'); return; }
+            if (this.state.recurrences.some(r => r.category === catName)) { this.showToast("Não é possível deletar. Categoria em uso por recorrências.", 'error'); return; }
+            
+            await db.delete('categories', id);
+            await this.loadData();
+            this.showToast('Categoria deletada.', 'success');
+            this.updateAllRenders();
+        },
+
+        async deleteBudget(id) { 
+            await db.delete('budgets', id); 
+            await this.loadData(); 
+            this.showToast('Orçamento deletado.', 'success'); 
+            this.updateAllRenders(); 
+        },
+
+        async deleteGoal(id) { 
+            await db.delete('goals', id); 
+            await this.loadData(); 
+            this.showToast('Meta deletada.', 'success'); 
+            this.updateAllRenders(); 
+        },
+
+        async deleteRecurrence(id) { 
+            await db.delete('recurrences', id); 
+            await this.loadData(); 
+            this.showToast('Recorrência deletada.', 'success'); 
+            this.updateAllRenders(); 
+        },
 
         async getOrCreateInvoiceForDate(cardId, targetDate) {
             const card = this.state.creditCards.find(c => c.id === cardId);
@@ -1176,8 +1376,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return newInvoice;
         },
         
-        openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('initial-balance-date').valueAsDate = new Date(); },
-        closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); this.formatCurrencyInput(document.getElementById('initial-balance'), true); if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
+        openAccountModal(triggeredBySelectId = null) { 
+            this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; 
+            this.elements.accountModal.classList.add('visible'); 
+        },
+
+        closeAccountModal() { 
+            this.elements.accountModal.classList.remove('visible'); 
+            this.elements.accountForm.reset(); 
+            if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } 
+        },
+
         openBillPaymentModal(cardId) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             const openInvoices = this.state.invoices.filter(i => i.creditCardId === cardId && i.status === 'open').sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -1189,18 +1398,56 @@ document.addEventListener('DOMContentLoaded', () => {
             form.elements['payment-card-name'].value = card.name;
             form.elements['payment-bill-amount'].value = this.formatCurrency(invoiceToPay.amount);
             const paymentAmountInput = form.elements['payment-amount'];
-            paymentAmountInput.value = invoiceToPay.amount;
+            paymentAmountInput.value = this.formatCurrency(invoiceToPay.amount).replace(/R\$\s?/, '');
             this.formatCurrencyInput(paymentAmountInput);
             form.elements['payment-date'].valueAsDate = new Date();
             this.populateSelectors();
             this.elements.billPaymentModal.classList.add('visible');
         },
+
         closeBillPaymentModal() { this.elements.billPaymentModal.classList.remove('visible'); this.elements.billPaymentForm.reset(); },
-        openCreditCardExpenseModal(cardId) { const form = this.elements.creditCardExpenseForm; form.elements['expense-card-id'].value = cardId; document.getElementById('expense-date').valueAsDate = new Date(); document.getElementById('expense-installments').value = 1; this.populateSelectors(); this.elements.creditCardExpenseModal.classList.add('visible'); },
-        closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
-        handleAccountSelectChange(e) { if (e.target.value === 'add_new_account') { const selectId = e.target.id; e.target.value = ''; this.openAccountModal(selectId); } },
         
-        updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); this.showToast('Ocorreu um erro ao atualizar a tela.', 'error'); } },
+        openCreditCardExpenseModal(cardId) { 
+            const form = this.elements.creditCardExpenseForm; 
+            form.elements['expense-card-id'].value = cardId; 
+            document.getElementById('expense-date').valueAsDate = new Date(); 
+            document.getElementById('expense-installments').value = 1; 
+            this.populateSelectors(); 
+            this.elements.creditCardExpenseModal.classList.add('visible'); 
+        },
+
+        closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
+        
+        handleAccountSelectChange(e) { 
+            if (e.target.value === 'add_new_account') { 
+                const selectId = e.target.id; 
+                e.target.value = ''; 
+                this.openAccountModal(selectId); 
+            } 
+        },
+        
+        updateAllRenders() { 
+            try { 
+                this.updateAllBalances(); 
+                this.populateSelectors(); 
+                this.renderSummary(); 
+                this.renderTransactionList(); 
+                this.renderAccountsList(); 
+                this.renderBudgetsList(); 
+                this.renderGoalsList(); 
+                this.renderRecurrencesList(); 
+                this.renderCategoriesList(); 
+                this.updateDashboardCharts(); 
+                this.validateTransactionForm();
+                if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } 
+                if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); } 
+                if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } 
+            } catch (error) { 
+                console.error("Erro durante a renderização completa:", error); 
+                this.showToast('Ocorreu um erro ao atualizar a tela.', 'error'); 
+            } 
+        },
+
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         getAccountIcon(type) {
@@ -1224,6 +1471,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         formatCurrencyInput(input, onBlur = false) {
             let value = input.value;
+            if (typeof value !== 'string') return;
+            
             if (!onBlur && value === '0') {
                 input.value = '';
                 return;
@@ -1265,12 +1514,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         },
 
-        populateSelectors(selectId, options) { 
-            const populate = (id, opts) => {
+        populateSelectors() { 
+            const populate = (id, opts, placeholder = null) => {
                 const select = document.getElementById(id); 
                 if(!select) return;
                 const currentValue = select.value; 
                 select.innerHTML = ''; 
+
+                if (placeholder) {
+                    const placeholderOption = document.createElement('option');
+                    placeholderOption.value = "";
+                    placeholderOption.textContent = placeholder;
+                    placeholderOption.disabled = true;
+                    placeholderOption.selected = true;
+                    select.appendChild(placeholderOption);
+                }
+
                 opts.forEach(opt => { 
                     const option = document.createElement('option'); 
                     option.value = opt.value; option.textContent = opt.text; 
@@ -1281,25 +1540,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     select.value = currentValue; 
                 } 
             };
-            if(selectId && options) {
-                populate(selectId, options);
-                return;
-            }
-            const categoryOptions = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(c => ({ value: c.name, text: c.name })); 
+            
+            const categoryOptions = [...this.state.categories]
+                .sort((a,b) => a.name.localeCompare(b.name))
+                .map(c => ({ value: c.name, text: c.name })); 
             const accountOptions = this.state.accounts.map(a => ({ value: a.id, text: a.name })); 
             const addNewOption = { value: 'add_new_account', text: '+ Adicionar Nova Conta...' }; 
+            
             const selectors = { 
-                'account-select': [...accountOptions, addNewOption], 
-                'transfer-from-account': [...accountOptions, addNewOption], 
-                'transfer-to-account': [...accountOptions, addNewOption], 
-                'category-select': categoryOptions, 
-                'budget-category': categoryOptions, 
-                'recurrence-account': [...accountOptions, addNewOption], 
-                'recurrence-category': categoryOptions, 
-                'payment-account-select': accountOptions, 
-                'expense-category': categoryOptions.filter(c => c.value !== 'Pagamento de Fatura' && c.value !== 'Saldo Inicial' && c.value !== 'Transferência') 
+                'account-select': { options: [...accountOptions, addNewOption], placeholder: accountOptions.length === 0 ? 'Crie uma conta primeiro' : 'Selecione uma conta' },
+                'transfer-from-account': { options: [...accountOptions, addNewOption], placeholder: 'Selecione a origem' },
+                'transfer-to-account': { options: [...accountOptions, addNewOption], placeholder: 'Selecione o destino' },
+                'category-select': { options: categoryOptions, placeholder: 'Selecione uma categoria' }, 
+                'budget-category': { options: categoryOptions, placeholder: 'Selecione uma categoria' }, 
+                'recurrence-account': { options: [...accountOptions, addNewOption], placeholder: 'Selecione uma conta' }, 
+                'recurrence-category': { options: categoryOptions, placeholder: 'Selecione uma categoria' }, 
+                'payment-account-select': { options: accountOptions, placeholder: 'Selecione a conta' }, 
+                'expense-category': { options: categoryOptions.filter(c => c.value !== 'Pagamento de Fatura' && c.value !== 'Transferência'), placeholder: 'Selecione uma categoria' } 
             }; 
-            for (const id in selectors) { populate(id, selectors[id]); }
+            
+            for (const id in selectors) { 
+                populate(id, selectors[id].options, selectors[id].placeholder); 
+            }
+        },
+
+        validateTransactionForm() {
+            const accountSelect = document.getElementById('account-select');
+            const submitButton = document.querySelector('#transaction-form button[type="submit"]');
+            if (accountSelect && submitButton) {
+                const isValid = accountSelect.value && accountSelect.value !== 'add_new_account';
+                submitButton.disabled = !isValid;
+            }
         },
         
         updateAllBalances() {
@@ -1322,7 +1593,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const accountName = t.accountId ? (this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A') : (this.state.creditCards.find(c => c.id === t.creditCardId)?.name || 'N/A');
             const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
         },
-        renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
+
+        renderTransactionList() { 
+            const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); 
+            if (this.state.accounts.length === 0) {
+                this.elements.transactionList.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Para começar, crie sua primeira conta na aba "Contas".</p>';
+            } else if (cashTransactions.length === 0) {
+                this.elements.transactionList.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação encontrada.</p>';
+            }
+            else {
+                this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('');
+            }
+        },
         
         renderSummary() {
             const now = new Date();
@@ -1334,17 +1616,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 new Date(t.date).getFullYear() === currentYear && 
                 t.type === 'income' && 
                 t.accountId && 
-                t.category !== 'Transferência' && 
-                t.category !== 'Saldo Inicial'
+                t.category !== 'Transferência'
             ).reduce((sum, t) => sum + (t.amount || 0), 0);
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                                     t.isPaid &&
-                                     t.accountId && 
-                                     new Date(t.date).getMonth() === currentMonth &&
-                                     new Date(t.date).getFullYear() === currentYear &&
-                                     t.category !== 'Transferência';
+                                             t.isPaid &&
+                                             t.accountId && 
+                                             new Date(t.date).getMonth() === currentMonth &&
+                                             new Date(t.date).getFullYear() === currentYear &&
+                                             t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
@@ -1363,7 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accountsListEl.innerHTML = ''; 
 
             if (this.state.accounts.length === 0) {
-                accountsListEl.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px; grid-column: 1 / -1;">Nenhuma conta cadastrada.</p>';
+                accountsListEl.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px; grid-column: 1 / -1;">Nenhuma conta cadastrada. Clique em "Adicionar Conta" para começar.</p>';
                 return;
             }
 
@@ -1373,7 +1654,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentYear = now.getFullYear();
 
                 const monthlyIncome = this.state.transactions
-                    .filter(t => t.accountId === acc.id && t.type === 'income' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.category !== 'Saldo Inicial')
+                    .filter(t => t.accountId === acc.id && t.type === 'income' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
                     .reduce((sum, t) => sum + t.amount, 0);
 
                 const monthlyExpense = this.state.transactions
@@ -1489,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedCard = this.state.creditCards.find(c => c.id === this.state.selectedCardId);
             
             if(!selectedCard) {
-                detailsContainer.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Selecione um cartão para ver os detalhes.</p>';
+                detailsContainer.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Selecione ou adicione um cartão para ver os detalhes.</p>';
                 return;
             }
 
@@ -1663,33 +1944,32 @@ document.addEventListener('DOMContentLoaded', () => {
         startEditMode(type, id){ 
             this.cancelEditMode();
             this.state.editingItem = { type, id };
-            const form = document.getElementById(`${type}-form`);
-            const item = this.state[`${type}s`].find(i => i.id === id);
-            if (!form || !item) { this.cancelEditMode(); return; }
-
-            const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
-            const tabButton = document.querySelector(`.tab-btn[data-tab="${tabForType}"]`);
-            if(tabButton) tabButton.click();
+            const item = this.state[`${type}s`]?.find(i => i.id === id);
             
+            let form;
+            // A lógica do modal de conta é diferente
             if (type === 'account') {
                 const accountItem = this.state.accounts.find(a => a.id === id);
                 if (!accountItem) return;
+                
                 this.openAccountModal();
                 const modalForm = document.getElementById('account-form');
                 modalForm.elements['account-name'].value = accountItem.name;
                 modalForm.elements['account-type'].value = accountItem.type;
-                const initialTransaction = this.state.transactions.find(t => t.id === `trans-initial-${id}`);
-                const initialBalanceInput = modalForm.elements['initial-balance'];
-                initialBalanceInput.value = initialTransaction ? initialTransaction.amount : '0';
-                this.formatCurrencyInput(initialBalanceInput);
-
-                modalForm.elements['initial-balance-date'].value = initialTransaction ? initialTransaction.date : new Date().toISOString().split('T')[0];
+                
                 document.getElementById('account-modal-title').textContent = `Editar Conta`;
                 const modalButtonContainer = document.getElementById(`account-form-buttons`);
                 modalButtonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
                 return;
             }
 
+            form = document.getElementById(`${type}-form`);
+            if (!form || !item) { this.cancelEditMode(); return; }
+
+            const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
+            const tabButton = document.querySelector(`.tab-btn[data-tab="${tabForType}"]`);
+            if(tabButton) tabButton.click();
+            
             Object.keys(item).forEach(key => {
                 const formKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
                 const formElement = form.elements[`${type}-${formKey}`] || form.elements[key];
@@ -1698,7 +1978,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         formElement.value = item[key].split('T')[0];
                     } else if (formElement.getAttribute('inputmode') === 'decimal') {
                         formElement.value = item[key];
-                        this.formatCurrencyInput(formElement);
+                        this.formatCurrencyInput(formElement, true);
                     } else {
                         formElement.value = item[key];
                     }
@@ -1721,11 +2001,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const form = document.getElementById(`${type}-form`);
                 if(form) form.reset();
                 const titleEl = document.getElementById(`${type}-form-title`);
-                if (titleEl) titleEl.textContent = `Adicionar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                if (titleEl) {
+                    const titleText = (type === 'creditCard') ? 'Adicionar Cartão de Crédito' : `Adicionar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                    titleEl.textContent = titleText;
+                }
                 const buttonContainer = document.getElementById(`${type}-form-buttons`);
-                if(buttonContainer) buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">Salvar</button>`;
+                if(buttonContainer) {
+                     const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                     buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
+                }
             }
-
             this.state.editingItem = null;
         },
         
@@ -1735,7 +2020,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initCharts() { 
             const commonOptions = this.getChartOptions(); 
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); 
-            if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
+            if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
             if (this.charts.reportChart) this.charts.reportChart.destroy();
         },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
@@ -1783,7 +2068,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fill: true,
                 tension: 0.1
             }];
-            this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => `Saldo: ${this.formatCurrency(context.parsed.y)}` } } } };
+            this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions, responsive: true, maintainAspectRatio: false, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => `Saldo: ${this.formatCurrency(context.parsed.y)}` } } } };
             this.charts.evolutionChart.update();
         },
         
@@ -1814,11 +2099,11 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.data.labels = labels;
             chart.data.datasets = [ { label: 'Gasto', data: spentData, backgroundColor: 'rgba(233, 69, 96, 0.8)' }, { label: 'Orçamento', data: budgetData, backgroundColor: 'rgba(75, 85, 99, 0.5)' } ];
             const commonOptions = this.getChartOptions();
-            chart.options = { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, stacked: true }, y: { ...commonOptions.scales.y, beginAtZero: true } }, plugins: { ...commonOptions.plugins } };
+            chart.options = { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, stacked: false }, y: { ...commonOptions.scales.y, beginAtZero: true } }, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => { const label = context.dataset.label || ''; const value = context.parsed.y || 0; return `${label}: ${this.formatCurrency(value)}`; } } } } };
             chart.update();
         },
 
-        // === SEÇÃO DE RELATÓRIOS (IMPLEMENTAÇÃO MELHORADA) ===
+        // === SEÇÃO DE RELATÓRIOS ===
         renderReportsMenu() {
             this.hideReportView();
             const menuEl = this.elements.reportsMenu;
@@ -1877,25 +2162,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const month = String(todayDate.getMonth() + 1).padStart(2, '0');
             const day = String(todayDate.getDate()).padStart(2, '0');
             const today = `${year}-${month}-${day}`;
+            const firstDayOfYear = `${year}-01-01`;
 
             const accountOptions = this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 
             switch (reportId) {
                 case 'accountStatement':
                     return `
-                        <div class="form-group"><label for="filter-account">Conta</label><select id="filter-account" class="form-control">${accountOptions}</select></div>
-                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${year}-01-01"></div>
+                        <div class="form-group"><label for="filter-account">Conta</label><select id="filter-account" class="form-control" ${this.state.accounts.length === 0 ? 'disabled' : ''}>${accountOptions}</select></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${firstDayOfYear}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
 
                 case 'categoryExpense':
                 case 'cashflow':
                      return `
-                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${year}-01-01"></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${firstDayOfYear}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
 
                 case 'paymentStatus':
                     return `
-                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${year}-01-01"></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${firstDayOfYear}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>
                         <div class="form-group">
                            <label for="filter-payment-status">Status do Pagamento</label>
@@ -1936,6 +2222,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const startDate = document.getElementById('filter-start-date').value;
             const endDate = document.getElementById('filter-end-date').value;
             const resultsArea = document.getElementById('report-results-area');
+
+            if(!accountId) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma conta selecionada. Por favor, crie uma conta primeiro.</p>';
+                return;
+            }
 
             const transactions = this.state.transactions
                 .filter(t => t.accountId === accountId && t.date >= startDate && t.date <= endDate)
@@ -2046,7 +2337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!monthlyData[monthKey]) {
                         monthlyData[monthKey] = { income: 0, expense: 0 };
                     }
-                    if (t.type === 'income' && t.category !== 'Transferência' && t.category !== 'Saldo Inicial') monthlyData[monthKey].income += t.amount;
+                    if (t.type === 'income' && t.category !== 'Transferência') monthlyData[monthKey].income += t.amount;
                     if (t.type === 'expense' && t.isPaid && t.category !== 'Transferência') monthlyData[monthKey].expense += t.amount;
                 }
             });
@@ -2136,14 +2427,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      }
                  }
                   return `
-                       <tr>
-                           <td>${this.formatDate(t.date)}</td>
-                           <td>${t.description}</td>
-                           <td>${this.formatDate(t.dueDate)}</td>
-                           <td>${this.formatCurrency(t.amount)}</td>
-                           <td class="${statusClass}">${statusText}</td>
-                       </tr>
-                   `;
+                     <tr>
+                         <td>${this.formatDate(t.date)}</td>
+                         <td>${t.description}</td>
+                         <td>${this.formatDate(t.dueDate)}</td>
+                         <td>${this.formatCurrency(t.amount)}</td>
+                         <td class="${statusClass}">${statusText}</td>
+                     </tr>
+                 `;
              }).join('');
 
              resultsArea.innerHTML = `
@@ -2214,7 +2505,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
-        // CORREÇÃO APLICADA AQUI
         generateReportPDF(reportId) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -2277,7 +2567,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
                         });
                     break;
-                // Outros relatórios podem ser adicionados aqui
             }
 
             if(body.length === 0){
