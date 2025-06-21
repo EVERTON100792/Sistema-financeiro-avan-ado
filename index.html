@@ -699,6 +699,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
                 if (el) this.elements[idCamel] = el;
+          <script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const db = {
+        _db: null, _dbName: 'FinanceAppDB_default', DB_VERSION: 2, STORES: ['accounts', 'creditCards', 'invoices', 'categories', 'transactions', 'budgets', 'goals', 'recurrences'],
+        async setDbName(username) { this._dbName = `FinanceAppDB_${username}`; },
+        async init() { return new Promise((resolve, reject) => { if (this._db) { resolve(this._db); return; } const request = indexedDB.open(this._dbName, this.DB_VERSION); request.onerror = (event) => { console.error("Erro ao abrir o DB:", event); reject("Erro ao abrir o DB"); }; request.onsuccess = (event) => { this._db = event.target.result; resolve(this._db); }; request.onupgradeneeded = (event) => { const db = event.target.result; this.STORES.forEach(storeName => { if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: 'id' }); } }); }; }); },
+        async _getStore(storeName, mode = 'readonly') { if (!this._db) await this.init(); return this._db.transaction(storeName, mode).objectStore(storeName); },
+        async put(storeName, item) { const store = await this._getStore(storeName, 'readwrite'); return new Promise((resolve, reject) => { const request = store.put(item); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); },
+        async getAll(storeName) { const store = await this._getStore(storeName); return new Promise((resolve, reject) => { const request = store.getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); },
+        async delete(storeName, id) { const store = await this._getStore(storeName, 'readwrite'); return new Promise((resolve, reject) => { const request = store.delete(id); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); }); },
+        async clear(storeName) { const store = await this._getStore(storeName, 'readwrite'); return new Promise((resolve, reject) => { const request = store.clear(); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); }); }
+    };
+
+    const sound = {
+        sounds: {
+            open: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAAAAAD//w==',
+            success: 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhcHJvT19pbmZvT1JJU0YAAAA6aHR0cHM6Ly9taXguY28vbG9va3VwL3NvdW5kLWVmZmVjdHMvY29pbi1zb3VuZC1zaG9ydC0xMjE1My1zb3VuZC1ldm9rZS1tdXNpYw==',
+            payment: 'data:audio/wav;base64,UklGRkFpT19XQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhdnhpT19pbmZvT1JJU0YAAAA7aHR0cHM6Ly9taXguY28vbG9va3VwL3NvdW5kLWVmZmVjdHMvY2FzaC1yZWdpc3Rlci0xNDYzMS1zb3VuZC1ldm9rZS1tdXNpYw==',
+            delete: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAAAAAD//w=='
+        },
+        play: function(soundName) {
+            if (this.sounds[soundName]) {
+                const audio = new Audio(this.sounds[soundName]);
+                audio.play().catch(error => {
+                    console.warn("Audio play was prevented: ", error);
+                });
+            }
+        }
+    };
+
+    const financeApp = {
+        elements: {},
+        charts: { mainOverviewChart: null, evolutionChart: null, accountCharts: {}, reportCharts: {} },
+        state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null },
+
+        async init() {
+            this.cacheDOMElements();
+            this.addEventListeners();
+            await this.checkLogin();
+        },
+
+        async initApp() {
+            await this.loadData();
+            if (!this.state.categories || this.state.categories.length === 0) { await this.createDefaultCategories(); await this.loadData(); }
+            await this.generateRecurringTransactions();
+            this.applySavedTheme();
+            this.elements.welcomeMessage.textContent = `Olá, ${this.state.user}!`;
+            document.getElementById('date').valueAsDate = new Date();
+            this.initCharts();
+            this.handleTransactionTypeChange();
+            this.updateAllRenders();
+            this.renderReportsMenu();
+        },
+        
+        async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
+
+        cacheDOMElements() {
+            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm', 'reportsMenu', 'reportViewContainer' ];
+            elementIds.forEach(idCamel => {
+                const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+                const el = document.getElementById(idKebab);
+                if (el) this.elements[idCamel] = el;
             });
             this.elements.tabButtons = document.querySelectorAll('.tab-btn');
             this.elements.tabContents = document.querySelectorAll('.tab-content');
@@ -942,6 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.handleTransactionTypeChange();
         },
         
+        // ############### FUNÇÃO CORRIGIDA ###############
         async handleAccount(e) {
             e.preventDefault();
             const form = e.target;
@@ -950,20 +1014,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const type = form.elements['account-type'].value;
             const initialBalance = this.parseCurrency(form.elements['initial-balance'].value);
             const initialBalanceDate = form.elements['initial-balance-date'].value;
-            
-            if(!name || !type || !initialBalanceDate) {
+
+            if (!name || !type || !initialBalanceDate) {
                 alert('Por favor, preencha todos os campos da conta.');
                 return;
             }
 
-            const account = { id, name, type, initialBalance };
+            // A conta em si não armazena mais o saldo inicial para evitar redundância.
+            const account = { id, name, type, initialBalance: 0 }; 
             await db.put('accounts', account);
 
+            // Se estiver editando, remove a transação de saldo inicial antiga.
             const existingInitialTransaction = this.state.transactions.find(t => t.accountId === id && t.category === 'Saldo Inicial');
             if (existingInitialTransaction) {
                 await db.delete('transactions', existingInitialTransaction.id);
             }
 
+            // Cria o saldo inicial como uma transação real, que será a base do cálculo.
             if (initialBalance > 0) {
                 const initialTransaction = {
                     id: `trans-initial-${id}`,
@@ -1212,7 +1279,6 @@ document.addEventListener('DOMContentLoaded', () => {
         handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); this.hideAllReportViews(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         
-        // ############### FUNÇÃO ADICIONADA/CORRIGIDA ###############
         parseCurrency(value) {
             if (typeof value === 'number') return value;
             if (typeof value !== 'string') return 0;
@@ -1265,19 +1331,26 @@ document.addEventListener('DOMContentLoaded', () => {
             populate('recurrence-category', categoryOptions);
             populate('expense-category', categoryOptions.filter(c => c.value !== 'Pagamento de Fatura' && c.value !== 'Saldo Inicial' && c.value !== 'Transferência'));
         },
+        
+        // ############### FUNÇÃO CORRIGIDA ###############
         updateAllBalances() {
             this.state.accounts.forEach(acc => {
-                let balance = acc.initialBalance || 0;
+                // O saldo agora é a soma de todas as transações da conta.
+                // Isso simplifica a lógica e evita erros de contagem dupla.
+                let balance = 0;
                 this.state.transactions
                     .filter(t => t.accountId === acc.id)
                     .forEach(t => {
-                        if(t.description && t.description.startsWith('Saldo Inicial') && t.date === new Date(acc.initialBalanceDate).toISOString().split('T')[0]) return;
-                        if (t.type === 'income') balance += t.amount;
-                        if (t.type === 'expense' && t.isPaid) balance -= t.amount;
+                        if (t.type === 'income') {
+                            balance += t.amount;
+                        } else if (t.type === 'expense' && t.isPaid) {
+                            balance -= t.amount;
+                        }
                     });
                 acc.currentBalance = balance;
             });
         },
+
         renderTransactionItem(t, isCardExpense = false) {
             const accountName = t.accountId ? (this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A') : (this.state.creditCards.find(c => c.id === t.creditCardId)?.name || 'N/A');
             const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
@@ -1333,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentYear = now.getFullYear();
 
                 const monthlyIncome = this.state.transactions
-                    .filter(t => t.accountId === acc.id && t.type === 'income' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
+                    .filter(t => t.accountId === acc.id && t.type === 'income' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.category !== 'Saldo Inicial')
                     .reduce((sum, t) => sum + t.amount, 0);
 
                 const monthlyExpense = this.state.transactions
@@ -1392,7 +1465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(t => t.accountId === account.id)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            let balance30DaysAgo = account.initialBalance;
+            let balance30DaysAgo = 0;
             relevantTransactions.forEach(t => {
                 if(new Date(t.date) < thirtyDaysAgo){
                     if (t.type === 'income') balance30DaysAgo += t.amount;
@@ -1637,9 +1710,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const modalForm = document.getElementById('account-form');
                 modalForm.elements['account-name'].value = accountItem.name;
                 modalForm.elements['account-type'].value = accountItem.type;
-                modalForm.elements['initial-balance'].value = accountItem.initialBalance;
-
+                
                 const initialTransaction = this.state.transactions.find(t => t.accountId === id && t.category === 'Saldo Inicial');
+                modalForm.elements['initial-balance'].value = initialTransaction ? initialTransaction.amount : 0;
                 modalForm.elements['initial-balance-date'].value = initialTransaction ? initialTransaction.date : new Date().toISOString().split('T')[0];
                 
                 document.getElementById('account-modal-title').textContent = `Editar Conta`;
@@ -1700,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Report charts will be initialized on demand
         },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
-        updateDashboardCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); this.renderDashboardBudgetChart(); const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); const initialAccountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.initialBalance || 0), 0); const initialCardDebt = 0; let runningNetWorth = initialAccountBalance - initialCardDebt; if (sortedTransactions.length > 0) { const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth); } else { dailyNetWorth.set(new Date().toISOString().split('T')[0], runningNetWorth); } sortedTransactions.forEach(t => { const amount = t.amount || 0; let impact = 0; if (t.type === 'income') impact = +amount; if (t.type === 'expense' && t.isPaid) impact = -amount; runningNetWorth += impact; dailyNetWorth.set(t.date, runningNetWorth); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
+        updateDashboardCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); this.renderDashboardBudgetChart(); const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); const initialAccountBalance = this.state.accounts.reduce((sum, acc) => { const initialTransaction = this.state.transactions.find(t => t.accountId === acc.id && t.category === 'Saldo Inicial'); return sum + (initialTransaction ? initialTransaction.amount : 0); }, 0); let runningNetWorth = initialAccountBalance; if (sortedTransactions.length > 0) { const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth); } else { dailyNetWorth.set(new Date().toISOString().split('T')[0], runningNetWorth); } sortedTransactions.forEach(t => { if (t.category === 'Saldo Inicial') return; const amount = t.amount || 0; let impact = 0; if (t.type === 'income') impact = +amount; if (t.type === 'expense' && t.isPaid) impact = -amount; runningNetWorth += impact; dailyNetWorth.set(t.date, runningNetWorth); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
         
         renderDashboardBudgetChart() {
             const chartCanvas = document.getElementById('main-overview-chart');
@@ -1936,14 +2009,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            const account = this.state.accounts.find(a => a.id === accountId);
             const transactions = this.state.transactions.filter(t => 
                 t.accountId === accountId &&
                 t.date >= startDate &&
                 t.date <= endDate
             ).sort((a,b) => new Date(a.date) - new Date(b.date));
 
-            let startBalance = account.initialBalance;
+            let startBalance = 0;
             this.state.transactions
                 .filter(t => t.accountId === accountId && t.date < startDate)
                 .forEach(t => {
@@ -1954,14 +2026,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let runningBalance = startBalance;
 
             const tableRows = transactions.map(t => {
-                const value = t.type === 'income' ? t.amount : -t.amount;
+                const value = t.type === 'income' ? t.amount : (t.type === 'expense' && t.isPaid ? -t.amount : 0);
                 runningBalance += value;
                 return `
                     <tr>
                         <td>${this.formatDate(t.date)}</td>
                         <td>${t.description}</td>
                         <td>${t.category}</td>
-                        <td class="${t.type === 'income' ? 'positive' : 'negative'}">${this.formatCurrency(value)}</td>
+                        <td class="${t.type === 'income' ? 'positive' : 'negative'}">${this.formatCurrency(t.type === 'income' ? t.amount : -t.amount)}</td>
                         <td>${this.formatCurrency(runningBalance)}</td>
                     </tr>
                 `;
@@ -2089,7 +2161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const month = date.getMonth();
                 const year = date.getFullYear();
                 labels.push(new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(date));
-                const monthIncome = this.state.transactions.filter(t => t.type === 'income' && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').reduce((sum, t) => sum + t.amount, 0);
+                const monthIncome = this.state.transactions.filter(t => t.type === 'income' && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência' && t.category !== 'Saldo Inicial').reduce((sum, t) => sum + t.amount, 0);
                 const monthExpense = this.state.transactions.filter(t => t.type === 'expense' && t.isPaid && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência').reduce((sum, t) => sum + t.amount, 0);
                 incomeData.push(monthIncome);
                 expenseData.push(monthExpense);
@@ -2100,22 +2172,37 @@ document.addEventListener('DOMContentLoaded', () => {
         getDataForNetWorthChart() {
             const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date));
             const dailyNetWorth = new Map();
-            const initialAccountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.initialBalance || 0), 0);
-            let runningNetWorth = initialAccountBalance;
+            let runningNetWorth = 0;
+
+            const accountInitialBalances = this.state.accounts.reduce((acc, account) => {
+                const initialTransaction = this.state.transactions.find(t => t.accountId === account.id && t.category === 'Saldo Inicial');
+                if (initialTransaction) {
+                    acc[account.id] = { amount: initialTransaction.amount, date: initialTransaction.date };
+                }
+                return acc;
+            }, {});
+
             if (sortedTransactions.length > 0) {
                 const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00');
                 firstDate.setDate(firstDate.getDate() - 1);
-                dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth);
+                dailyNetWorth.set(firstDate.toISOString().split('T')[0], 0);
             }
-            sortedTransactions.forEach(t => {
-                const amount = t.amount || 0;
-                let impact = 0;
-                if (t.type === 'income') impact = +amount;
-                if (t.type === 'expense' && t.isPaid) impact = -amount;
-                runningNetWorth += impact;
-                dailyNetWorth.set(t.date, runningNetWorth);
-            });
-            const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
+
+            const allDates = [...new Set(sortedTransactions.map(t => t.date))].sort();
+            
+            let currentBalance = 0;
+            const balanceMap = new Map();
+            
+            for(const date of allDates) {
+                const transactionsOnDate = sortedTransactions.filter(t => t.date === date);
+                transactionsOnDate.forEach(t => {
+                    if (t.type === 'income') currentBalance += t.amount;
+                    if (t.type === 'expense' && t.isPaid) currentBalance -= t.amount;
+                });
+                balanceMap.set(date, currentBalance);
+            }
+
+            const balanceHistory = Array.from(balanceMap.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
             return { balanceHistory };
         },
 
@@ -2171,14 +2258,13 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         getDataForAccountStatement(accountId, startDate, endDate) {
-             const account = this.state.accounts.find(a => a.id === accountId);
             const transactions = this.state.transactions.filter(t => 
                 t.accountId === accountId &&
                 t.date >= startDate &&
                 t.date <= endDate
             ).sort((a,b) => new Date(a.date) - new Date(b.date));
 
-            let startBalance = account.initialBalance;
+            let startBalance = 0;
             this.state.transactions
                 .filter(t => t.accountId === accountId && t.date < startDate)
                 .forEach(t => {
