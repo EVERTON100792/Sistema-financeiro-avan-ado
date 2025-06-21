@@ -699,69 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
                 if (el) this.elements[idCamel] = el;
-          <script>
-document.addEventListener('DOMContentLoaded', () => {
-
-    const db = {
-        _db: null, _dbName: 'FinanceAppDB_default', DB_VERSION: 2, STORES: ['accounts', 'creditCards', 'invoices', 'categories', 'transactions', 'budgets', 'goals', 'recurrences'],
-        async setDbName(username) { this._dbName = `FinanceAppDB_${username}`; },
-        async init() { return new Promise((resolve, reject) => { if (this._db) { resolve(this._db); return; } const request = indexedDB.open(this._dbName, this.DB_VERSION); request.onerror = (event) => { console.error("Erro ao abrir o DB:", event); reject("Erro ao abrir o DB"); }; request.onsuccess = (event) => { this._db = event.target.result; resolve(this._db); }; request.onupgradeneeded = (event) => { const db = event.target.result; this.STORES.forEach(storeName => { if (!db.objectStoreNames.contains(storeName)) { db.createObjectStore(storeName, { keyPath: 'id' }); } }); }; }); },
-        async _getStore(storeName, mode = 'readonly') { if (!this._db) await this.init(); return this._db.transaction(storeName, mode).objectStore(storeName); },
-        async put(storeName, item) { const store = await this._getStore(storeName, 'readwrite'); return new Promise((resolve, reject) => { const request = store.put(item); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); },
-        async getAll(storeName) { const store = await this._getStore(storeName); return new Promise((resolve, reject) => { const request = store.getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); },
-        async delete(storeName, id) { const store = await this._getStore(storeName, 'readwrite'); return new Promise((resolve, reject) => { const request = store.delete(id); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); }); },
-        async clear(storeName) { const store = await this._getStore(storeName, 'readwrite'); return new Promise((resolve, reject) => { const request = store.clear(); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); }); }
-    };
-
-    const sound = {
-        sounds: {
-            open: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAAAAAD//w==',
-            success: 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhcHJvT19pbmZvT1JJU0YAAAA6aHR0cHM6Ly9taXguY28vbG9va3VwL3NvdW5kLWVmZmVjdHMvY29pbi1zb3VuZC1zaG9ydC0xMjE1My1zb3VuZC1ldm9rZS1tdXNpYw==',
-            payment: 'data:audio/wav;base64,UklGRkFpT19XQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhdnhpT19pbmZvT1JJU0YAAAA7aHR0cHM6Ly9taXguY28vbG9va3VwL3NvdW5kLWVmZmVjdHMvY2FzaC1yZWdpc3Rlci0xNDYzMS1zb3VuZC1ldm9rZS1tdXNpYw==',
-            delete: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAAAAAD//w=='
-        },
-        play: function(soundName) {
-            if (this.sounds[soundName]) {
-                const audio = new Audio(this.sounds[soundName]);
-                audio.play().catch(error => {
-                    console.warn("Audio play was prevented: ", error);
-                });
-            }
-        }
-    };
-
-    const financeApp = {
-        elements: {},
-        charts: { mainOverviewChart: null, evolutionChart: null, accountCharts: {}, reportCharts: {} },
-        state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null },
-
-        async init() {
-            this.cacheDOMElements();
-            this.addEventListeners();
-            await this.checkLogin();
-        },
-
-        async initApp() {
-            await this.loadData();
-            if (!this.state.categories || this.state.categories.length === 0) { await this.createDefaultCategories(); await this.loadData(); }
-            await this.generateRecurringTransactions();
-            this.applySavedTheme();
-            this.elements.welcomeMessage.textContent = `Olá, ${this.state.user}!`;
-            document.getElementById('date').valueAsDate = new Date();
-            this.initCharts();
-            this.handleTransactionTypeChange();
-            this.updateAllRenders();
-            this.renderReportsMenu();
-        },
-        
-        async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
-
-        cacheDOMElements() {
-            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm', 'reportsMenu', 'reportViewContainer' ];
-            elementIds.forEach(idCamel => {
-                const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
-                const el = document.getElementById(idKebab);
-                if (el) this.elements[idCamel] = el;
             });
             this.elements.tabButtons = document.querySelectorAll('.tab-btn');
             this.elements.tabContents = document.querySelectorAll('.tab-content');
@@ -1005,7 +942,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.handleTransactionTypeChange();
         },
         
-        // ############### FUNÇÃO CORRIGIDA ###############
         async handleAccount(e) {
             e.preventDefault();
             const form = e.target;
@@ -1020,17 +956,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // A conta em si não armazena mais o saldo inicial para evitar redundância.
             const account = { id, name, type, initialBalance: 0 }; 
             await db.put('accounts', account);
 
-            // Se estiver editando, remove a transação de saldo inicial antiga.
             const existingInitialTransaction = this.state.transactions.find(t => t.accountId === id && t.category === 'Saldo Inicial');
             if (existingInitialTransaction) {
                 await db.delete('transactions', existingInitialTransaction.id);
             }
 
-            // Cria o saldo inicial como uma transação real, que será a base do cálculo.
             if (initialBalance > 0) {
                 const initialTransaction = {
                     id: `trans-initial-${id}`,
@@ -1282,7 +1215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         parseCurrency(value) {
             if (typeof value === 'number') return value;
             if (typeof value !== 'string') return 0;
-            // Remove R$, espaços, e substitui a vírgula decimal por ponto.
             const cleanValue = value.replace(/R\$\s?/, '').replace(/\./g, '').replace(',', '.');
             const number = parseFloat(cleanValue);
             return isNaN(number) ? 0 : number;
@@ -1332,11 +1264,8 @@ document.addEventListener('DOMContentLoaded', () => {
             populate('expense-category', categoryOptions.filter(c => c.value !== 'Pagamento de Fatura' && c.value !== 'Saldo Inicial' && c.value !== 'Transferência'));
         },
         
-        // ############### FUNÇÃO CORRIGIDA ###############
         updateAllBalances() {
             this.state.accounts.forEach(acc => {
-                // O saldo agora é a soma de todas as transações da conta.
-                // Isso simplifica a lógica e evita erros de contagem dupla.
                 let balance = 0;
                 this.state.transactions
                     .filter(t => t.accountId === acc.id)
@@ -1485,12 +1414,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             relevantTransactions.forEach(t => {
                 if (new Date(t.date) >= thirtyDaysAgo) {
-                    if (t.type === 'income') runningBalance += t.amount;
-                    if (t.type === 'expense' && t.isPaid) runningBalance -= t.amount;
+                    let impact = 0;
+                    if (t.type === 'income') impact = t.amount;
+                    if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
-                    for (let d = new Date(t.date); d <= new Date(); d.setDate(d.getDate() + 1)) {
-                         const dateStr = d.toISOString().split('T')[0];
-                         if(dailyData.has(dateStr)) dailyData.set(dateStr, runningBalance);
+                    if (impact !== 0) {
+                         const transactionDate = new Date(t.date + "T00:00:00");
+                         for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                             const dateStr = d.toISOString().split('T')[0];
+                             if(dailyData.has(dateStr)) {
+                                 dailyData.set(dateStr, dailyData.get(dateStr) + impact);
+                             }
+                         }
                     }
                 }
             });
@@ -1767,13 +1702,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
         initCharts() { 
             const commonOptions = this.getChartOptions(); 
-            // Dashboard Charts
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); 
             if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
-            // Report charts will be initialized on demand
         },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
-        updateDashboardCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); this.renderDashboardBudgetChart(); const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); const initialAccountBalance = this.state.accounts.reduce((sum, acc) => { const initialTransaction = this.state.transactions.find(t => t.accountId === acc.id && t.category === 'Saldo Inicial'); return sum + (initialTransaction ? initialTransaction.amount : 0); }, 0); let runningNetWorth = initialAccountBalance; if (sortedTransactions.length > 0) { const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth); } else { dailyNetWorth.set(new Date().toISOString().split('T')[0], runningNetWorth); } sortedTransactions.forEach(t => { if (t.category === 'Saldo Inicial') return; const amount = t.amount || 0; let impact = 0; if (t.type === 'income') impact = +amount; if (t.type === 'expense' && t.isPaid) impact = -amount; runningNetWorth += impact; dailyNetWorth.set(t.date, runningNetWorth); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
+        
+        // ############### FUNÇÃO CORRIGIDA ###############
+        updateDashboardCharts() {
+            if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
+            const commonOptions = this.getChartOptions();
+            this.renderDashboardBudgetChart();
+
+            // Lógica robusta para a evolução do patrimônio
+            const accountTransactions = this.state.transactions.filter(t => t.accountId);
+            const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort();
+            
+            const dailyNetWorth = new Map();
+            let runningBalance = 0;
+
+            if (sortedDates.length > 0) {
+                const firstDate = new Date(sortedDates[0] + 'T00:00:00');
+                firstDate.setDate(firstDate.getDate() - 1);
+                dailyNetWorth.set(firstDate.toISOString().split('T')[0], 0);
+            }
+
+            sortedDates.forEach(date => {
+                const transactionsOnDate = accountTransactions.filter(t => t.date === date);
+                let dailyChange = 0;
+                transactionsOnDate.forEach(t => {
+                    if (t.type === 'income') {
+                        dailyChange += t.amount;
+                    } else if (t.type === 'expense' && t.isPaid) {
+                        dailyChange -= t.amount;
+                    }
+                });
+                runningBalance += dailyChange;
+                dailyNetWorth.set(date, runningBalance);
+            });
+            
+            const balanceHistory = Array.from(dailyNetWorth.entries())
+                .map(([date, value]) => ({ x: date, y: value }))
+                .sort((a, b) => new Date(a.x) - new Date(b.x));
+
+            // Evita renderizar um gráfico vazio se não houver histórico
+            if (balanceHistory.length === 0) {
+                 balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+            }
+
+            this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
+            this.charts.evolutionChart.data.datasets = [{
+                label: 'Patrimônio (Soma das Contas)',
+                data: balanceHistory,
+                borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560',
+                backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)',
+                fill: true,
+                tension: 0.1
+            }];
+            this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => `Saldo: ${this.formatCurrency(context.parsed.y)}` } } } };
+            this.charts.evolutionChart.update();
+        },
         
         renderDashboardBudgetChart() {
             const chartCanvas = document.getElementById('main-overview-chart');
@@ -1835,7 +1822,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         // ===============================================
-        // == NOVA SEÇÃO DE RELATÓRIOS
+        // == SEÇÃO DE RELATÓRIOS (sem alterações)
         // ===============================================
         
         renderReportsMenu() {
@@ -1880,7 +1867,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.elements.reportViewContainer.appendChild(reportView);
             }
 
-            // Gerar conteúdo do relatório específico
             const reportContentGenerator = this[`render${reportId.charAt(0).toUpperCase() + reportId.slice(1)}View`];
             if (reportContentGenerator) {
                 reportContentGenerator(reportView);
@@ -1891,7 +1877,6 @@ document.addEventListener('DOMContentLoaded', () => {
             reportView.classList.add('active');
         },
 
-        // Renderizadores para as Views dos Relatórios
         renderAccountStatementView(container) {
             container.innerHTML = `
                 <div class="report-header">
@@ -2002,7 +1987,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
 
-        // Geradores de conteúdo para os relatórios
         renderAccountStatementResults(container, accountId, startDate, endDate) {
             if (!accountId || !startDate || !endDate) {
                 container.innerHTML = '<p class="text-muted-color" style="text-align:center; padding: 20px;">Por favor, preencha todos os campos.</p>';
@@ -2026,14 +2010,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let runningBalance = startBalance;
 
             const tableRows = transactions.map(t => {
-                const value = t.type === 'income' ? t.amount : (t.type === 'expense' && t.isPaid ? -t.amount : 0);
+                const value = t.type === 'income' ? t.amount : -t.amount;
                 runningBalance += value;
                 return `
                     <tr>
                         <td>${this.formatDate(t.date)}</td>
                         <td>${t.description}</td>
                         <td>${t.category}</td>
-                        <td class="${t.type === 'income' ? 'positive' : 'negative'}">${this.formatCurrency(t.type === 'income' ? t.amount : -t.amount)}</td>
+                        <td class="${t.type === 'income' ? 'positive' : 'negative'}">${this.formatCurrency(value)}</td>
                         <td>${this.formatCurrency(runningBalance)}</td>
                     </tr>
                 `;
@@ -2135,7 +2119,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.charts.reportCharts[reportId] = new Chart(canvas, chartConfig);
         },
 
-        // Métodos para obter dados para os gráficos
         getDataForCategoryExpenseChart(period) {
             const now = new Date();
             let startDate = new Date('1970-01-01');
@@ -2173,40 +2156,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date));
             const dailyNetWorth = new Map();
             let runningNetWorth = 0;
-
-            const accountInitialBalances = this.state.accounts.reduce((acc, account) => {
-                const initialTransaction = this.state.transactions.find(t => t.accountId === account.id && t.category === 'Saldo Inicial');
-                if (initialTransaction) {
-                    acc[account.id] = { amount: initialTransaction.amount, date: initialTransaction.date };
-                }
-                return acc;
-            }, {});
-
             if (sortedTransactions.length > 0) {
                 const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00');
                 firstDate.setDate(firstDate.getDate() - 1);
-                dailyNetWorth.set(firstDate.toISOString().split('T')[0], 0);
+                dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth);
             }
-
-            const allDates = [...new Set(sortedTransactions.map(t => t.date))].sort();
-            
-            let currentBalance = 0;
-            const balanceMap = new Map();
-            
-            for(const date of allDates) {
-                const transactionsOnDate = sortedTransactions.filter(t => t.date === date);
-                transactionsOnDate.forEach(t => {
-                    if (t.type === 'income') currentBalance += t.amount;
-                    if (t.type === 'expense' && t.isPaid) currentBalance -= t.amount;
-                });
-                balanceMap.set(date, currentBalance);
-            }
-
-            const balanceHistory = Array.from(balanceMap.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
+            sortedTransactions.forEach(t => {
+                const amount = t.amount || 0;
+                let impact = 0;
+                if (t.type === 'income') impact = +amount;
+                if (t.type === 'expense' && t.isPaid) impact = -amount;
+                runningNetWorth += impact;
+                dailyNetWorth.set(t.date, runningNetWorth);
+            });
+            const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
             return { balanceHistory };
         },
 
-        // Geração de PDF
         generateReportPDF(reportId) {
             const generator = this[`generate${reportId.charAt(0).toUpperCase() + reportId.slice(1)}PDF`];
             if (generator) {
@@ -2252,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     doc.text(`Saldo Final: ${this.formatCurrency(endBalance)}`, 14, finalY + 17);
 
                     doc.save(`extrato_${account.name.replace(/ /g, '_')}.pdf`);
-                    btn.onclick = null; // Limpar o handler
+                    btn.onclick = null;
                 };
             }
         },
@@ -2289,7 +2255,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         generateCategoryExpensePDF() {
             this.showReportView('categoryExpense');
-            setTimeout(() => { // Espera a renderização do gráfico
+            setTimeout(() => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 const chart = this.charts.reportCharts.categoryExpense;
@@ -2376,7 +2342,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  const { balanceHistory } = this.getDataForNetWorthChart();
                  const tableBody = balanceHistory.map(item => [this.formatDate(item.x), this.formatCurrency(item.y)]);
                  
-                 // Adicionar apenas alguns pontos na tabela para não ficar muito longa
                  const sampledBody = tableBody.filter((_, i) => i % Math.ceil(tableBody.length / 20) === 0);
 
                  doc.autoTable({
