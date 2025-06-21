@@ -219,21 +219,15 @@
         .summary-item .label { font-size: 0.9rem; color: var(--text-muted-color); }
         .summary-item .value { font-size: 1.4rem; font-weight: 600; }
         
-        .report-table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
         .report-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: fixed; /* Previne que colunas largas quebrem o layout */
         }
         .report-table th, .report-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid var(--secondary-color);
-            white-space: nowrap;
         }
         .report-table th {
             font-weight: 600;
@@ -245,11 +239,9 @@
         body.light-mode .report-table tbody tr:nth-child(even) {
             background-color: var(--secondary-color);
         }
-        .report-table th:nth-child(2), .report-table td:nth-child(2) { /* Coluna de Descrição */
-            width: 40%; /* Dá mais espaço para a descrição */
-            white-space: normal; /* Permite que o texto na descrição quebre a linha */
+        .report-table td:nth-child(2) { /* Coluna de Descrição */
             word-wrap: break-word;
-            word-break: break-all; /* Força a quebra de textos longos */
+            max-width: 300px; /* Limita a largura máxima */
         }
         .report-table td:not(:first-child):not(:nth-child(2)) { /* Colunas de valor */
             text-align: right;
@@ -262,43 +254,57 @@
         .toast.error { background-color: var(--error-color); }
         @keyframes slideIn { to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
-        
+
         /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR === */
-        @media (max-width: 992px) {
-            .dashboard-layout, .credit-card-module-layout, .login-wrapper {
-                grid-template-columns: 1fr;
-            }
-            .login-showcase { 
-                display: none;
+        @media (max-width: 768px) {
+            body { line-height: 1.5; }
+            .container { padding: 10px; }
+            .card { padding: 15px; }
+            h2 { font-size: 1.5rem; }
+            
+            #login-container { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%); }
+            .login-wrapper { grid-template-columns: 1fr; }
+            .login-showcase { display: none; }
+            .login-form-wrapper { width: 100%; }
+            .login-box { width: 90%; max-width: 400px; }
+
+            #menu-toggle { display: block; }
+            .app-layout { position: relative; }
+            .sidebar-nav { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; background-color: var(--card-bg-color); transform: translateX(-100%); transition: transform 0.3s ease-in-out; border-radius: 0 var(--border-radius) var(--border-radius) 0; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+            .sidebar-nav.visible { transform: translateX(0); }
+
+            .grid-layout, .dashboard-layout, .report-summary, .account-card-grid, .account-details, .credit-card-module-layout { 
+                grid-template-columns: 1fr; 
             }
         }
-
+        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR V2 === */
         @media (max-width: 768px) {
             body { 
                 line-height: 1.5; 
-                -webkit-text-size-adjust: 100%;
+                -webkit-text-size-adjust: 100%; /* Previne zoom automático de fontes em iPhones */
             }
             .container { 
-                padding: 10px;
+                padding: 15px; /* Reduz o espaçamento lateral da página */
             }
             .card { 
-                padding: 15px;
+                padding: 15px; /* Reduz o espaçamento interno dos cards */
             }
             h1 { font-size: 1.8rem; }
             h2 { font-size: 1.4rem; }
 
-            .summary-section, .grid-layout, .report-summary, .credit-card-summary, .account-card-grid, .account-details, .report-filters {
+            /* Força todos os principais layouts de grid a terem uma única coluna e aumenta o espaço entre eles */
+            .summary-section, .grid-layout, .dashboard-layout, .account-card-grid, .account-details, .credit-card-module-layout, .report-filters {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 20px; /* Aumenta o espaço vertical entre os itens */
             }
-            
+
+            /* Trata especificamente os cards de resumo dos relatórios */
             .report-summary, .credit-card-summary {
-                display: block;
+                display: block; /* Remove o grid e faz os itens se comportarem como blocos */
             }
             .report-summary .summary-item, .credit-card-summary .info-item {
-                text-align: left;
-                padding-bottom: 15px;
-                margin-bottom: 15px;
+                text-align: left; /* Alinha o texto à esquerda para melhor leitura */
+                padding: 10px 0;
                 border-bottom: 1px solid var(--secondary-color);
             }
              .report-summary .summary-item:last-child, .credit-card-summary .info-item:last-child {
@@ -306,22 +312,13 @@
                 padding-bottom: 0;
                 margin-bottom: 0;
             }
-              
+             .report-summary .summary-item:not(:last-child), .credit-card-summary .info-item:not(:last-child) {
+                margin-bottom: 10px;
+            }
+             
             header, .report-header { 
-                gap: 10px;
+                row-gap: 10px; 
             }
-
-            #menu-toggle { display: block; }
-            .app-layout { position: relative; }
-            .sidebar-nav {
-                position: fixed; left: 0; top: 0; bottom: 0;
-                height: 100vh; z-index: 1000; background-color: var(--card-bg-color);
-                transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
-                border-radius: 0 var(--border-radius) var(--border-radius) 0;
-                box-shadow: 0 0 40px rgba(0,0,0,0.5);
-            }
-            .sidebar-nav.visible { transform: translateX(0); }
         }
 
     </style>
@@ -1179,4 +1176,1082 @@ document.addEventListener('DOMContentLoaded', () => {
             return newInvoice;
         },
         
-        openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('
+        openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('initial-balance-date').valueAsDate = new Date(); },
+        closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); this.formatCurrencyInput(document.getElementById('initial-balance'), true); if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
+        openBillPaymentModal(cardId) {
+            const card = this.state.creditCards.find(c => c.id === cardId);
+            const openInvoices = this.state.invoices.filter(i => i.creditCardId === cardId && i.status === 'open').sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+            if (!card || openInvoices.length === 0) { this.showToast("Nenhuma fatura aberta encontrada para este cartão.", 'error'); return; }
+            const invoiceToPay = openInvoices[0];
+            const form = this.elements.billPaymentForm;
+            form.elements['payment-card-id'].value = card.id;
+            form.elements['payment-invoice-id'].value = invoiceToPay.id;
+            form.elements['payment-card-name'].value = card.name;
+            form.elements['payment-bill-amount'].value = this.formatCurrency(invoiceToPay.amount);
+            const paymentAmountInput = form.elements['payment-amount'];
+            paymentAmountInput.value = invoiceToPay.amount;
+            this.formatCurrencyInput(paymentAmountInput);
+            form.elements['payment-date'].valueAsDate = new Date();
+            this.populateSelectors();
+            this.elements.billPaymentModal.classList.add('visible');
+        },
+        closeBillPaymentModal() { this.elements.billPaymentModal.classList.remove('visible'); this.elements.billPaymentForm.reset(); },
+        openCreditCardExpenseModal(cardId) { const form = this.elements.creditCardExpenseForm; form.elements['expense-card-id'].value = cardId; document.getElementById('expense-date').valueAsDate = new Date(); document.getElementById('expense-installments').value = 1; this.populateSelectors(); this.elements.creditCardExpenseModal.classList.add('visible'); },
+        closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
+        handleAccountSelectChange(e) { if (e.target.value === 'add_new_account') { const selectId = e.target.id; e.target.value = ''; this.openAccountModal(selectId); } },
+        
+        updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); this.showToast('Ocorreu um erro ao atualizar a tela.', 'error'); } },
+        getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
+        getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
+        getAccountIcon(type) {
+            switch (type) {
+                case 'checking': return '🏦';
+                case 'savings': return '🐖';
+                case 'cash': return '💵';
+                default: return '💰';
+            }
+        },
+        handleLogout() {
+            if (confirm('Tem certeza que deseja sair? Seus dados permanecerão salvos no navegador.')) {
+                localStorage.removeItem('financeAppUser');
+                window.location.reload();
+            }
+        },
+        toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
+        applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
+        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
+        handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
+        
+        formatCurrencyInput(input, onBlur = false) {
+            let value = input.value;
+            if (!onBlur && value === '0') {
+                input.value = '';
+                return;
+            }
+            value = value.replace(/\D/g, '');
+            if (!value) {
+                input.value = onBlur ? '0,00' : '';
+                return;
+            }
+            while(value.length < 3) {
+                value = '0' + value;
+            }
+            let integerPart = value.slice(0, -2);
+            let decimalPart = value.slice(-2);
+            integerPart = integerPart.replace(/^0+/, '') || '0';
+            input.value = parseInt(integerPart).toLocaleString('pt-BR') + ',' + decimalPart;
+        },
+
+        parseCurrency(value) {
+            if (typeof value === 'number') return value;
+            if (typeof value !== 'string' || value.trim() === '') return 0;
+            const cleanValue = value.replace(/\./g, '').replace(',', '.');
+            const number = parseFloat(cleanValue);
+            return isNaN(number) ? 0 : number;
+        },
+
+        formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
+        formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
+        
+        showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            if(!toastContainer) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        },
+
+        populateSelectors(selectId, options) { 
+            const populate = (id, opts) => {
+                const select = document.getElementById(id); 
+                if(!select) return;
+                const currentValue = select.value; 
+                select.innerHTML = ''; 
+                opts.forEach(opt => { 
+                    const option = document.createElement('option'); 
+                    option.value = opt.value; option.textContent = opt.text; 
+                    if (opt.value === 'add_new_account') { option.style.fontWeight = 'bold'; option.style.color = 'var(--accent-color)'; } 
+                    select.appendChild(option); 
+                }); 
+                if (Array.from(select.options).some(opt => opt.value === currentValue)) { 
+                    select.value = currentValue; 
+                } 
+            };
+            if(selectId && options) {
+                populate(selectId, options);
+                return;
+            }
+            const categoryOptions = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(c => ({ value: c.name, text: c.name })); 
+            const accountOptions = this.state.accounts.map(a => ({ value: a.id, text: a.name })); 
+            const addNewOption = { value: 'add_new_account', text: '+ Adicionar Nova Conta...' }; 
+            const selectors = { 
+                'account-select': [...accountOptions, addNewOption], 
+                'transfer-from-account': [...accountOptions, addNewOption], 
+                'transfer-to-account': [...accountOptions, addNewOption], 
+                'category-select': categoryOptions, 
+                'budget-category': categoryOptions, 
+                'recurrence-account': [...accountOptions, addNewOption], 
+                'recurrence-category': categoryOptions, 
+                'payment-account-select': accountOptions, 
+                'expense-category': categoryOptions.filter(c => c.value !== 'Pagamento de Fatura' && c.value !== 'Saldo Inicial' && c.value !== 'Transferência') 
+            }; 
+            for (const id in selectors) { populate(id, selectors[id]); }
+        },
+        
+        updateAllBalances() {
+            this.state.accounts.forEach(acc => {
+                let balance = 0;
+                this.state.transactions
+                    .filter(t => t.accountId === acc.id)
+                    .forEach(t => {
+                        if (t.type === 'income') {
+                            balance += t.amount;
+                        } else if (t.type === 'expense' && t.isPaid) {
+                            balance -= t.amount;
+                        }
+                    });
+                acc.currentBalance = balance;
+            });
+        },
+
+        renderTransactionItem(t, isCardExpense = false) {
+            const accountName = t.accountId ? (this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A') : (this.state.creditCards.find(c => c.id === t.creditCardId)?.name || 'N/A');
+            const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
+        },
+        renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
+        
+        renderSummary() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const monthlyIncome = this.state.transactions.filter(t => 
+                new Date(t.date).getMonth() === currentMonth && 
+                new Date(t.date).getFullYear() === currentYear && 
+                t.type === 'income' && 
+                t.accountId && 
+                t.category !== 'Transferência' && 
+                t.category !== 'Saldo Inicial'
+            ).reduce((sum, t) => sum + (t.amount || 0), 0);
+            
+            const monthlyExpense = this.state.transactions.filter(t => {
+                return t.type === 'expense' &&
+                                    t.isPaid &&
+                                    t.accountId && 
+                                    new Date(t.date).getMonth() === currentMonth &&
+                                    new Date(t.date).getFullYear() === currentYear &&
+                                    t.category !== 'Transferência';
+            }).reduce((sum, t) => sum + (t.amount || 0), 0);
+
+            const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
+            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            const netWorth = accountBalance - cardDebt; 
+
+            const balanceEl = document.getElementById('balance');
+            balanceEl.textContent = this.formatCurrency(netWorth);
+            balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome);
+            document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense);
+        },
+        
+        renderAccountsList() {
+            const accountsListEl = this.elements.accountsList;
+            accountsListEl.innerHTML = ''; 
+
+            if (this.state.accounts.length === 0) {
+                accountsListEl.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px; grid-column: 1 / -1;">Nenhuma conta cadastrada.</p>';
+                return;
+            }
+
+            this.state.accounts.forEach(acc => {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                const monthlyIncome = this.state.transactions
+                    .filter(t => t.accountId === acc.id && t.type === 'income' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear && t.category !== 'Saldo Inicial')
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const monthlyExpense = this.state.transactions
+                    .filter(t => t.accountId === acc.id && t.type === 'expense' && t.isPaid && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                const cardHTML = `
+                    <div class="list-item card">
+                        <div class="list-item-header">
+                            <div class="main-info">
+                                <span class="icon">${this.getAccountIcon(acc.type)}</span>
+                                <div>
+                                    <h3>${acc.name}</h3>
+                                    <small style="color:var(--text-muted-color);font-weight:400; text-transform: capitalize;">${acc.type === 'checking' ? 'Conta Corrente' : acc.type}</small>
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <button class="edit-btn" data-type="account" data-id="${acc.id}" title="Editar">${this.getEditIconSVG()}</button>
+                                <button class="delete-button" data-type="account" data-id="${acc.id}" title="Deletar">${this.getDeleteIconSVG()}</button>
+                            </div>
+                        </div>
+                        <div class="account-details">
+                            <div>
+                                <span class="account-main-balance ${acc.currentBalance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(acc.currentBalance)}</span>
+                                <div class="account-monthly-summary">
+                                    <span class="income">▲ ${this.formatCurrency(monthlyIncome)}</span> | 
+                                    <span class="expense">▼ ${this.formatCurrency(monthlyExpense)}</span>
+                                </div>
+                            </div>
+                            <div class="account-chart-container">
+                                <canvas id="account-chart-${acc.id}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                accountsListEl.innerHTML += cardHTML;
+            });
+
+            this.state.accounts.forEach(acc => {
+                const canvas = document.getElementById(`account-chart-${acc.id}`);
+                if (canvas) {
+                    if (this.charts.accountCharts[acc.id]) {
+                        this.charts.accountCharts[acc.id].destroy();
+                    }
+                    this.renderAccountChart(acc, canvas);
+                }
+            });
+        },
+        
+        renderAccountChart(account, canvas) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            thirtyDaysAgo.setHours(0,0,0,0);
+            
+            const relevantTransactions = this.state.transactions
+                .filter(t => t.accountId === account.id)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let balance30DaysAgo = 0;
+            relevantTransactions.forEach(t => {
+                if(new Date(t.date) < thirtyDaysAgo){
+                    if (t.type === 'income') balance30DaysAgo += t.amount;
+                    if (t.type === 'expense' && t.isPaid) balance30DaysAgo -= t.amount;
+                }
+            });
+
+            const dailyData = new Map();
+            let runningBalance = balance30DaysAgo;
+            
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateString = date.toISOString().split('T')[0];
+                dailyData.set(dateString, runningBalance);
+            }
+            
+            relevantTransactions.forEach(t => {
+                if (new Date(t.date) >= thirtyDaysAgo) {
+                    let impact = 0;
+                    if (t.type === 'income') impact = t.amount;
+                    if (t.type === 'expense' && t.isPaid) impact = -t.amount;
+                    
+                    if (impact !== 0) {
+                         const transactionDate = new Date(t.date + "T00:00:00");
+                         for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                             const dateStr = d.toISOString().split('T')[0];
+                             if(dailyData.has(dateStr)) {
+                                 dailyData.set(dateStr, dailyData.get(dateStr) + impact);
+                             }
+                         }
+                    }
+                }
+            });
+            
+            const chartData = Array.from(dailyData.entries()).map(([date, balance]) => ({x: date, y: balance}));
+
+            this.charts.accountCharts[account.id] = new Chart(canvas, {
+                type: 'line',
+                data: { datasets: [{ data: chartData, borderColor: account.currentBalance >= balance30DaysAgo ? 'var(--success-color)' : 'var(--error-color)', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+        },
+        
+        renderCreditCardModule() {
+            const selectorList = this.elements.creditCardSelectorList;
+            selectorList.innerHTML = this.state.creditCards.map(c => `
+                <div class="list-item ${c.id === this.state.selectedCardId ? 'selected' : ''}" data-id="${c.id}" style="flex-direction: row; align-items: center; cursor: pointer;">
+                    <div class="main-info" style="flex-grow: 1;"><h3>${c.name}</h3></div>
+                </div>
+            `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:10px 0;">Nenhum cartão cadastrado.</p>';
+
+            const detailsContainer = this.elements.selectedCardDetails;
+            const selectedCard = this.state.creditCards.find(c => c.id === this.state.selectedCardId);
+            
+            if(!selectedCard) {
+                detailsContainer.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Selecione um cartão para ver os detalhes.</p>';
+                return;
+            }
+
+            const openInvoices = this.state.invoices.filter(i => i.creditCardId === selectedCard.id && i.status === 'open');
+            const totalOpenAmount = openInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+            const availableLimit = selectedCard.limit - totalOpenAmount;
+            
+            const nextInvoiceToPay = openInvoices.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+            const invoiceAmount = nextInvoiceToPay ? nextInvoiceToPay.amount : 0;
+            const invoiceTransactions = nextInvoiceToPay ? this.state.transactions.filter(t => t.invoiceId === nextInvoiceToPay.id) : [];
+
+            detailsContainer.innerHTML = `
+                <div class="card-header">
+                    <h2>${selectedCard.name}</h2>
+                    <div class="actions">
+                        <button class="edit-btn" data-type="creditCard" data-id="${selectedCard.id}" title="Editar Cartão">${this.getEditIconSVG()}</button>
+                        <button class="delete-button" data-type="creditCard" data-id="${selectedCard.id}" title="Deletar Cartão">${this.getDeleteIconSVG()}</button>
+                    </div>
+                </div>
+                <div class="credit-card-summary">
+                    <div class="info-item">
+                        <div class="label">Próxima Fatura</div>
+                        <div class="value expense">${this.formatCurrency(invoiceAmount)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Limite Disponível</div>
+                        <div class="value positive">${this.formatCurrency(availableLimit)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Vencimento</div>
+                        <div class="value">${nextInvoiceToPay ? this.formatDate(nextInvoiceToPay.dueDate) : 'N/A'}</div>
+                    </div>
+                </div>
+                <div class="progress-bar-container" title="Limite Total: ${this.formatCurrency(selectedCard.limit)}">
+                    <div class="progress-bar ${ (totalOpenAmount / selectedCard.limit * 100) > 80 ? 'over' : ''}" style="width: ${Math.min(totalOpenAmount / selectedCard.limit * 100, 100)}%;"></div>
+                </div>
+                <div class="credit-card-actions">
+                    <button class="btn btn-primary add-expense-btn" data-id="${selectedCard.id}">Adicionar Despesa</button>
+                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}">Pagar Fatura</button>
+                </div>
+                <h3 style="margin-top: 30px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">Compras na Próxima Fatura</h3>
+                <div class="transaction-list-container" style="margin-top: 15px;">
+                    <ul>
+                        ${invoiceTransactions.length > 0 ? invoiceTransactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => this.renderTransactionItem(t, true)).join('') : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma despesa nesta fatura.</p>'}
+                    </ul>
+                </div>
+            `;
+        },
+        
+        renderCategoriesList() { this.elements.categoriesList.innerHTML = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(cat => ` <div class="category-item"> <div class="list-item-header"> <div class="main-info"><h3>${cat.name}</h3></div> <div class="actions"> <button class="edit-btn" data-type="category" data-id="${cat.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="category" data-id="${cat.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join(''); },
+        renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
+        renderGoalsList() { this.elements.goalsList.innerHTML = this.state.goals.map(g => { const percentage = g.target > 0 ? (g.saved / g.target) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${g.name}</h3> <span>${this.formatCurrency(g.saved)} / ${this.formatCurrency(g.target)}</span> ${g.deadline ? `<small style="color:var(--text-muted-color);">Prazo: ${this.formatDate(g.deadline)}</small>` : ''} </div> <div class="actions"> <button class="edit-btn" data-type="goal" data-id="${g.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="goal" data-id="${g.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> <form class="goal-contribution-form" data-goal-id="${g.id}"> <input type="text" class="contribution-amount" inputmode="decimal" placeholder="Valor do aporte"> <select class="contribution-account">${this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select> <button type="submit" class="btn btn-success">Aportar</button> </form> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma meta criada.</p>'; },
+        renderRecurrencesList() { this.elements.recurrencesList.innerHTML = this.state.recurrences.map(r => ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${r.description} (${r.type === 'income' ? 'Receita' : 'Despesa'})</h3> <span>${this.formatCurrency(r.amount)} (${r.frequency === 'monthly' ? 'Mensal' : 'Anual'})</span> <small style="color:var(--text-muted-color);">Próximo Lançamento: ${this.formatDate(r.nextDueDate)}</small> </div> <div class="actions"> <button class="edit-btn" data-type="recurrence" data-id="${r.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="recurrence" data-id="${r.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma recorrência cadastrada.</p>'; },
+        
+        handleCalendarNav(direction) {
+            this.state.currentCalendarDate.setMonth(this.state.currentCalendarDate.getMonth() + direction);
+            this.renderCalendar();
+        },
+
+        renderCalendar() {
+            const grid = this.elements.calendarGrid;
+            const header = this.elements.monthYearDisplay;
+            if (!grid || !header) return;
+
+            grid.innerHTML = '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const date = this.state.currentCalendarDate;
+            const month = date.getMonth();
+            const year = date.getFullYear();
+            
+            header.textContent = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(date);
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            const startDayOfWeek = firstDayOfMonth.getDay();
+
+            const transactionsThisMonth = this.state.transactions.filter(t => {
+                const tDate = new Date(t.date + 'T00:00:00');
+                return tDate.getFullYear() === year && tDate.getMonth() === month;
+            });
+            
+            const lastDayOfPrevMonth = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek; i > 0; i--) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day other-month';
+                dayCell.innerHTML = `<span class="day-number">${lastDayOfPrevMonth - i + 1}</span>`;
+                grid.appendChild(dayCell);
+            }
+
+            const MAX_VISIBLE_EVENTS = 3;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                const currentDate = new Date(year, month, day);
+                const dayOfWeek = currentDate.getDay();
+                
+                dayCell.className = 'calendar-day';
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    dayCell.classList.add('weekend');
+                }
+                if (currentDate.getTime() === today.getTime()) {
+                    dayCell.classList.add('current-day');
+                }
+                dayCell.dataset.date = currentDate.toISOString().split('T')[0];
+
+                const dayNumber = document.createElement('span');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayCell.appendChild(dayNumber);
+
+                const eventsContainer = document.createElement('div');
+                eventsContainer.className = 'events-container';
+                dayCell.appendChild(eventsContainer);
+
+                const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
+                                                                .sort((a,b) => a.amount - b.amount);
+
+                dayTransactions.forEach((t, index) => {
+                    if(index < MAX_VISIBLE_EVENTS) {
+                        const eventMarker = document.createElement('div');
+                        eventMarker.className = 'event-marker';
+                        eventMarker.title = `${t.description} - ${this.formatCurrency(t.amount)}`;
+                        
+                        const eventDesc = document.createElement('span');
+                        eventDesc.className = 'event-desc';
+                        eventDesc.textContent = t.description;
+                        eventMarker.appendChild(eventDesc);
+                        
+                        if (t.type === 'income') {
+                            eventMarker.classList.add('income');
+                        } else {
+                            if (t.isPaid) {
+                                eventMarker.classList.add('expense-paid');
+                            } else {
+                                const dueDate = new Date(t.dueDate + 'T00:00:00');
+                                if (dueDate < today) {
+                                    eventMarker.classList.add('expense-overdue');
+                                } else {
+                                    eventMarker.classList.add('expense-due');
+                                }
+                            }
+                        }
+                        eventsContainer.appendChild(eventMarker);
+                    }
+                });
+
+                if (dayTransactions.length > MAX_VISIBLE_EVENTS) {
+                    const hiddenCount = dayTransactions.length - MAX_VISIBLE_EVENTS;
+                    const moreIndicator = document.createElement('div');
+                    moreIndicator.className = 'more-events-indicator';
+                    moreIndicator.textContent = `+${hiddenCount} mais`;
+                    eventsContainer.appendChild(moreIndicator);
+                }
+
+                grid.appendChild(dayCell);
+            }
+
+            const totalCells = startDayOfWeek + daysInMonth;
+            const nextMonthDays = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= nextMonthDays; i++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day other-month';
+                dayCell.innerHTML = `<span class="day-number">${i}</span>`;
+                grid.appendChild(dayCell);
+            }
+        },
+        
+        startEditMode(type, id){ 
+            this.cancelEditMode();
+            this.state.editingItem = { type, id };
+            const form = document.getElementById(`${type}-form`);
+            const item = this.state[`${type}s`].find(i => i.id === id);
+            if (!form || !item) { this.cancelEditMode(); return; }
+
+            const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
+            const tabButton = document.querySelector(`.tab-btn[data-tab="${tabForType}"]`);
+            if(tabButton) tabButton.click();
+            
+            if (type === 'account') {
+                const accountItem = this.state.accounts.find(a => a.id === id);
+                if (!accountItem) return;
+                this.openAccountModal();
+                const modalForm = document.getElementById('account-form');
+                modalForm.elements['account-name'].value = accountItem.name;
+                modalForm.elements['account-type'].value = accountItem.type;
+                const initialTransaction = this.state.transactions.find(t => t.id === `trans-initial-${id}`);
+                const initialBalanceInput = modalForm.elements['initial-balance'];
+                initialBalanceInput.value = initialTransaction ? initialTransaction.amount : '0';
+                this.formatCurrencyInput(initialBalanceInput);
+
+                modalForm.elements['initial-balance-date'].value = initialTransaction ? initialTransaction.date : new Date().toISOString().split('T')[0];
+                document.getElementById('account-modal-title').textContent = `Editar Conta`;
+                const modalButtonContainer = document.getElementById(`account-form-buttons`);
+                modalButtonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
+                return;
+            }
+
+            Object.keys(item).forEach(key => {
+                const formKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+                const formElement = form.elements[`${type}-${formKey}`] || form.elements[key];
+                if (formElement) {
+                    if (formElement.type === 'date' && item[key]) {
+                        formElement.value = item[key].split('T')[0];
+                    } else if (formElement.getAttribute('inputmode') === 'decimal') {
+                        formElement.value = item[key];
+                        this.formatCurrencyInput(formElement);
+                    } else {
+                        formElement.value = item[key];
+                    }
+                }
+            });
+
+            document.getElementById(`${type}-form-title`).textContent = `Editar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            const buttonContainer = document.getElementById(`${type}-form-buttons`);
+            buttonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar</button> <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancelar</button>`;
+            document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode());
+        },
+
+        cancelEditMode(){ 
+            if(!this.state.editingItem) return;
+            const type = this.state.editingItem.type;
+
+            if (type === 'account') {
+                this.closeAccountModal();
+            } else {
+                const form = document.getElementById(`${type}-form`);
+                if(form) form.reset();
+                const titleEl = document.getElementById(`${type}-form-title`);
+                if (titleEl) titleEl.textContent = `Adicionar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                const buttonContainer = document.getElementById(`${type}-form-buttons`);
+                if(buttonContainer) buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">Salvar</button>`;
+            }
+
+            this.state.editingItem = null;
+        },
+        
+        async exportBackup() { try { const data = {}; for (const storeName of db.STORES) { data[storeName] = await db.getAll(storeName); } data.lastBackup = new Date().toISOString(); const json = JSON.stringify(data, null, 2); const blob = new Blob([json], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; const date = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`; link.download = `financeApp_backup_${this.state.user}_${date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); this.showToast('Backup exportado com sucesso!', 'success'); } catch (error) { console.error("Erro ao exportar:", error); this.showToast("Erro ao exportar dados.", 'error'); } },
+        async importBackup(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const data = JSON.parse(e.target.result); if (data && data.transactions && data.accounts) { if (confirm('Atenção! Isso substituirá TODOS os dados atuais. Deseja continuar?')) { await Promise.all(db.STORES.map(s => db.clear(s))); for (const storeName of db.STORES) { if (data[storeName]) await Promise.all(data[storeName].map(item => db.put(storeName, item))); } await this.loadData(); this.updateAllRenders(); this.showToast('Backup restaurado com sucesso!', 'success'); } } else { this.showToast('Arquivo de backup inválido ou corrompido.', 'error'); } } catch (error) { console.error("Erro ao importar:", error); this.showToast('Erro ao ler o arquivo de backup.', 'error'); } finally { event.target.value = null; } }; reader.readAsText(file); },
+
+        initCharts() { 
+            const commonOptions = this.getChartOptions(); 
+            if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); 
+            if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
+            if (this.charts.reportChart) this.charts.reportChart.destroy();
+        },
+        getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
+        
+        updateDashboardCharts() {
+            if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
+            const commonOptions = this.getChartOptions();
+            this.renderDashboardBudgetChart();
+
+            const accountTransactions = this.state.transactions.filter(t => t.accountId);
+            const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort();
+            
+            const dailyNetWorth = new Map();
+            let runningBalance = 0;
+
+            if (sortedDates.length > 0) {
+                const firstDate = new Date(sortedDates[0] + 'T00:00:00');
+                firstDate.setDate(firstDate.getDate() - 1);
+                dailyNetWorth.set(firstDate.toISOString().split('T')[0], 0);
+            }
+
+            sortedDates.forEach(date => {
+                const transactionsOnDate = accountTransactions.filter(t => t.date === date);
+                let dailyChange = 0;
+                transactionsOnDate.forEach(t => {
+                    if (t.type === 'income') dailyChange += t.amount;
+                    else if (t.type === 'expense' && t.isPaid) dailyChange -= t.amount;
+                });
+                runningBalance += dailyChange;
+                dailyNetWorth.set(date, runningBalance);
+            });
+            
+            const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
+
+            if (balanceHistory.length === 0) {
+                 balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+            }
+
+            this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
+            this.charts.evolutionChart.data.datasets = [{
+                label: 'Patrimônio (Soma das Contas)',
+                data: balanceHistory,
+                borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560',
+                backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)',
+                fill: true,
+                tension: 0.1
+            }];
+            this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => `Saldo: ${this.formatCurrency(context.parsed.y)}` } } } };
+            this.charts.evolutionChart.update();
+        },
+        
+        renderDashboardBudgetChart() {
+            const chartCanvas = document.getElementById('main-overview-chart');
+            const placeholder = document.getElementById('main-chart-placeholder');
+            const chart = this.charts.mainOverviewChart;
+            const now = new Date();
+            const budgets = this.state.budgets.filter(b => b.amount > 0);
+
+            if (budgets.length === 0) {
+                chartCanvas.style.display = 'none';
+                placeholder.style.display = 'flex';
+                return;
+            }
+
+            chartCanvas.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            const labels = budgets.map(b => b.category);
+            const spentData = budgets.map(b => {
+                return this.state.transactions
+                    .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+                    .reduce((sum, t) => sum + t.amount, 0);
+            });
+            const budgetData = budgets.map(b => b.amount);
+
+            chart.data.labels = labels;
+            chart.data.datasets = [ { label: 'Gasto', data: spentData, backgroundColor: 'rgba(233, 69, 96, 0.8)' }, { label: 'Orçamento', data: budgetData, backgroundColor: 'rgba(75, 85, 99, 0.5)' } ];
+            const commonOptions = this.getChartOptions();
+            chart.options = { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, stacked: true }, y: { ...commonOptions.scales.y, beginAtZero: true } }, plugins: { ...commonOptions.plugins } };
+            chart.update();
+        },
+
+        // === SEÇÃO DE RELATÓRIOS (IMPLEMENTAÇÃO MELHORADA) ===
+        renderReportsMenu() {
+            this.hideReportView();
+            const menuEl = this.elements.reportsMenu;
+            menuEl.innerHTML = Object.entries(this.reports).map(([id, report]) => `
+                <div class="report-menu-item" data-report-id="${id}">
+                    <div>
+                        <h3>${report.title}</h3>
+                        <p>${report.description}</p>
+                    </div>
+                    <div class="report-menu-actions">
+                        <button class="btn btn-primary" data-action="view">Visualizar Relatório</button>
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        showReportView(reportId) {
+            this.elements.reportsMenu.style.display = 'none';
+            const viewContainer = this.elements.reportViewContainer;
+            const report = this.reports[reportId];
+            if (!report) return;
+
+            viewContainer.innerHTML = `
+                <div class="report-view">
+                    <div class="report-header">
+                        <h2>${report.title}</h2>
+                        <div class="report-menu-actions">
+                             <button class="btn btn-secondary" data-action="back-to-menu">‹ Voltar ao Menu</button>
+                             <button class="btn btn-success" data-action="export-pdf" data-report-id="${reportId}">Exportar PDF 📄</button>
+                        </div>
+                    </div>
+                    <div class="report-filters" id="report-filters-${reportId}">
+                        ${this.buildReportFilters(reportId)}
+                    </div>
+                     <button class="btn btn-primary" style="width: 100%;" data-action="generate-report" data-report-id="${reportId}">Gerar Relatório</button>
+                    <div class="report-results-area" id="report-results-area">
+                        <p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Selecione os filtros e gere o relatório para ver os resultados.</p>
+                    </div>
+                </div>
+            `;
+            viewContainer.style.display = 'block';
+        },
+
+        hideReportView() {
+            this.elements.reportViewContainer.style.display = 'none';
+            this.elements.reportsMenu.style.display = 'grid';
+            if (this.charts.reportChart) {
+                this.charts.reportChart.destroy();
+                this.charts.reportChart = null;
+            }
+        },
+
+        buildReportFilters(reportId) {
+            // CORREÇÃO DEFINITIVA: Gera a string YYYY-MM-DD a partir da data local, evitando erros de fuso horário.
+            const todayDate = new Date();
+            const year = todayDate.getFullYear();
+            const month = String(todayDate.getMonth() + 1).padStart(2, '0');
+            const day = String(todayDate.getDate()).padStart(2, '0');
+            const today = `${year}-${month}-${day}`;
+
+            const accountOptions = this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+            switch (reportId) {
+                case 'accountStatement':
+                case 'categoryExpense':
+                case 'cashflow':
+                case 'paymentStatus':
+                     return `
+                        <div class="form-group"><label for="filter-account">Conta</label><select id="filter-account">${accountOptions}</select></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${today}"></div>
+                        <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
+                case 'annualSummary':
+                    const currentYear = new Date().getFullYear();
+                    let yearOptions = '';
+                    for (let y = currentYear; y >= currentYear - 5; y--) { yearOptions += `<option value="${y}">${y}</option>`; }
+                    return `<div class="form-group"><label for="filter-year">Ano</label><select id="filter-year">${yearOptions}</select></div>`;
+                default:
+                    return '<p>Filtros não disponíveis.</p>';
+            }
+        },
+
+        renderReportResults(reportId) {
+            if (this.charts.reportChart) {
+                this.charts.reportChart.destroy();
+                this.charts.reportChart = null;
+            }
+            switch (reportId) {
+                case 'accountStatement': this.renderAccountStatementResults(); break;
+                case 'categoryExpense': this.renderCategoryExpenseResults(); break;
+                case 'cashflow': this.renderCashflowResults(); break;
+                case 'paymentStatus': this.renderPaymentStatusResults(); break;
+                case 'annualSummary': this.renderAnnualSummaryResults(); break;
+            }
+        },
+
+        renderAccountStatementResults() {
+            const accountId = document.getElementById('filter-account').value;
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const resultsArea = document.getElementById('report-results-area');
+
+            const transactions = this.state.transactions
+                .filter(t => t.accountId === accountId && t.date >= startDate && t.date <= endDate)
+                .sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            if (transactions.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma transação encontrada para os filtros selecionados.</p>';
+                return;
+            }
+            
+            const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const balance = totalIncome - totalExpense;
+
+            const rows = transactions.map(t => `
+                <tr>
+                    <td>${this.formatDate(t.date)}</td>
+                    <td>${t.description}</td>
+                    <td>${t.category}</td>
+                    <td class="positive">${t.type === 'income' ? this.formatCurrency(t.amount) : '—'}</td>
+                    <td class="negative">${t.type === 'expense' ? this.formatCurrency(t.amount) : '—'}</td>
+                </tr>
+            `).join('');
+
+            resultsArea.innerHTML = `
+                <div class="report-summary">
+                    <div class="summary-item"><div class="label">Total Entradas</div><div class="value positive">${this.formatCurrency(totalIncome)}</div></div>
+                    <div class="summary-item"><div class="label">Total Saídas</div><div class="value negative">${this.formatCurrency(totalExpense)}</div></div>
+                    <div class="summary-item"><div class="label">Saldo do Período</div><div class="value ${balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(balance)}</div></div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead><tr><th style="width:15%">Data</th><th style="width:40%">Descrição</th><th style="width:20%">Categoria</th><th style="width:12.5%">Entrada</th><th style="width:12.5%">Saída</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        },
+
+        renderCategoryExpenseResults() {
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const resultsArea = document.getElementById('report-results-area');
+
+            const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= startDate && t.date <= endDate);
+            const categoryTotals = expenses.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
+            
+            const sortedCategories = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a);
+
+            if (sortedCategories.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma despesa encontrada para os filtros selecionados.</p>';
+                return;
+            }
+            
+            const totalSpent = sortedCategories.reduce((sum, [,total]) => sum + total, 0);
+
+            const rows = sortedCategories.map(([category, total]) => `
+                <tr>
+                    <td>${category}</td>
+                    <td class="negative">${this.formatCurrency(total)}</td>
+                </tr>
+            `).join('');
+
+            resultsArea.innerHTML = `
+                <div class="report-summary">
+                     <div class="summary-item"><div class="label">Total Gasto no Período</div><div class="value negative">${this.formatCurrency(totalSpent)}</div></div>
+                </div>
+                <div class="grid-layout">
+                    <div style="overflow-x:auto;">
+                        <table class="report-table">
+                            <thead><tr><th>Categoria</th><th>Total Gasto</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    <div class="report-chart-container" style="min-height: 350px;">
+                        <canvas id="report-chart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            const ctx = document.getElementById('report-chart').getContext('2d');
+            this.charts.reportChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedCategories.map(([cat]) => cat),
+                    datasets: [{
+                        data: sortedCategories.map(([, total]) => total),
+                        backgroundColor: ['#e94560', '#f1c40f', '#3498db', '#e74c3c', '#9b59b6', '#2ecc71', '#1abc9c', '#f39c12', '#7f8c8d']
+                    }]
+                },
+                options: { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false }
+            });
+        },
+        
+        renderCashflowResults() {
+            const startDate = new Date(document.getElementById('filter-start-date').value + 'T00:00:00');
+            const endDate = new Date(document.getElementById('filter-end-date').value + 'T00:00:00');
+            const resultsArea = document.getElementById('report-results-area');
+
+            const monthlyData = {};
+            this.state.transactions.forEach(t => {
+                const tDate = new Date(t.date + 'T00:00:00');
+                if (tDate >= startDate && tDate <= endDate && t.accountId) {
+                    const monthKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthlyData[monthKey]) {
+                        monthlyData[monthKey] = { income: 0, expense: 0 };
+                    }
+                    if (t.type === 'income' && t.category !== 'Transferência' && t.category !== 'Saldo Inicial') monthlyData[monthKey].income += t.amount;
+                    if (t.type === 'expense' && t.isPaid && t.category !== 'Transferência') monthlyData[monthKey].expense += t.amount;
+                }
+            });
+
+            const sortedMonths = Object.keys(monthlyData).sort();
+             if (sortedMonths.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum dado encontrado para os filtros selecionados.</p>';
+                return;
+            }
+
+            const rows = sortedMonths.map(month => {
+                const data = monthlyData[month];
+                const balance = data.income - data.expense;
+                const monthName = new Date(month + '-02').toLocaleString('pt-BR', {month: 'long', year: 'numeric'});
+                return `
+                    <tr>
+                        <td>${monthName}</td>
+                        <td class="positive">${this.formatCurrency(data.income)}</td>
+                        <td class="negative">${this.formatCurrency(data.expense)}</td>
+                        <td class="${balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(balance)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            resultsArea.innerHTML = `
+                <div class="report-chart-container" style="min-height: 350px; margin-bottom: 20px;">
+                    <canvas id="report-chart"></canvas>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+
+            const ctx = document.getElementById('report-chart').getContext('2d');
+            this.charts.reportChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths.map(m => new Date(m + '-02').toLocaleString('pt-BR', {month: 'short', year: '2-digit'})),
+                    datasets: [
+                        { label: 'Receitas', data: sortedMonths.map(m => monthlyData[m].income), backgroundColor: 'var(--success-color)' },
+                        { label: 'Despesas', data: sortedMonths.map(m => monthlyData[m].expense), backgroundColor: 'var(--error-color)' }
+                    ]
+                },
+                options: { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false }
+            });
+        },
+        
+        renderPaymentStatusResults() {
+             const startDate = document.getElementById('filter-start-date').value;
+             const endDate = document.getElementById('filter-end-date').value;
+             const resultsArea = document.getElementById('report-results-area');
+
+             const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= startDate && t.date <= endDate).sort((a, b) => new Date(a.date) - new Date(b.date));
+             if (expenses.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma despesa encontrada para os filtros selecionados.</p>';
+                return;
+            }
+             
+             const rows = expenses.map(t => {
+                let statusText = '';
+                let statusClass = '';
+                if(t.isPaid){
+                    statusText = 'Pago'; statusClass = 'positive';
+                } else {
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const dueDate = new Date(t.dueDate + 'T00:00:00');
+                    if(dueDate < today) {
+                        statusText = 'Atrasado'; statusClass = 'negative';
+                    } else {
+                        statusText = 'Pendente'; statusClass = 'warning';
+                    }
+                }
+                 return `
+                     <tr>
+                         <td>${this.formatDate(t.date)}</td>
+                         <td>${t.description}</td>
+                         <td>${this.formatDate(t.dueDate)}</td>
+                         <td>${this.formatCurrency(t.amount)}</td>
+                         <td class="${statusClass}">${statusText}</td>
+                     </tr>
+                 `;
+             }).join('');
+
+             resultsArea.innerHTML = `
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead><tr><th style="width:15%">Data</th><th style="width:40%">Descrição</th><th style="width:15%">Vencimento</th><th style="width:15%">Valor</th><th style="width:15%">Status</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+        },
+
+        renderAnnualSummaryResults() {
+            const year = document.getElementById('filter-year').value;
+            const resultsArea = document.getElementById('report-results-area');
+            const monthlyData = {};
+
+            for(let i=0; i<12; i++){
+                const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
+                monthlyData[monthKey] = { income: 0, expense: 0, balance: 0 };
+            }
+
+            this.state.transactions.forEach(t => {
+                if(t.date.startsWith(year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
+                    const month = parseInt(t.date.substring(5, 7), 10) - 1;
+                    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+                    if(t.type === 'income') monthlyData[monthKey].income += t.amount;
+                    if(t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
+                }
+            });
+
+            const tableRows = Object.keys(monthlyData).map(monthKey => {
+                const data = monthlyData[monthKey];
+                data.balance = data.income - data.expense;
+                const monthName = new Date(monthKey + '-02').toLocaleString('pt-BR', {month: 'long'});
+                return `
+                    <tr>
+                        <td>${monthName}</td>
+                        <td class="positive">${this.formatCurrency(data.income)}</td>
+                        <td class="negative">${this.formatCurrency(data.expense)}</td>
+                        <td class="${data.balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(data.balance)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            resultsArea.innerHTML = `
+                <div class="report-chart-container" style="min-height: 350px; margin-bottom: 20px;">
+                    <canvas id="report-chart"></canvas>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="report-table">
+                        <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>
+            `;
+            
+            const ctx = document.getElementById('report-chart').getContext('2d');
+            this.charts.reportChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(monthlyData).map(m => new Date(m + '-02').toLocaleString('pt-BR', {month: 'short'})),
+                    datasets: [
+                        { label: 'Receitas', data: Object.values(monthlyData).map(d=>d.income), backgroundColor: 'var(--success-color)' },
+                        { label: 'Despesas', data: Object.values(monthlyData).map(d=>d.expense), backgroundColor: 'var(--error-color)' }
+                    ]
+                },
+                options: { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false, scales: { x: { stacked: false }, y: { stacked: false } } }
+            });
+        },
+
+        generateReportPDF(reportId) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const report = this.reports[reportId];
+            
+            doc.setFontSize(18);
+            doc.text(report.title, 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+
+            const filters = {
+                accountId: document.getElementById('filter-account')?.value,
+                startDate: document.getElementById('filter-start-date')?.value,
+                endDate: document.getElementById('filter-end-date')?.value,
+                year: document.getElementById('filter-year')?.value
+            };
+            
+            let body = [];
+            let head = [];
+
+            switch(reportId) {
+                case 'accountStatement':
+                    head = [['Data', 'Descrição', 'Categoria', 'Entrada', 'Saída']];
+                    body = this.state.transactions
+                        .filter(t => t.accountId === filters.accountId && t.date >= filters.startDate && t.date <= filters.endDate)
+                        .sort((a,b) => new Date(a.date) - new Date(b.date))
+                        .map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' ? this.formatCurrency(t.amount) : '']);
+                    break;
+                case 'categoryExpense':
+                    head = [['Categoria', 'Total Gasto']];
+                    const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    const categoryTotals = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
+                    body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
+                    break;
+                 case 'paymentStatus':
+                    head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
+                     body = this.state.transactions
+                        .filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate)
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .map(t => {
+                            let statusText = t.isPaid ? 'Pago' : (new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString()) ? 'Atrasado' : 'Pendente');
+                            return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
+                        });
+                    break;
+                // Outros relatórios podem ser adicionados aqui
+            }
+
+            if(body.length === 0){
+                this.showToast("Nenhum dado para exportar com os filtros selecionados.", "error");
+                return;
+            }
+
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 30,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 33, 62] }, // --primary-color
+            });
+            
+            doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+
+    };
+
+    financeApp.init();
+});
+</script>
+</body>
+</html>
