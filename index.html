@@ -908,8 +908,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const action = button.dataset.action;
                     if (action === 'view') {
                         this.showReportView(reportId);
-                    } else if (action === 'pdf') {
-                        this.generateReportPDF(reportId, true); // Generate with default filters first
                     }
                 }
             });
@@ -922,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.renderReportResults(reportId);
                 } else if (e.target.dataset.action === 'export-pdf') {
                     const reportId = e.target.dataset.reportId;
-                    this.generateReportPDF(reportId, false); // Generate with applied filters
+                    this.generateReportPDF(reportId);
                 }
             });
 
@@ -1616,16 +1614,37 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                                             t.isPaid &&
-                                             t.accountId && 
-                                             new Date(t.date).getMonth() === currentMonth &&
-                                             new Date(t.date).getFullYear() === currentYear &&
-                                             t.category !== 'Transferência';
+                       t.isPaid &&
+                       t.accountId && 
+                       new Date(t.date).getMonth() === currentMonth &&
+                       new Date(t.date).getFullYear() === currentYear &&
+                       t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
-            const netWorth = accountBalance - cardDebt; 
+            
+            // ===================================================================
+            // === NOVA LÓGICA HÍBRIDA PARA DÍVIDA DO CARTÃO DE CRÉDITO ===
+            // ===================================================================
+            let relevantCardDebt = 0;
+            this.state.creditCards.forEach(card => {
+                // Encontra todas as faturas abertas para o cartão atual
+                const openInvoicesForCard = this.state.invoices.filter(i => 
+                    i.creditCardId === card.id && i.status === 'open'
+                );
+
+                if (openInvoicesForCard.length > 0) {
+                    // Ordena para achar a que vence primeiro (a próxima a ser paga)
+                    openInvoicesForCard.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                    const nextInvoiceToPay = openInvoicesForCard[0];
+                    relevantCardDebt += nextInvoiceToPay.amount || 0;
+                }
+            });
+            // ===================================================================
+            // === FIM DA NOVA LÓGICA ===
+            // ===================================================================
+
+            const netWorth = accountBalance - relevantCardDebt; 
 
             const balanceEl = document.getElementById('balance');
             balanceEl.textContent = this.formatCurrency(netWorth);
@@ -2454,8 +2473,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(t.date.startsWith(year) && t.accountId && t.category !== 'Transferência'){
                     const month = parseInt(t.date.substring(5, 7), 10) - 1;
                     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-                    if(t.type === 'income') monthlyData[monthKey].income += t.amount;
-                    if(t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
+                    if(asMonthlyData[monthKey]) {
+                        if(t.type === 'income') asMonthlyData[monthKey].income += t.amount;
+                        if(t.type === 'expense' && t.isPaid) asMonthlyData[monthKey].expense += t.amount;
+                    }
                 }
             });
 
@@ -2532,9 +2553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
                     const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
                     const balance = totalIncome - totalExpense;
-                    foot = [['Total', '', '', this.formatCurrency(totalIncome), this.formatCurrency(totalExpense)]];
-                    finalY = doc.lastAutoTable.finalY || 30;
-                    doc.text(`Saldo do Período: ${this.formatCurrency(balance)}`, 14, finalY + 10);
+                    foot = [['', 'Saldo do Período:', this.formatCurrency(balance), this.formatCurrency(totalIncome), this.formatCurrency(totalExpense)]];
                     break;
                     
                 case 'categoryExpense':
@@ -2604,7 +2623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const data = asMonthlyData[monthKey];
                         const balance = data.income - data.expense;
                         const monthName = new Date(monthKey + '-02').toLocaleString('pt-BR', {month: 'long'});
-                        return [monthName, this.formatCurrency(data.income), this.formatCurrency(data.expense), this.formatCurrency(data.balance)];
+                        return [monthName, this.formatCurrency(data.income), this.formatCurrency(data.expense), this.formatCurrency(balance)];
                     });
                     break;
             }
@@ -2617,12 +2636,20 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.autoTable({
                 head: head,
                 body: body,
-                foot: foot,
+                foot: foot.length > 0 ? foot : undefined,
                 startY: 30,
                 theme: 'grid',
-                headStyles: { fillColor: [22, 33, 62] }, // --primary-color
-                footStyles: { fillColor: [22, 33, 62], fontStyle: 'bold' }
+                headStyles: { fillColor: [22, 33, 62] },
+                footStyles: { fillColor: [22, 33, 62], fontStyle: 'bold', textColor: [255,255,255] }
             });
+            
+            // Add final text after the table
+            if (reportId === 'accountStatement') {
+                finalY = doc.lastAutoTable.finalY || doc.autoTable.previous.finalY;
+                const balance = (transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)) - (transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
+                doc.setFontSize(10);
+                doc.text(`Saldo Final do Período: ${this.formatCurrency(balance)}`, 14, finalY + 10);
+            }
             
             doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
         }
