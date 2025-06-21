@@ -105,6 +105,11 @@
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--primary-color); }
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
         .settings-actions { display: flex; flex-direction: column; gap: 15px; } 
+        .report-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; align-items: center; }
+        .report-filters .form-group { margin-bottom: 0; }
+        .report-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .report-card-header h3 { border-bottom: none; margin-bottom: 0; }
+        .report-chart-container { min-height: 350px; margin-top: 20px; position: relative; }
         .chart-placeholder { display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted-color); text-align: center; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 
         /* === ESTILOS PARA O MENU LATERAL === */
@@ -208,44 +213,6 @@
             .login-form-wrapper { width: 100%; }
             .login-box { width: 90%; max-width: 400px; }
         }
-
-        /* === ESTILOS DA NOVA CENTRAL DE RELATÓRIOS === */
-        .report-generator-controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            align-items: flex-end;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--secondary-color);
-        }
-        .report-options {
-            display: none;
-        }
-        #report-display-area {
-            border-radius: var(--border-radius);
-            padding: 20px;
-            background-color: var(--primary-color);
-            min-height: 200px;
-            margin-top: 30px;
-        }
-        .report-header {
-            border-bottom: 1px solid var(--secondary-color);
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
-        .report-header h3 {
-            margin-bottom: 5px;
-        }
-        .report-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
-        .report-summary-grid span { display: block; }
-        .report-summary-grid .label { color: var(--text-muted-color); }
-        .report-summary-grid .value { font-weight: 600; }
     </style>
 </head>
 <body>
@@ -525,39 +492,78 @@
                 </div>
                 
                 <div id="tab-reports" class="tab-content">
-                    <div class="card">
-                        <h2>Central de Relatórios</h2>
-                        <p style="color:var(--text-muted-color); margin-top: -15px; margin-bottom: 25px;">Selecione um tipo de relatório, preencha os filtros e gere uma visualização detalhada na tela.</p>
-
-                        <div class="report-generator-controls">
-                            <div class="form-group">
-                                <label for="report-type-select">Tipo de Relatório</label>
-                                <select id="report-type-select">
-                                    <option value="">-- Selecione --</option>
-                                    <option value="monthly-statement">Extrato Mensal por Conta</option>
-                                </select>
-                            </div>
-
-                            <div id="options-monthly-statement" class="report-options">
-                                <div class="form-group">
-                                    <label for="report-account-select">Selecione a Conta</label>
-                                    <select id="report-account-select"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="report-month-select">Selecione o Mês/Ano</label>
-                                    <input type="month" id="report-month-select">
-                                </div>
-                            </div>
-
-                            <div class="form-buttons">
-                                <button id="generate-report-btn" class="btn btn-primary" style="width: 100%;">Gerar Relatório</button>
-                            </div>
-                        </div>
-
-                        <div id="report-display-area">
-                           <div class="chart-placeholder"><p>Selecione um tipo de relatório e clique em "Gerar" para visualizar os dados aqui.</p></div>
-                        </div>
-                    </div>
+                             <div class="grid-layout" style="gap: 30px;">
+                                 <div class="card" style="grid-column: 1 / -1;">
+                                     <h2>Relatório Detalhado de Transações</h2>
+                                     <div class="report-filters">
+                                         <div class="form-group">
+                                             <label for="report-date-filter">Período</label>
+                                             <select id="report-date-filter">
+                                                 <option value="all">Todo o Período</option>
+                                                 <option value="today">Hoje</option>
+                                                 <option value="7">Últimos 7 dias</option>
+                                                 <option value="30" selected>Últimos 30 dias</option>
+                                                 <option value="month">Este Mês</option>
+                                                 <option value="year">Este Ano</option>
+                                             </select>
+                                         </div>
+                                         <div class="form-group">
+                                             <label for="report-category-filter">Categoria</label>
+                                             <select id="report-category-filter"></select>
+                                         </div>
+                                         <div class="form-group">
+                                             <label for="report-payment-status-filter">Status</label>
+                                             <select id="report-payment-status-filter">
+                                                 <option value="all">Todos os Status</option>
+                                                 <option value="paid">Pagas/Recebidas</option>
+                                                 <option value="unpaid">A Pagar</option>
+                                             </select>
+                                         </div>
+                                          <div class="form-group">
+                                             <label for="report-type-filter">Tipo</label>
+                                             <select id="report-type-filter">
+                                                 <option value="all">Todos os Tipos</option>
+                                                 <option value="expense">Despesas</option>
+                                                 <option value="income">Receitas</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <button id="export-filtered-pdf-btn" class="btn btn-primary" style="margin-bottom: 20px;">Gerar PDF do Relatório</button>
+                                     <div id="filtered-report-results" class="transaction-list-container"></div>
+                                 </div>
+                                 <div class="card">
+                                     <div class="report-card-header">
+                                         <h3>Despesas por Categoria</h3>
+                                         <div class="form-group" style="margin-bottom: 0;">
+                                             <select id="category-report-period" style="padding: 8px;">
+                                                 <option value="month" selected>Este Mês</option>
+                                                 <option value="30">Últimos 30 dias</option>
+                                                 <option value="year">Este Ano</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="report-chart-container">
+                                         <canvas id="category-report-chart"></canvas>
+                                     </div>
+                                     <button id="export-category-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
+                                 </div>
+                                 
+                                 <div class="card">
+                                     <div class="report-card-header">
+                                         <h3>Fluxo de Caixa Mensal</h3>
+                                         <div class="form-group" style="margin-bottom: 0;">
+                                             <select id="cashflow-report-period" style="padding: 8px;">
+                                                 <option value="6" selected>Últimos 6 Meses</option>
+                                                 <option value="12">Últimos 12 Meses</option>
+                                             </select>
+                                         </div>
+                                     </div>
+                                     <div class="report-chart-container">
+                                         <canvas id="cashflow-report-chart"></canvas>
+                                     </div>
+                                     <button id="export-cashflow-pdf-btn" class="btn btn-secondary" style="width: 100%; margin-top: 20px;">Gerar PDF</button>
+                                 </div>
+                             </div>
                 </div>
 
                 <div id="tab-calendar" class="tab-content">
@@ -739,7 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
 
         cacheDOMElements() {
-            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm' ];
+            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter', 'filteredReportResults', 'exportFilteredPdfBtn', 'categoryReportPeriod', 'exportCategoryPdfBtn', 'cashflowReportPeriod', 'exportCashflowPdfBtn', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm' ];
             elementIds.forEach(idCamel => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
@@ -774,9 +780,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('transfer-form').addEventListener('submit', (e) => this.handleTransfer(e));
             this.elements.transactionType.addEventListener('change', () => this.handleTransactionTypeChange());
             this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
-            document.getElementById('export-btn')?.addEventListener('click', () => this.exportBackup());
-            document.getElementById('import-btn')?.addEventListener('click', () => document.getElementById('import-file-input').click());
-            document.getElementById('import-file-input')?.addEventListener('change', (e) => this.importBackup(e));
+            document.getElementById('export-btn').addEventListener('click', () => this.exportBackup());
+            document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
+            document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
             
             this.elements.accountSelectors.forEach(sel => sel.addEventListener('change', (e) => this.handleAccountSelectChange(e)));
 
@@ -834,8 +840,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.renderCalendar();
             });
             
-            document.getElementById('report-type-select')?.addEventListener('change', () => this.handleReportTypeChange());
-            document.getElementById('generate-report-btn')?.addEventListener('click', () => this.generateReport());
+            const reportFilters = ['reportDateFilter', 'reportCategoryFilter', 'reportPaymentStatusFilter', 'reportTypeFilter'];
+            reportFilters.forEach(id => this.elements[id]?.addEventListener('change', () => this.renderFilteredReport()));
+            this.elements.categoryReportPeriod?.addEventListener('change', () => this.renderCategoryExpenseChart());
+            this.elements.cashflowReportPeriod?.addEventListener('change', () => this.renderCashflowChart());
+            this.elements.exportFilteredPdfBtn?.addEventListener('click', () => this.exportFilteredReportToPDF());
+            this.elements.exportCategoryPdfBtn?.addEventListener('click', () => this.exportChartToPDF('Despesas por Categoria', this.charts.categoryReportChart, this.getCategoryExpenseDataForPDF.bind(this)));
+            this.elements.exportCashflowPdfBtn?.addEventListener('click', () => this.exportChartToPDF('Fluxo de Caixa Mensal', this.charts.cashflowReportChart, this.getCashflowDataForPDF.bind(this)));
             
             this.elements.billPaymentModalCloseBtn.addEventListener('click', () => this.closeBillPaymentModal());
             this.elements.billPaymentModal.addEventListener('click', (e) => { if(e.target === this.elements.billPaymentModal) this.closeBillPaymentModal(); });
@@ -1173,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
         handleAccountSelectChange(e) { if (e.target.value === 'add_new_account') { const selectId = e.target.id; e.target.value = ''; this.openAccountModal(selectId); } },
         
-        updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { /* A nova aba de relatórios é gerada sob demanda */ } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); } },
+        updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderAllReports(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); } },
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         getAccountIcon(type) {
@@ -1188,37 +1199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm('Tem certeza que deseja sair? Seus dados permanecerão salvos no navegador.')) {
                 sound.play('delete');
                 localStorage.removeItem('financeAppUser');
-                setTimeout(() => window.location.reload(), 300);
+                window.location.reload();
             }
         },
         toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
         applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-        handleTabClick(e) {
-            if (this.state.editingItem) {
-                this.cancelEditMode();
-            }
-            this.elements.tabButtons.forEach(tab => tab.classList.remove('active'));
-            this.elements.tabContents.forEach(content => content.classList.remove('active'));
-            
-            const tabButton = e.currentTarget;
-            tabButton.classList.add('active');
-            document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active');
-
-            if (this.elements.sidebarNav.classList.contains('visible')) {
-                this.elements.sidebarNav.classList.remove('visible');
-                this.elements.menuOverlay.classList.remove('visible');
-            }
-            
-            if (tabButton.dataset.tab === 'calendar') {
-                this.renderCalendar();
-            }
-            if (tabButton.dataset.tab === 'credit-cards') {
-                this.renderCreditCardModule();
-            }
-            if (tabButton.dataset.tab === 'accounts') {
-                this.renderAccountsList();
-            }
-        },
+        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderAllReports(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
         formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
@@ -1572,177 +1558,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        handleReportTypeChange() {
-            const reportType = document.getElementById('report-type-select').value;
-            document.querySelectorAll('.report-options').forEach(el => el.style.display = 'none');
-            
-            if (reportType) {
-                const optionsEl = document.getElementById(`options-${reportType}`);
-                if (optionsEl) {
-                    optionsEl.style.display = 'grid';
-                    if (reportType === 'monthly-statement') {
-                        const accountSelect = document.getElementById('report-account-select');
-                        accountSelect.innerHTML = '';
-                        this.state.accounts.forEach(acc => {
-                            const option = document.createElement('option');
-                            option.value = acc.id;
-                            option.textContent = acc.name;
-                            accountSelect.appendChild(option);
-                        });
-                        document.getElementById('report-month-select').valueAsDate = new Date();
-                    }
-                }
-            }
-        },
-
-        generateReport() {
-            const reportType = document.getElementById('report-type-select').value;
-            const displayArea = document.getElementById('report-display-area');
-            
-            if (!reportType) {
-                displayArea.innerHTML = `<div class="chart-placeholder"><p>Por favor, selecione um tipo de relatório.</p></div>`;
-                return;
-            }
-
-            sound.play('success');
-
-            switch (reportType) {
-                case 'monthly-statement':
-                    displayArea.innerHTML = this.generateMonthlyStatementHTML();
-                    document.getElementById('download-report-pdf-btn')?.addEventListener('click', () => this.downloadMonthlyStatementPDF());
-                    break;
-                default:
-                    displayArea.innerHTML = `<div class="chart-placeholder"><p>Relatório não implementado.</p></div>`;
-            }
-        },
-
-        generateMonthlyStatementHTML() {
-            const accountId = document.getElementById('report-account-select').value;
-            const monthYear = document.getElementById('report-month-select').value;
-            if (!accountId || !monthYear) return `<div class="chart-placeholder"><p>Por favor, selecione uma conta e um mês/ano.</p></div>`;
-
-            const account = this.state.accounts.find(a => a.id === accountId);
-            const [year, month] = monthYear.split('-').map(Number);
-            const selectedMonth = month - 1;
-
-            let openingBalance = account.initialBalance;
-            this.state.transactions.forEach(t => {
-                const tDate = new Date(t.date + 'T00:00:00');
-                if (t.accountId === accountId && tDate < new Date(year, selectedMonth, 1)) {
-                    if (t.type === 'income') openingBalance += t.amount;
-                    if (t.type === 'expense' && t.isPaid) openingBalance -= t.amount;
-                }
-            });
-            
-            const monthTransactions = this.state.transactions.filter(t => {
-                const tDate = new Date(t.date + 'T00:00:00');
-                return t.accountId === accountId && tDate.getFullYear() === year && tDate.getMonth() === selectedMonth;
-            }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            let closingBalance = openingBalance;
-            let totalIncome = 0;
-            let totalExpense = 0;
-
-            const transactionsHTML = monthTransactions.map(t => {
-                if (t.type === 'income') {
-                    closingBalance += t.amount;
-                    totalIncome += t.amount;
-                }
-                if (t.type === 'expense' && t.isPaid) {
-                    closingBalance -= t.amount;
-                    totalExpense += t.amount;
-                }
-                return this.renderTransactionItem(t);
-            }).join('');
-
-            return `
-                <div class="report-header">
-                    <h3>Extrato da Conta: ${account.name}</h3>
-                    <p style="color:var(--text-muted-color);">Período: ${new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, selectedMonth, 1))}</p>
-                    <div class="report-summary-grid">
-                        <div><span class="label">Saldo Anterior</span> <span class="value">${this.formatCurrency(openingBalance)}</span></div>
-                        <div><span class="label">Total de Entradas</span> <span class="value positive">${this.formatCurrency(totalIncome)}</span></div>
-                        <div><span class="label">Total de Saídas</span> <span class="value negative">${this.formatCurrency(totalExpense)}</span></div>
-                        <div><span class="label">Saldo Final</span> <span class="value">${this.formatCurrency(closingBalance)}</span></div>
-                    </div>
-                </div>
-                <div class="form-buttons" style="margin-bottom: 20px;">
-                    <button id="download-report-pdf-btn" class="btn btn-secondary">Baixar PDF deste Extrato</button>
-                </div>
-                <ul class="transaction-list-container" style="max-height: 500px;">
-                    ${transactionsHTML || '<p>Nenhuma transação neste período.</p>'}
-                </ul>
-            `;
-        },
-
-        downloadMonthlyStatementPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const accountId = document.getElementById('report-account-select').value;
-            const monthYear = document.getElementById('report-month-select').value;
-            const account = this.state.accounts.find(a => a.id === accountId);
-            const [year, month] = monthYear.split('-').map(Number);
-            const selectedMonth = month - 1;
-
-            let openingBalance = account.initialBalance;
-            this.state.transactions.forEach(t => {
-                const tDate = new Date(t.date + 'T00:00:00');
-                if (t.accountId === accountId && tDate < new Date(year, selectedMonth, 1)) {
-                    if (t.type === 'income') openingBalance += t.amount;
-                    if (t.type === 'expense' && t.isPaid) openingBalance -= t.amount;
-                }
-            });
-            const monthTransactions = this.state.transactions.filter(t => {
-                const tDate = new Date(t.date + 'T00:00:00');
-                return t.accountId === accountId && tDate.getFullYear() === year && tDate.getMonth() === selectedMonth;
-            }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.text(`Extrato da Conta: ${account.name}`, 14, 22);
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100);
-            const periodText = `Período: ${new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, selectedMonth, 1))}`;
-            doc.text(periodText, 14, 29);
-
-            const columns = ["Data", "Descrição", "Débito (R$)", "Crédito (R$)"];
-            const body = [];
-            body.push(['', {content: 'Saldo Anterior', styles: {fontStyle: 'bold'}}, '', {content: this.formatCurrency(openingBalance).replace('R$', '').trim(), styles: {halign: 'right'}}]);
-            
-            let runningBalance = openingBalance;
-            monthTransactions.forEach(t => {
-                if (t.type === 'income') {
-                    runningBalance += t.amount;
-                    body.push([this.formatDate(t.date), t.description, '', {content: this.formatCurrency(t.amount).replace('R$', '').trim(), styles: {halign: 'right'}}]);
-                } else if (t.type === 'expense' && t.isPaid) {
-                    runningBalance -= t.amount;
-                    body.push([this.formatDate(t.date), t.description, {content: this.formatCurrency(t.amount).replace('R$', '').trim(), styles: {halign: 'right'}}, '']);
-                }
-            });
-            
-            body.push(['', {content: 'Saldo Final', styles: {fontStyle: 'bold'}}, '', {content: this.formatCurrency(runningBalance).replace('R$', '').trim(), styles: {fontStyle: 'bold', halign: 'right'}}]);
-
-            doc.autoTable({
-                head: [columns],
-                body: body,
-                startY: 40,
-                theme: 'grid',
-                headStyles: { fillColor: [15, 52, 96] },
-                didParseCell: function(data) {
-                    if (data.column.dataKey === 2 && data.cell.raw) {
-                        data.cell.styles.textColor = [231, 76, 60];
-                    }
-                    if (data.column.dataKey === 3 && data.cell.raw) {
-                        data.cell.styles.textColor = [46, 204, 113];
-                    }
-                }
-            });
-
-            const dateStr = new Date().toISOString().split('T')[0];
-            doc.save(`extrato_${account.name.replace(/ /g, '_')}_${year}-${month}.pdf`);
-        },
+        renderAllReports() { this.renderFilteredReport(); this.renderCategoryExpenseChart(); this.renderCashflowChart(); },
+        getFilteredTransactions() { const dateFilter = this.elements.reportDateFilter.value; const categoryFilter = this.elements.reportCategoryFilter.value; const statusFilter = this.elements.reportPaymentStatusFilter.value; const typeFilter = this.elements.reportTypeFilter.value; const now = new Date(); let startDate = new Date('1970-01-01'); let endDate = new Date('2999-12-31'); switch(dateFilter) { case 'today': startDate = new Date(now.setHours(0,0,0,0)); endDate = new Date(now.setHours(23,59,59,999)); break; case '7': startDate = new Date(new Date().setDate(now.getDate() - 7)); break; case '30': startDate = new Date(new Date().setDate(now.getDate() - 30)); break; case 'month': startDate = new Date(now.getFullYear(), now.getMonth(), 1); endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); break; case 'year': startDate = new Date(now.getFullYear(), 0, 1); endDate = new Date(now.getFullYear(), 11, 31); break; } return this.state.transactions.filter(t => { const tDate = new Date(t.date); if (dateFilter !== 'all' && (tDate < startDate || tDate > endDate)) return false; if (categoryFilter !== 'all' && t.category !== categoryFilter) return false; if (typeFilter !== 'all' && t.type !== typeFilter) return false; if (statusFilter !== 'all') { if(statusFilter === 'paid' && !t.isPaid) return false; if(statusFilter === 'unpaid' && (t.isPaid || t.type !== 'expense')) return false; } return true; }); },
+        renderFilteredReport() { const filtered = this.getFilteredTransactions(); this.elements.filteredReportResults.innerHTML = filtered.length > 0 ? filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => this.renderTransactionItem(t)).join('') : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação encontrada com os filtros selecionados.</p>'; },
+        renderCategoryExpenseChart() { const period = this.elements.categoryReportPeriod.value; const now = new Date(); let startDate = new Date('1970-01-01'); if (period === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); if (period === '30') startDate = new Date(new Date().setDate(now.getDate() - 30)); if (period === 'year') startDate = new Date(now.getFullYear(), 0, 1); const expenses = this.state.transactions.filter(t => t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date) >= startDate && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura'); const categoryTotals = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {}); const sortedCategories = Object.entries(categoryTotals).sort(([,a],[,b]) => b - a); const labels = sortedCategories.map(([name]) => name); const data = sortedCategories.map(([,total]) => total); this.charts.categoryReportChart.data.labels = labels; this.charts.categoryReportChart.data.datasets = [{ label: 'Despesas por Categoria', data: data, backgroundColor: ['#e94560', '#f1c40f', '#3498db', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c', '#34495e', '#7f8c8d', '#c0392b'], hoverOffset: 4 }]; this.charts.categoryReportChart.options = { ...this.charts.categoryReportChart.options, ...this.getChartOptions() }; this.charts.categoryReportChart.update(); },
+        renderCashflowChart() { const monthsCount = parseInt(this.elements.cashflowReportPeriod.value, 10); const now = new Date(); const labels = []; const incomeData = []; const expenseData = []; for (let i = monthsCount - 1; i >= 0; i--) { const date = new Date(now.getFullYear(), now.getMonth() - i, 1); const month = date.getMonth(); const year = date.getFullYear(); labels.push(new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(date)); const monthIncome = this.state.transactions.filter(t => t.type === 'income' && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').reduce((sum, t) => sum + t.amount, 0); const monthExpense = this.state.transactions.filter(t => t.type === 'expense' && t.isPaid && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência').reduce((sum, t) => sum + t.amount, 0); incomeData.push(monthIncome); expenseData.push(monthExpense); } this.charts.cashflowReportChart.data.labels = labels; this.charts.cashflowReportChart.data.datasets = [ { label: 'Receitas', data: incomeData, backgroundColor: 'rgba(46, 204, 113, 0.7)' }, { label: 'Despesas', data: expenseData, backgroundColor: 'rgba(231, 76, 60, 0.7)' } ]; this.charts.cashflowReportChart.options = { ...this.charts.cashflowReportChart.options, ...this.getChartOptions() }; this.charts.cashflowReportChart.update(); },
         
         startEditMode(type, id){ 
             this.state.editingItem = { type, id };
@@ -1778,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async exportBackup() { try { const data = {}; for (const storeName of db.STORES) { data[storeName] = await db.getAll(storeName); } data.lastBackup = new Date().toISOString(); const json = JSON.stringify(data, null, 2); const blob = new Blob([json], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; const date = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`; link.download = `financeApp_backup_${this.state.user}_${date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); alert('Backup exportado com sucesso!'); } catch (error) { console.error("Erro ao exportar:", error); alert("Erro ao exportar dados."); } },
         async importBackup(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const data = JSON.parse(e.target.result); if (data && data.transactions && data.accounts) { if (confirm('Atenção! Isso substituirá TODOS os dados atuais. Deseja continuar?')) { await Promise.all(db.STORES.map(s => db.clear(s))); for (const storeName of db.STORES) { if (data[storeName]) await Promise.all(data[storeName].map(item => db.put(storeName, item))); } await this.loadData(); this.updateAllRenders(); alert('Backup restaurado com sucesso!'); } } else { alert('Arquivo de backup inválido ou corrompido.'); } } catch (error) { console.error("Erro ao importar:", error); alert('Erro ao ler o arquivo de backup.'); } finally { event.target.value = null; } }; reader.readAsText(file); },
 
-        initCharts() { const commonOptions = this.getChartOptions(); if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); },
+        initCharts() { const commonOptions = this.getChartOptions(); if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); if (this.charts.categoryReportChart) this.charts.categoryReportChart.destroy(); const catCtx = document.getElementById('category-report-chart').getContext('2d'); this.charts.categoryReportChart = new Chart(catCtx, { type: 'doughnut', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false } }); if (this.charts.cashflowReportChart) this.charts.cashflowReportChart.destroy(); const cashCtx = document.getElementById('cashflow-report-chart').getContext('2d'); this.charts.cashflowReportChart = new Chart(cashCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { x: { ...commonOptions.scales.x }, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
         updateDashboardCharts() { if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return; const commonOptions = this.getChartOptions(); this.renderDashboardBudgetChart(); const sortedTransactions = [...this.state.transactions].filter(t=>t.accountId).sort((a,b) => new Date(a.date) - new Date(b.date)); const dailyNetWorth = new Map(); const initialAccountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.initialBalance || 0), 0); const initialCardDebt = 0; let runningNetWorth = initialAccountBalance - initialCardDebt; if (sortedTransactions.length > 0) { const firstDate = new Date(sortedTransactions[0].date + 'T00:00:00'); firstDate.setDate(firstDate.getDate() - 1); dailyNetWorth.set(firstDate.toISOString().split('T')[0], runningNetWorth); } else { dailyNetWorth.set(new Date().toISOString().split('T')[0], runningNetWorth); } sortedTransactions.forEach(t => { const amount = t.amount || 0; let impact = 0; if (t.type === 'income') impact = +amount; if (t.type === 'expense' && t.isPaid) impact = -amount; runningNetWorth += impact; dailyNetWorth.set(t.date, runningNetWorth); }); const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x)); this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x); this.charts.evolutionChart.data.datasets = [{ label: 'Patrimônio Líquido', data: balanceHistory, borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560', backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)', fill: true, tension: 0.1 }]; this.charts.evolutionChart.options = { ...this.charts.evolutionChart.options, ...commonOptions }; this.charts.evolutionChart.update(); },
         
@@ -1875,6 +1695,130 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             chart.update();
+        },
+
+        exportFilteredReportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const filteredTransactions = this.getFilteredTransactions().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('Relatório Detalhado de Transações', 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Relatório gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 29);
+
+            const columns = [
+                { header: 'Data', dataKey: 'date' },
+                { header: 'Descrição', dataKey: 'description' },
+                { header: 'Categoria', dataKey: 'category' },
+                { header: 'Tipo', dataKey: 'type' },
+                { header: 'Valor (R$)', dataKey: 'amount' },
+            ];
+
+            const body = filteredTransactions.map(t => ({
+                date: this.formatDate(t.date),
+                description: t.description,
+                category: t.category,
+                type: t.type === 'income' ? 'Receita' : 'Despesa',
+                amount: this.formatCurrency(t.amount).replace('R$', '').trim()
+            }));
+
+            doc.autoTable({
+                columns,
+                body,
+                startY: 35,
+                headStyles: { fillColor: [15, 52, 96] },
+                styles: { font: 'helvetica', fontSize: 9 },
+            });
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            doc.save(`relatorio_transacoes_${dateStr}.pdf`);
+        },
+
+        getCategoryExpenseDataForPDF() {
+            const period = this.elements.categoryReportPeriod.value;
+            const now = new Date();
+            let startDate = new Date('1970-01-01');
+            if (period === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            if (period === '30') startDate = new Date(new Date().setDate(now.getDate() - 30));
+            if (period === 'year') startDate = new Date(now.getFullYear(), 0, 1);
+
+            const expenses = this.state.transactions.filter(t => t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date) >= startDate && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura');
+            const categoryTotals = expenses.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
+
+            const totalSpent = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+            const sortedCategories = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
+            
+            const columns = ['Categoria', 'Valor Gasto (R$)', '% do Total'];
+            const body = sortedCategories.map(([name, total]) => {
+                const percentage = totalSpent > 0 ? ((total / totalSpent) * 100).toFixed(2) + '%' : '0.00%';
+                return [name, this.formatCurrency(total).replace('R$', '').trim(), percentage];
+            });
+
+            return { columns, body };
+        },
+
+        getCashflowDataForPDF() {
+            const monthsCount = parseInt(this.elements.cashflowReportPeriod.value, 10);
+            const now = new Date();
+            
+            const columns = ['Mês/Ano', 'Receitas (R$)', 'Despesas (R$)', 'Saldo (R$)'];
+            const body = [];
+
+            for (let i = monthsCount - 1; i >= 0; i--) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                const label = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit' }).format(date);
+
+                const monthIncome = this.state.transactions.filter(t => t.type === 'income' && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura').reduce((sum, t) => sum + t.amount, 0);
+                const monthExpense = this.state.transactions.filter(t => t.type === 'expense' && t.isPaid && t.accountId && new Date(t.date).getMonth() === month && new Date(t.date).getFullYear() === year && t.category !== 'Transferência').reduce((sum, t) => sum + t.amount, 0);
+                const balance = monthIncome - monthExpense;
+
+                body.push([
+                    label,
+                    this.formatCurrency(monthIncome).replace('R$', '').trim(),
+                    this.formatCurrency(monthExpense).replace('R$', '').trim(),
+                    this.formatCurrency(balance).replace('R$', '').trim()
+                ]);
+            }
+            return { columns, body };
+        },
+        
+        exportChartToPDF(title, chart, getDataForTable) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text(title, 105, 22, { align: 'center' });
+            
+            const chartImage = chart.toBase64Image('image/png', 1.0);
+            const aspectRatio = chart.width / chart.height;
+            const imgWidth = 180;
+            const imgHeight = imgWidth / aspectRatio;
+            doc.addImage(chartImage, 'PNG', 15, 35, imgWidth, imgHeight);
+
+            const { columns, body } = getDataForTable();
+            const tableStartY = 35 + imgHeight + 10;
+            
+            doc.autoTable({
+                head: [columns],
+                body: body,
+                startY: tableStartY,
+                headStyles: { fillColor: [15, 52, 96] },
+                styles: { font: 'helvetica', fontSize: 9 },
+            });
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `${title.toLowerCase().replace(/ /g, '_')}_${dateStr}.pdf`;
+            doc.save(filename);
         },
     };
 
