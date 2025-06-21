@@ -973,17 +973,17 @@ document.addEventListener('DOMContentLoaded', () => {
                      hasChanges = true; 
                      if (r.frequency === 'monthly') { 
                          nextDueDate.setMonth(nextDueDate.getMonth() + 1); 
-                        } else if (r.frequency === 'weekly') { 
-                            nextDueDate.setDate(nextDueDate.getDate() + 7); 
-                        } else if (r.frequency === 'yearly') { 
-                            nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
-                        } 
-                        r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
-                        await db.put('recurrences', r); 
-                    } 
-                } 
-                if (hasChanges) await this.loadData(); 
-            },
+                     } else if (r.frequency === 'weekly') { 
+                         nextDueDate.setDate(nextDueDate.getDate() + 7); 
+                     } else if (r.frequency === 'yearly') { 
+                         nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
+                     } 
+                     r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
+                     await db.put('recurrences', r); 
+                 } 
+             } 
+             if (hasChanges) await this.loadData(); 
+        },
 
         async checkLogin() {
             const user = localStorage.getItem('financeAppUser');
@@ -1112,13 +1112,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const cardId = form.elements['expense-card-id'].value;
             const totalAmount = this.parseCurrency(form.elements['expense-amount'].value);
             const originalDescription = form.elements['expense-description'].value;
-            const purchaseDate = form.elements['expense-date'].value;
+            const purchaseDateStr = form.elements['expense-date'].value;
+            const purchaseDate = new Date(purchaseDateStr + 'T00:00:00');
             const category = form.elements['expense-category'].value;
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
+
             if (installments === 1) {
-                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
+                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, purchaseDate);
                 if (!openInvoice) { this.showToast("Não foi possível encontrar ou criar uma fatura para este cartão.", 'error'); return; }
-                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDate, category: category, isPaid: false };
+                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category: category, isPaid: false };
                 await db.put('transactions', expense);
                 openInvoice.amount = parseFloat(((openInvoice.amount || 0) + expense.amount).toFixed(2));
                 await db.put('invoices', openInvoice);
@@ -1126,22 +1128,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const purchaseGroupId = `p-${Date.now()}`;
                 let installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
                 let sumOfInstallments = 0;
+
                 for (let i = 0; i < installments; i++) {
-                    const installmentDate = new Date(purchaseDate + 'T00:00:00');
-                    installmentDate.setMonth(installmentDate.getMonth() + i);
-                    const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
+                    const installmentPurchaseDate = new Date(purchaseDate); 
+                    const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentPurchaseDate);
                     if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
+
                     let currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
-                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDate, category: category, isPaid: false };
+                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDateStr, category: category, isPaid: false };
+                    
                     await db.put('transactions', expense);
                     invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
                     await db.put('invoices', invoice);
+                    
                     sumOfInstallments += currentInstallmentAmount;
+                    purchaseDate.setMonth(purchaseDate.getMonth() + 1); // Increment month for the next installment's invoice
                 }
             }
+
             this.showToast('Despesa no cartão adicionada!', 'success');
             await this.loadData();
-            this.renderCreditCardModule();
             this.updateAllRenders();
             this.closeCreditCardExpenseModal();
         },
@@ -1166,7 +1172,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await db.put('invoices', invoice);
             await this.getOrCreateInvoiceForDate(cardId, new Date());
             await this.loadData();
-            this.renderCreditCardModule();
             this.updateAllRenders();
             this.closeBillPaymentModal();
             this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
@@ -1292,7 +1297,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.loadData(); 
             this.showToast('Transação deletada.', 'success'); 
             this.updateAllRenders(); 
-            this.renderCreditCardModule(); 
         },
 
         async deleteAccount(id) {
@@ -1318,7 +1322,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await this.loadData(); 
             this.showToast('Cartão e suas transações deletados.', 'success'); 
             this.updateAllRenders(); 
-            this.renderCreditCardModule(); 
         },
 
         async deleteCategory(id) {
@@ -1354,25 +1357,52 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllRenders(); 
         },
 
-        async getOrCreateInvoiceForDate(cardId, targetDate) {
+        async getOrCreateInvoiceForDate(cardId, purchaseDate) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             if (!card) return null;
-            let closingDateYear = targetDate.getFullYear();
-            let closingDateMonth = targetDate.getMonth();
-            if (targetDate.getDate() > card.closingDay) {
-                closingDateMonth += 1;
+
+            let invoiceMonth = purchaseDate.getMonth();
+            let invoiceYear = purchaseDate.getFullYear();
+
+            // Se o dia da compra for maior que o dia de fechamento, a fatura pertence ao próximo mês.
+            if (purchaseDate.getDate() > card.closingDay) {
+                invoiceMonth += 1;
+                if (invoiceMonth > 11) {
+                    invoiceMonth = 0;
+                    invoiceYear += 1;
+                }
             }
-            const closingDate = new Date(closingDateYear, closingDateMonth, card.closingDay);
+
+            const closingDate = new Date(invoiceYear, invoiceMonth, card.closingDay);
             const closingDateStr = closingDate.toISOString().split('T')[0];
+
             let invoice = this.state.invoices.find(i => i.creditCardId === cardId && i.closingDate === closingDateStr);
-            if (invoice) return invoice;
-            let dueDate = new Date(closingDate.getFullYear(), closingDate.getMonth(), card.dueDay);
-            if (card.dueDay <= card.closingDay) {
-                dueDate.setMonth(dueDate.getMonth() + 1);
+            if (invoice) {
+                return invoice;
             }
-            const newInvoice = { id: `inv-${cardId}-${closingDateStr}`, creditCardId: cardId, status: 'open', amount: 0, closingDate: closingDateStr, dueDate: dueDate.toISOString().split('T')[0], };
+
+            let dueMonth = closingDate.getMonth();
+            let dueYear = closingDate.getFullYear();
+            if (card.dueDay <= card.closingDay) {
+                dueMonth += 1;
+                 if (dueMonth > 11) {
+                    dueMonth = 0;
+                    dueYear += 1;
+                }
+            }
+            const dueDate = new Date(dueYear, dueMonth, card.dueDay);
+
+            const newInvoice = {
+                id: `inv-${cardId}-${closingDateStr}`,
+                creditCardId: cardId,
+                status: 'open',
+                amount: 0,
+                closingDate: closingDateStr,
+                dueDate: dueDate.toISOString().split('T')[0],
+            };
+
             await db.put('invoices', newInvoice);
-            this.state.invoices.push(newInvoice);
+            this.state.invoices.push(newInvoice); // Atualiza o estado local para evitar recarregar tudo
             return newInvoice;
         },
         
@@ -1440,7 +1470,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.updateDashboardCharts(); 
                 this.validateTransactionForm();
                 if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } 
-                if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); } 
+                if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); this.hideReportView(); } 
                 if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } 
             } catch (error) { 
                 console.error("Erro durante a renderização completa:", error); 
@@ -1738,13 +1768,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
                     if (impact !== 0) {
-                         const transactionDate = new Date(t.date + "T00:00:00");
-                         for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                          const transactionDate = new Date(t.date + "T00:00:00");
+                          for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
                             const dateStr = d.toISOString().split('T')[0];
                             if(dailyData.has(dateStr)) {
                                 dailyData.set(dateStr, dailyData.get(dateStr) + impact);
                             }
-                         }
+                          }
                     }
                 }
             });
@@ -1809,7 +1839,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="credit-card-actions">
                     <button class="btn btn-primary add-expense-btn" data-id="${selectedCard.id}">Adicionar Despesa</button>
-                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}">Pagar Fatura</button>
+                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}" ${!nextInvoiceToPay || invoiceAmount <= 0 ? 'disabled' : ''}>Pagar Fatura</button>
                 </div>
                 <h3 style="margin-top: 30px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">Compras na Próxima Fatura</h3>
                 <div class="transaction-list-container" style="margin-top: 15px;">
@@ -2007,8 +2037,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const buttonContainer = document.getElementById(`${type}-form-buttons`);
                 if(buttonContainer) {
-                     const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                     buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
+                      const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                      buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
                 }
             }
             this.state.editingItem = null;
@@ -2175,7 +2205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'categoryExpense':
                 case 'cashflow':
-                     return `
+                      return `
                         <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${firstDayOfYear}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
 
@@ -2427,13 +2457,13 @@ document.addEventListener('DOMContentLoaded', () => {
                      }
                  }
                   return `
-                     <tr>
-                         <td>${this.formatDate(t.date)}</td>
-                         <td>${t.description}</td>
-                         <td>${this.formatDate(t.dueDate)}</td>
-                         <td>${this.formatCurrency(t.amount)}</td>
-                         <td class="${statusClass}">${statusText}</td>
-                     </tr>
+                      <tr>
+                          <td>${this.formatDate(t.date)}</td>
+                          <td>${t.description}</td>
+                          <td>${this.formatDate(t.dueDate)}</td>
+                          <td>${this.formatCurrency(t.amount)}</td>
+                          <td class="${statusClass}">${statusText}</td>
+                      </tr>
                  `;
              }).join('');
 
