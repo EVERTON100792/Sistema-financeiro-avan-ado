@@ -1115,39 +1115,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const purchaseDate = new Date(purchaseDateStr + 'T00:00:00');
             const category = form.elements['expense-category'].value;
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
-
-            const tempPurchaseDate = new Date(purchaseDate);
+            
+            const dbPromises = [];
 
             if (installments === 1) {
-                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
-                if (!openInvoice) { this.showToast("Não foi possível encontrar ou criar uma fatura para este cartão.", 'error'); return; }
-                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category: category, isPaid: false };
-                await db.put('transactions', expense);
-                openInvoice.amount = parseFloat(((openInvoice.amount || 0) + expense.amount).toFixed(2));
-                await db.put('invoices', openInvoice);
+                const invoice = await this.getOrCreateInvoiceForDate(cardId, purchaseDate);
+                if (!invoice) { this.showToast("Não foi possível processar a fatura.", 'error'); return; }
+
+                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category, isPaid: false };
+                dbPromises.push(db.put('transactions', expense));
+                
+                invoice.amount = parseFloat(((invoice.amount || 0) + totalAmount).toFixed(2));
+                dbPromises.push(db.put('invoices', invoice));
+                
+                this.state.transactions.push(expense);
             } else {
                 const purchaseGroupId = `p-${Date.now()}`;
-                let installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
+                const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
                 let sumOfInstallments = 0;
+                const tempPurchaseDate = new Date(purchaseDate);
 
                 for (let i = 0; i < installments; i++) {
                     const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
                     if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
 
-                    let currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
-                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDateStr, category: category, isPaid: false };
+                    const currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
+                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDateStr, category, isPaid: false };
                     
-                    await db.put('transactions', expense);
+                    dbPromises.push(db.put('transactions', expense));
                     invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
-                    await db.put('invoices', invoice);
-                    
+                    dbPromises.push(db.put('invoices', invoice));
+
+                    this.state.transactions.push(expense);
                     sumOfInstallments += currentInstallmentAmount;
                     tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
                 }
             }
 
+            await Promise.all(dbPromises);
+
             this.showToast('Despesa no cartão adicionada!', 'success');
-            await this.loadData();
             this.updateAllRenders();
             this.closeCreditCardExpenseModal();
         },
@@ -1650,11 +1657,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                                             t.isPaid &&
-                                             t.accountId && 
-                                             new Date(t.date).getMonth() === currentMonth &&
-                                             new Date(t.date).getFullYear() === currentYear &&
-                                             t.category !== 'Transferência';
+                    t.isPaid &&
+                    t.accountId && 
+                    new Date(t.date).getMonth() === currentMonth &&
+                    new Date(t.date).getFullYear() === currentYear &&
+                    t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
@@ -1680,17 +1687,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentClosingDate = new Date(closingYear, closingMonth, card.closingDay);
                 const currentClosingDateStr = currentClosingDate.toISOString().split('T')[0];
 
-                // Soma o valor de todas as faturas abertas que já fecharam ou que são do ciclo atual
+                // Soma o valor de todas as faturas abertas que já fecharam OU que são do ciclo atual
                 const relevantInvoices = this.state.invoices.filter(inv =>
                     inv.creditCardId === card.id &&
                     inv.status === 'open' &&
-                    (new Date(inv.closingDate + 'T00:00:00') <= today || inv.closingDate === currentClosingDateStr)
+                    (new Date(inv.closingDate + 'T00:00:00') < today || inv.closingDate === currentClosingDateStr)
                 );
 
                 relevantInvoices.forEach(inv => {
                     cardDebt += (inv.amount || 0);
                 });
             });
+
 
             const netWorth = accountBalance - cardDebt; 
 
