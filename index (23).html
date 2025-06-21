@@ -973,17 +973,17 @@ document.addEventListener('DOMContentLoaded', () => {
                      hasChanges = true; 
                      if (r.frequency === 'monthly') { 
                          nextDueDate.setMonth(nextDueDate.getMonth() + 1); 
-                        } else if (r.frequency === 'weekly') { 
-                            nextDueDate.setDate(nextDueDate.getDate() + 7); 
-                        } else if (r.frequency === 'yearly') { 
-                            nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
-                        } 
-                        r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
-                        await db.put('recurrences', r); 
-                    } 
-                } 
-                if (hasChanges) await this.loadData(); 
-            },
+                     } else if (r.frequency === 'weekly') { 
+                         nextDueDate.setDate(nextDueDate.getDate() + 7); 
+                     } else if (r.frequency === 'yearly') { 
+                         nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
+                     } 
+                     r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
+                     await db.put('recurrences', r); 
+                 } 
+             } 
+             if (hasChanges) await this.loadData(); 
+        },
 
         async checkLogin() {
             const user = localStorage.getItem('financeAppUser');
@@ -1045,18 +1045,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const dueDate = form.elements['due-date'].value;
             const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null;
             const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
+            
             await db.put('transactions', newT);
+            this.state.transactions.push(newT); // Manually update state
+
             if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
                 if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) {
                     const nextMonthDate = new Date(dueDate + 'T00:00:00');
                     nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
                     const newR = { id: `rec-${Date.now()}`, description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
                     await db.put('recurrences', newR);
+                    this.state.recurrences.push(newR); // Manually update state
                 }
             }
             this.showToast(this.state.editingItem ? 'Transação atualizada!' : 'Transação adicionada!', 'success');
-            await this.loadData();
-            this.updateAllRenders();
+            
+            this.updateAllRenders(); // Render with updated state
             this.cancelEditMode();
             form.reset();
             document.getElementById('date').valueAsDate = new Date();
@@ -1076,14 +1080,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const account = { id, name, type };
             await db.put('accounts', account);
             
+            if (isEditing) {
+                const index = this.state.accounts.findIndex(a => a.id === id);
+                if (index !== -1) this.state.accounts[index] = account;
+            } else {
+                this.state.accounts.push(account);
+            }
+            
             this.showToast(isEditing ? 'Conta atualizada!' : 'Conta adicionada!', 'success');
-            await this.loadData();
             this.updateAllRenders();
             
             if (this.state.selectToUpdateAfterAccountCreation && !isEditing) {
                 const selectEl = document.getElementById(this.state.selectToUpdateAfterAccountCreation);
                 if(selectEl) selectEl.value = id;
-                this.validateTransactionForm(); // Re-validar o formulário de transação
+                this.validateTransactionForm();
                 this.state.selectToUpdateAfterAccountCreation = null;
             }
             
@@ -1096,12 +1106,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = this.state.editingItem?.id || `cc-${Date.now()}`; 
             const card = { id, name: form.elements['credit-card-name'].value, limit: this.parseCurrency(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; 
             await db.put('creditCards', card); 
+            
+            if (this.state.editingItem) {
+                const index = this.state.creditCards.findIndex(c => c.id === id);
+                if (index > -1) this.state.creditCards[index] = card;
+            } else {
+                this.state.creditCards.push(card);
+            }
             await this.getOrCreateInvoiceForDate(id, new Date()); 
+            
             this.state.selectedCardId = id; 
             this.showToast('Cartão de crédito salvo!', 'success'); 
-            await this.loadData(); 
-            this.renderCreditCardModule(); 
-            this.updateAllRenders(); 
+            this.updateAllRenders();
             form.reset(); 
             this.cancelEditMode();
         },
@@ -1112,36 +1128,50 @@ document.addEventListener('DOMContentLoaded', () => {
             const cardId = form.elements['expense-card-id'].value;
             const totalAmount = this.parseCurrency(form.elements['expense-amount'].value);
             const originalDescription = form.elements['expense-description'].value;
-            const purchaseDate = form.elements['expense-date'].value;
+            const purchaseDateStr = form.elements['expense-date'].value;
+            const purchaseDate = new Date(purchaseDateStr + 'T00:00:00');
             const category = form.elements['expense-category'].value;
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
+            
+            const dbPromises = [];
+
             if (installments === 1) {
-                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
-                if (!openInvoice) { this.showToast("Não foi possível encontrar ou criar uma fatura para este cartão.", 'error'); return; }
-                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDate, category: category, isPaid: false };
-                await db.put('transactions', expense);
-                openInvoice.amount = parseFloat(((openInvoice.amount || 0) + expense.amount).toFixed(2));
-                await db.put('invoices', openInvoice);
+                const invoice = await this.getOrCreateInvoiceForDate(cardId, purchaseDate);
+                if (!invoice) { this.showToast("Não foi possível processar a fatura.", 'error'); return; }
+
+                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category, isPaid: false };
+                dbPromises.push(db.put('transactions', expense));
+                
+                invoice.amount = parseFloat(((invoice.amount || 0) + totalAmount).toFixed(2));
+                dbPromises.push(db.put('invoices', invoice));
+                
+                this.state.transactions.push(expense);
             } else {
                 const purchaseGroupId = `p-${Date.now()}`;
-                let installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
+                const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
                 let sumOfInstallments = 0;
+                const tempPurchaseDate = new Date(purchaseDate);
+
                 for (let i = 0; i < installments; i++) {
-                    const installmentDate = new Date(purchaseDate + 'T00:00:00');
-                    installmentDate.setMonth(installmentDate.getMonth() + i);
-                    const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
+                    const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
                     if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
-                    let currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
-                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDate, category: category, isPaid: false };
-                    await db.put('transactions', expense);
+
+                    const currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
+                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDateStr, category, isPaid: false };
+                    
+                    dbPromises.push(db.put('transactions', expense));
                     invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
-                    await db.put('invoices', invoice);
+                    dbPromises.push(db.put('invoices', invoice));
+
+                    this.state.transactions.push(expense);
                     sumOfInstallments += currentInstallmentAmount;
+                    tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
                 }
             }
+
+            await Promise.all(dbPromises);
+
             this.showToast('Despesa no cartão adicionada!', 'success');
-            await this.loadData();
-            this.renderCreditCardModule();
             this.updateAllRenders();
             this.closeCreditCardExpenseModal();
         },
@@ -1161,15 +1191,23 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllBalances();
             if (sourceAccount.currentBalance < paymentAmount) { this.showToast("Saldo insuficiente na conta de origem.", 'error'); return; }
             const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate };
-            await db.put('transactions', expenseTransaction);
+            
             invoice.status = 'paid';
-            await db.put('invoices', invoice);
+            
+            await Promise.all([
+                db.put('transactions', expenseTransaction),
+                db.put('invoices', invoice)
+            ]);
+
+            this.state.transactions.push(expenseTransaction);
+            const invIndex = this.state.invoices.findIndex(i => i.id === invoice.id);
+            if(invIndex > -1) this.state.invoices[invIndex].status = 'paid';
+
             await this.getOrCreateInvoiceForDate(cardId, new Date());
-            await this.loadData();
-            this.renderCreditCardModule();
+            
+            this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
             this.updateAllRenders();
             this.closeBillPaymentModal();
-            this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
         },
         
         async handleCategorySubmit(e) { 
@@ -1279,8 +1317,11 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         async deleteTransaction(id) { 
-            const t = this.state.transactions.find(t=>t.id===id); 
-            if(!t) return; 
+            const tIndex = this.state.transactions.findIndex(t=>t.id===id);
+            if(tIndex === -1) return; 
+            
+            const t = this.state.transactions[tIndex];
+            
             if(t.creditCardId) { 
                 const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); 
                 if(invoice) { 
@@ -1288,11 +1329,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.put('invoices', invoice); 
                 } 
             } 
+            
             await db.delete('transactions', id); 
-            await this.loadData(); 
+            this.state.transactions.splice(tIndex, 1); // Manual state update
+            
             this.showToast('Transação deletada.', 'success'); 
             this.updateAllRenders(); 
-            this.renderCreditCardModule(); 
         },
 
         async deleteAccount(id) {
@@ -1305,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...associatedRecurrences.map(r => db.delete('recurrences', r.id))
             ]);
 
-            await this.loadData();
+            await this.loadData(); // Reload after massive delete
             this.showToast(`Conta "${accountName}" e todas as suas transações e recorrências foram deletadas.`, 'success');
             this.updateAllRenders();
         },
@@ -1314,11 +1356,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const toDeleteT = this.state.transactions.filter(t => t.creditCardId === id); 
             const toDeleteI = this.state.invoices.filter(i => i.creditCardId === id); 
             await Promise.all([ db.delete('creditCards', id), ...toDeleteT.map(t => db.delete('transactions', t.id)), ...toDeleteI.map(i => db.delete('invoices', i.id)) ]); 
+            
             this.state.selectedCardId = null; 
-            await this.loadData(); 
+            await this.loadData(); // Reload after massive delete
+
             this.showToast('Cartão e suas transações deletados.', 'success'); 
             this.updateAllRenders(); 
-            this.renderCreditCardModule(); 
         },
 
         async deleteCategory(id) {
@@ -1354,23 +1397,49 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllRenders(); 
         },
 
-        async getOrCreateInvoiceForDate(cardId, targetDate) {
+        async getOrCreateInvoiceForDate(cardId, purchaseDate) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             if (!card) return null;
-            let closingDateYear = targetDate.getFullYear();
-            let closingDateMonth = targetDate.getMonth();
-            if (targetDate.getDate() > card.closingDay) {
-                closingDateMonth += 1;
+
+            let invoiceMonth = purchaseDate.getMonth();
+            let invoiceYear = purchaseDate.getFullYear();
+
+            if (purchaseDate.getDate() > card.closingDay) {
+                invoiceMonth += 1;
+                if (invoiceMonth > 11) {
+                    invoiceMonth = 0;
+                    invoiceYear += 1;
+                }
             }
-            const closingDate = new Date(closingDateYear, closingDateMonth, card.closingDay);
+
+            const closingDate = new Date(invoiceYear, invoiceMonth, card.closingDay);
             const closingDateStr = closingDate.toISOString().split('T')[0];
+
             let invoice = this.state.invoices.find(i => i.creditCardId === cardId && i.closingDate === closingDateStr);
-            if (invoice) return invoice;
-            let dueDate = new Date(closingDate.getFullYear(), closingDate.getMonth(), card.dueDay);
-            if (card.dueDay <= card.closingDay) {
-                dueDate.setMonth(dueDate.getMonth() + 1);
+            if (invoice) {
+                return invoice;
             }
-            const newInvoice = { id: `inv-${cardId}-${closingDateStr}`, creditCardId: cardId, status: 'open', amount: 0, closingDate: closingDateStr, dueDate: dueDate.toISOString().split('T')[0], };
+
+            let dueMonth = closingDate.getMonth();
+            let dueYear = closingDate.getFullYear();
+            if (card.dueDay <= card.closingDay) {
+                dueMonth += 1;
+                 if (dueMonth > 11) {
+                    dueMonth = 0;
+                    dueYear += 1;
+                }
+            }
+            const dueDate = new Date(dueYear, dueMonth, card.dueDay);
+
+            const newInvoice = {
+                id: `inv-${cardId}-${closingDateStr}`,
+                creditCardId: cardId,
+                status: 'open',
+                amount: 0,
+                closingDate: closingDateStr,
+                dueDate: dueDate.toISOString().split('T')[0],
+            };
+
             await db.put('invoices', newInvoice);
             this.state.invoices.push(newInvoice);
             return newInvoice;
@@ -1440,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.updateDashboardCharts(); 
                 this.validateTransactionForm();
                 if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } 
-                if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); } 
+                if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); this.hideReportView(); } 
                 if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } 
             } catch (error) { 
                 console.error("Erro durante a renderização completa:", error); 
@@ -1621,16 +1690,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                                             t.isPaid &&
-                                             t.accountId && 
-                                             new Date(t.date).getMonth() === currentMonth &&
-                                             new Date(t.date).getFullYear() === currentYear &&
-                                             t.category !== 'Transferência';
+                    t.isPaid &&
+                    t.accountId && 
+                    new Date(t.date).getMonth() === currentMonth &&
+                    new Date(t.date).getFullYear() === currentYear &&
+                    t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
-            const netWorth = accountBalance - cardDebt; 
+            
+            // A dívida do cartão não é mais subtraída diretamente aqui.
+            // Ela se reflete na diminuição do 'accountBalance' quando a fatura é paga.
+            const netWorth = accountBalance; 
 
             const balanceEl = document.getElementById('balance');
             balanceEl.textContent = this.formatCurrency(netWorth);
@@ -1738,13 +1809,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
                     if (impact !== 0) {
-                         const transactionDate = new Date(t.date + "T00:00:00");
-                         for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                          const transactionDate = new Date(t.date + "T00:00:00");
+                          for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
                             const dateStr = d.toISOString().split('T')[0];
                             if(dailyData.has(dateStr)) {
                                 dailyData.set(dateStr, dailyData.get(dateStr) + impact);
                             }
-                         }
+                          }
                     }
                 }
             });
@@ -1809,7 +1880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="credit-card-actions">
                     <button class="btn btn-primary add-expense-btn" data-id="${selectedCard.id}">Adicionar Despesa</button>
-                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}">Pagar Fatura</button>
+                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}" ${!nextInvoiceToPay || invoiceAmount <= 0 ? 'disabled' : ''}>Pagar Fatura</button>
                 </div>
                 <h3 style="margin-top: 30px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">Compras na Próxima Fatura</h3>
                 <div class="transaction-list-container" style="margin-top: 15px;">
@@ -2007,8 +2078,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const buttonContainer = document.getElementById(`${type}-form-buttons`);
                 if(buttonContainer) {
-                     const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                     buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
+                      const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                      buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
                 }
             }
             this.state.editingItem = null;
@@ -2175,7 +2246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'categoryExpense':
                 case 'cashflow':
-                     return `
+                      return `
                         <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${firstDayOfYear}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
 
@@ -2427,13 +2498,13 @@ document.addEventListener('DOMContentLoaded', () => {
                      }
                  }
                   return `
-                     <tr>
-                         <td>${this.formatDate(t.date)}</td>
-                         <td>${t.description}</td>
-                         <td>${this.formatDate(t.dueDate)}</td>
-                         <td>${this.formatCurrency(t.amount)}</td>
-                         <td class="${statusClass}">${statusText}</td>
-                     </tr>
+                      <tr>
+                          <td>${this.formatDate(t.date)}</td>
+                          <td>${t.description}</td>
+                          <td>${this.formatDate(t.dueDate)}</td>
+                          <td>${this.formatCurrency(t.amount)}</td>
+                          <td class="${statusClass}">${statusText}</td>
+                      </tr>
                  `;
              }).join('');
 
@@ -2542,7 +2613,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
                     const statusFilter = document.getElementById('filter-payment-status')?.value;
-                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= endDate);
 
                     if (statusFilter && statusFilter !== 'all') {
                         expenses = expenses.filter(t => {
