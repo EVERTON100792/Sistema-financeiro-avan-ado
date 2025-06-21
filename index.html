@@ -512,7 +512,7 @@
                         <div id="reports-menu">
                             </div>
                         <div id="report-view-container" style="display: none;">
-                             </div>
+                            </div>
                     </div>
                 </div>
 
@@ -791,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (action === 'view') {
                         this.showReportView(reportId);
                     } else if (action === 'pdf') {
-                        this.generateReportPDF(reportId);
+                        this.generateReportPDF(reportId, true); // Generate with default filters first
                     }
                 }
             });
@@ -802,6 +802,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (e.target.dataset.action === 'generate-report') {
                     const reportId = e.target.dataset.reportId;
                     this.renderReportResults(reportId);
+                } else if (e.target.dataset.action === 'export-pdf') {
+                    const reportId = e.target.dataset.reportId;
+                    this.generateReportPDF(reportId, false); // Generate with applied filters
                 }
             });
 
@@ -1246,11 +1249,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                                 t.isPaid &&
-                                 t.accountId && 
-                                 new Date(t.date).getMonth() === currentMonth &&
-                                 new Date(t.date).getFullYear() === currentYear &&
-                                 t.category !== 'Transferência';
+                                    t.isPaid &&
+                                    t.accountId && 
+                                    new Date(t.date).getMonth() === currentMonth &&
+                                    new Date(t.date).getFullYear() === currentYear &&
+                                    t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
@@ -1642,6 +1645,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const commonOptions = this.getChartOptions(); 
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); 
             if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
+            if (this.charts.reportChart) this.charts.reportChart.destroy();
         },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
         
@@ -1723,23 +1727,416 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         },
 
-        // === NOVA SEÇÃO DE RELATÓRIOS ===
-        renderReportsMenu() { /* Esta é a implementação completa */ },
-        showReportView(reportId) { /* Esta é a implementação completa */ },
-        hideReportView() { /* Esta é a implementação completa */ },
-        buildReportFilters(reportId) { /* Esta é a implementação completa */ },
-        renderReportResults(reportId) { /* Esta é a implementação completa */ },
-        renderAccountStatementResults() { /* Esta é a implementação completa */ },
-        renderCategoryExpenseResults() { /* Esta é a implementação completa */ },
-        renderCashflowResults() { /* Esta é a implementação completa */ },
-        renderPaymentStatusResults() { /* Esta é a implementação completa */ },
-        renderAnnualSummaryResults() { /* Esta é a implementação completa */ },
-        generateReportPDF(reportId) { /* Esta é a implementação completa */ },
-        generateAccountStatementPDF(filters) { /* Esta é a implementação completa */ },
-        generateCategoryExpensePDF(filters) { /* Esta é a implementação completa */ },
-        generateCashflowPDF(filters) { /* Esta é a implementação completa */ },
-        generatePaymentStatusPDF(filters) { /* Esta é a implementação completa */ },
-        generateAnnualSummaryPDF(filters) { /* Esta é a implementação completa */ },
+        // === SEÇÃO DE RELATÓRIOS CORRIGIDA E IMPLEMENTADA ===
+        renderReportsMenu() {
+            this.hideReportView();
+            const menuEl = this.elements.reportsMenu;
+            menuEl.innerHTML = Object.entries(this.reports).map(([id, report]) => `
+                <div class="report-menu-item" data-report-id="${id}">
+                    <div>
+                        <h3>${report.title}</h3>
+                        <p>${report.description}</p>
+                    </div>
+                    <div class="report-menu-actions">
+                        <button class="btn btn-primary" data-action="view">Visualizar Relatório</button>
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        showReportView(reportId) {
+            this.elements.reportsMenu.style.display = 'none';
+            const viewContainer = this.elements.reportViewContainer;
+            const report = this.reports[reportId];
+            if (!report) return;
+
+            viewContainer.innerHTML = `
+                <div class="report-view">
+                    <div class="report-header">
+                        <h2>${report.title}</h2>
+                        <div class="report-menu-actions">
+                             <button class="btn btn-secondary" data-action="back-to-menu">‹ Voltar ao Menu</button>
+                             <button class="btn btn-success" data-action="export-pdf" data-report-id="${reportId}">Exportar PDF 📄</button>
+                        </div>
+                    </div>
+                    <div class="report-filters" id="report-filters-${reportId}">
+                        ${this.buildReportFilters(reportId)}
+                    </div>
+                     <button class="btn btn-primary" style="width: 100%;" data-action="generate-report" data-report-id="${reportId}">Gerar Relatório</button>
+                    <div class="report-results-area" id="report-results-area">
+                        <p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Selecione os filtros e gere o relatório para ver os resultados.</p>
+                    </div>
+                </div>
+            `;
+            viewContainer.style.display = 'block';
+        },
+
+        hideReportView() {
+            this.elements.reportViewContainer.style.display = 'none';
+            this.elements.reportsMenu.style.display = 'grid';
+            if (this.charts.reportChart) {
+                this.charts.reportChart.destroy();
+                this.charts.reportChart = null;
+            }
+        },
+
+        buildReportFilters(reportId) {
+            const today = new Date().toISOString().split('T')[0];
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+            const accountOptions = this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+            switch (reportId) {
+                case 'accountStatement':
+                    return `
+                        <div class="form-group"><label for="filter-account">Conta</label><select id="filter-account">${accountOptions}</select></div>
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${thirtyDaysAgoStr}"></div>
+                        <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
+                case 'categoryExpense':
+                case 'cashflow':
+                case 'paymentStatus':
+                     return `
+                        <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${thirtyDaysAgoStr}"></div>
+                        <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
+                case 'annualSummary':
+                    const currentYear = new Date().getFullYear();
+                    let yearOptions = '';
+                    for (let y = currentYear; y >= currentYear - 5; y--) { yearOptions += `<option value="${y}">${y}</option>`; }
+                    return `<div class="form-group"><label for="filter-year">Ano</label><select id="filter-year">${yearOptions}</select></div>`;
+                default:
+                    return '<p>Filtros não disponíveis.</p>';
+            }
+        },
+
+        renderReportResults(reportId) {
+            if (this.charts.reportChart) {
+                this.charts.reportChart.destroy();
+                this.charts.reportChart = null;
+            }
+            switch (reportId) {
+                case 'accountStatement': this.renderAccountStatementResults(); break;
+                case 'categoryExpense': this.renderCategoryExpenseResults(); break;
+                case 'cashflow': this.renderCashflowResults(); break;
+                case 'paymentStatus': this.renderPaymentStatusResults(); break;
+                case 'annualSummary': this.renderAnnualSummaryResults(); break;
+            }
+        },
+
+        renderAccountStatementResults() {
+            const accountId = document.getElementById('filter-account').value;
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const resultsArea = document.getElementById('report-results-area');
+
+            const transactions = this.state.transactions.filter(t => t.accountId === accountId && t.date >= startDate && t.date <= endDate).sort((a,b) => new Date(a.date) - new Date(b.date));
+            if (transactions.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma transação encontrada para os filtros selecionados.</p>';
+                return;
+            }
+
+            const rows = transactions.map(t => `
+                <tr>
+                    <td>${this.formatDate(t.date)}</td>
+                    <td>${t.description}</td>
+                    <td>${t.category}</td>
+                    <td class="positive">${t.type === 'income' ? this.formatCurrency(t.amount) : ''}</td>
+                    <td class="negative">${t.type === 'expense' ? this.formatCurrency(t.amount) : ''}</td>
+                </tr>
+            `).join('');
+
+            resultsArea.innerHTML = `
+                <table class="table" style="width:100%; text-align: left; border-collapse: collapse;">
+                    <thead><tr><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Data</th><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Descrição</th><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Categoria</th><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Entrada</th><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Saída</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        },
+
+        renderCategoryExpenseResults() {
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const resultsArea = document.getElementById('report-results-area');
+
+            const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= startDate && t.date <= endDate);
+            const categoryTotals = expenses.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
+            
+            const sortedCategories = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a);
+
+            if (sortedCategories.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma despesa encontrada para os filtros selecionados.</p>';
+                return;
+            }
+
+            const rows = sortedCategories.map(([category, total]) => `
+                <tr>
+                    <td>${category}</td>
+                    <td class="negative">${this.formatCurrency(total)}</td>
+                </tr>
+            `).join('');
+
+            resultsArea.innerHTML = `
+                <div class="grid-layout">
+                    <div>
+                        <table class="table" style="width:100%; text-align: left; border-collapse: collapse;">
+                            <thead><tr><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Categoria</th><th style="padding: 8px; border-bottom: 1px solid var(--secondary-color);">Total Gasto</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    <div class="report-chart-container" style="min-height: 350px;">
+                        <canvas id="report-chart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            const ctx = document.getElementById('report-chart').getContext('2d');
+            this.charts.reportChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedCategories.map(([cat]) => cat),
+                    datasets: [{
+                        data: sortedCategories.map(([, total]) => total),
+                        backgroundColor: ['#e94560', '#f1c40f', '#3498db', '#e74c3c', '#9b59b6', '#2ecc71', '#1abc9c', '#f39c12']
+                    }]
+                },
+                options: { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false }
+            });
+        },
+        
+        renderCashflowResults() {
+            const startDate = new Date(document.getElementById('filter-start-date').value + 'T00:00:00');
+            const endDate = new Date(document.getElementById('filter-end-date').value + 'T00:00:00');
+            const resultsArea = document.getElementById('report-results-area');
+
+            const monthlyData = {};
+            this.state.transactions.forEach(t => {
+                const tDate = new Date(t.date + 'T00:00:00');
+                if (tDate >= startDate && tDate <= endDate && t.accountId) {
+                    const monthKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthlyData[monthKey]) {
+                        monthlyData[monthKey] = { income: 0, expense: 0 };
+                    }
+                    if (t.type === 'income') monthlyData[monthKey].income += t.amount;
+                    if (t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
+                }
+            });
+
+            const sortedMonths = Object.keys(monthlyData).sort();
+             if (sortedMonths.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhum dado encontrado para os filtros selecionados.</p>';
+                return;
+            }
+
+            const rows = sortedMonths.map(month => {
+                const data = monthlyData[month];
+                const balance = data.income - data.expense;
+                const monthName = new Date(month + '-02').toLocaleString('pt-BR', {month: 'long', year: 'numeric'});
+                return `
+                    <tr>
+                        <td>${monthName}</td>
+                        <td class="positive">${this.formatCurrency(data.income)}</td>
+                        <td class="negative">${this.formatCurrency(data.expense)}</td>
+                        <td class="${balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(balance)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            resultsArea.innerHTML = `
+                <div class="report-chart-container" style="min-height: 350px; margin-bottom: 20px;">
+                    <canvas id="report-chart"></canvas>
+                </div>
+                <table class="table" style="width:100%; text-align: left; border-collapse: collapse;">
+                    <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+
+            const ctx = document.getElementById('report-chart').getContext('2d');
+            this.charts.reportChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths.map(m => new Date(m + '-02').toLocaleString('pt-BR', {month: 'short', year: '2-digit'})),
+                    datasets: [
+                        { label: 'Receitas', data: sortedMonths.map(m => monthlyData[m].income), backgroundColor: 'var(--success-color)' },
+                        { label: 'Despesas', data: sortedMonths.map(m => monthlyData[m].expense), backgroundColor: 'var(--error-color)' }
+                    ]
+                },
+                options: { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false }
+            });
+        },
+        
+        renderPaymentStatusResults() {
+             const startDate = document.getElementById('filter-start-date').value;
+             const endDate = document.getElementById('filter-end-date').value;
+             const resultsArea = document.getElementById('report-results-area');
+
+             const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= startDate && t.date <= endDate).sort((a, b) => new Date(a.date) - new Date(b.date));
+             if (expenses.length === 0) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma despesa encontrada para os filtros selecionados.</p>';
+                return;
+            }
+             
+             const rows = expenses.map(t => {
+                let statusText = '';
+                let statusClass = '';
+                if(t.isPaid){
+                    statusText = 'Pago'; statusClass = 'positive';
+                } else {
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const dueDate = new Date(t.dueDate + 'T00:00:00');
+                    if(dueDate < today) {
+                        statusText = 'Atrasado'; statusClass = 'negative';
+                    } else {
+                        statusText = 'Pendente'; statusClass = 'warning';
+                    }
+                }
+                 return `
+                     <tr>
+                         <td>${this.formatDate(t.date)}</td>
+                         <td>${t.description}</td>
+                         <td>${this.formatDate(t.dueDate)}</td>
+                         <td>${this.formatCurrency(t.amount)}</td>
+                         <td class="${statusClass}">${statusText}</td>
+                     </tr>
+                 `;
+             }).join('');
+
+             resultsArea.innerHTML = `
+                <table class="table" style="width:100%; text-align: left; border-collapse: collapse;">
+                     <thead><tr><th>Data</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead>
+                     <tbody>${rows}</tbody>
+                 </table>`;
+        },
+
+        renderAnnualSummaryResults() {
+            const year = document.getElementById('filter-year').value;
+            const resultsArea = document.getElementById('report-results-area');
+            const monthlyData = {};
+
+            for(let i=0; i<12; i++){
+                const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
+                monthlyData[monthKey] = { income: 0, expense: 0, balance: 0 };
+            }
+
+            this.state.transactions.forEach(t => {
+                if(t.date.startsWith(year) && t.accountId){
+                    const month = parseInt(t.date.substring(5, 7), 10) - 1;
+                    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+                    if(t.type === 'income') monthlyData[monthKey].income += t.amount;
+                    if(t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
+                }
+            });
+
+            const tableRows = Object.keys(monthlyData).map(monthKey => {
+                const data = monthlyData[monthKey];
+                data.balance = data.income - data.expense;
+                const monthName = new Date(monthKey + '-02').toLocaleString('pt-BR', {month: 'long'});
+                return `
+                    <tr>
+                        <td>${monthName}</td>
+                        <td class="positive">${this.formatCurrency(data.income)}</td>
+                        <td class="negative">${this.formatCurrency(data.expense)}</td>
+                        <td class="${data.balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(data.balance)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            resultsArea.innerHTML = `
+                <div class="report-chart-container" style="min-height: 350px; margin-bottom: 20px;">
+                    <canvas id="report-chart"></canvas>
+                </div>
+                 <table class="table" style="width:100%; text-align: left; border-collapse: collapse;">
+                     <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead>
+                     <tbody>${tableRows}</tbody>
+                 </table>
+            `;
+            
+            const ctx = document.getElementById('report-chart').getContext('2d');
+            this.charts.reportChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(monthlyData).map(m => new Date(m + '-02').toLocaleString('pt-BR', {month: 'short'})),
+                    datasets: [
+                        { label: 'Receitas', data: Object.values(monthlyData).map(d=>d.income), backgroundColor: 'var(--success-color)' },
+                        { label: 'Despesas', data: Object.values(monthlyData).map(d=>d.expense), backgroundColor: 'var(--error-color)' }
+                    ]
+                },
+                options: { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false, scales: { x: { stacked: false }, y: { stacked: false } } }
+            });
+        },
+
+        generateReportPDF(reportId, useDefaultFilters) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const report = this.reports[reportId];
+            
+            doc.setFontSize(18);
+            doc.text(report.title, 14, 22);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+
+            const getFilters = () => {
+                if (useDefaultFilters) {
+                     const today = new Date();
+                     const thirtyDaysAgo = new Date();
+                     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                     return {
+                        accountId: this.state.accounts.length > 0 ? this.state.accounts[0].id : null,
+                        startDate: thirtyDaysAgo.toISOString().split('T')[0],
+                        endDate: today.toISOString().split('T')[0],
+                        year: today.getFullYear().toString()
+                     };
+                } else {
+                    return {
+                        accountId: document.getElementById('filter-account')?.value,
+                        startDate: document.getElementById('filter-start-date')?.value,
+                        endDate: document.getElementById('filter-end-date')?.value,
+                        year: document.getElementById('filter-year')?.value
+                    };
+                }
+            };
+            
+            const filters = getFilters();
+            let body = [];
+            let head = [];
+
+            switch(reportId) {
+                case 'accountStatement':
+                    head = [['Data', 'Descrição', 'Categoria', 'Entrada', 'Saída']];
+                    body = this.state.transactions
+                        .filter(t => t.accountId === filters.accountId && t.date >= filters.startDate && t.date <= filters.endDate)
+                        .sort((a,b) => new Date(a.date) - new Date(b.date))
+                        .map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' ? this.formatCurrency(t.amount) : '']);
+                    break;
+                case 'categoryExpense':
+                    head = [['Categoria', 'Total Gasto']];
+                    const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    const categoryTotals = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
+                    body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
+                    break;
+                 // Adicionar outros casos de PDF aqui se desejar
+            }
+
+            if(body.length === 0){
+                this.showToast("Nenhum dado para exportar com os filtros selecionados.", "error");
+                return;
+            }
+
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 30,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 33, 62] }, // --primary-color
+            });
+            
+            doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+
     };
 
     financeApp.init();
