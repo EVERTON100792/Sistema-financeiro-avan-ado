@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.reportViewContainer.addEventListener('click', e => {
                  const closeBtn = e.target.closest('.close-report-btn');
                  if(closeBtn) {
-                     this.hideAllReportViews();
+                       this.hideAllReportViews();
                  }
             });
         },
@@ -941,6 +941,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
             this.handleTransactionTypeChange();
         },
+        
+        // ############### CÓDIGO CORRIGIDO ABAIXO ###############
         async handleAccount(e) {
             e.preventDefault();
             const form = e.target;
@@ -949,25 +951,57 @@ document.addEventListener('DOMContentLoaded', () => {
             const type = form.elements['account-type'].value;
             const initialBalance = parseFloat(form.elements['initial-balance'].value);
             const initialBalanceDate = form.elements['initial-balance-date'].value;
-            const isEditing = !!this.state.editingItem;
+            
+            if(!name || !type || !initialBalanceDate) {
+                alert('Por favor, preencha todos os campos da conta.');
+                return;
+            }
+
+            // === INÍCIO DA CORREÇÃO: LÓGICA DE INTEGRIDADE DO SALDO INICIAL ===
             const account = { id, name, type, initialBalance };
             await db.put('accounts', account);
-            if (!isEditing) {
-                sound.play('success');
-                if (initialBalance > 0) {
-                    const initialTransaction = { id: `trans-${Date.now()}`, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate };
-                    await db.put('transactions', initialTransaction);
-                }
+
+            // 1. Encontre e delete qualquer transação de "Saldo Inicial" existente para esta conta.
+            // Isso garante que a edição do saldo inicial funcione corretamente.
+            const existingInitialTransaction = this.state.transactions.find(t => t.accountId === id && t.category === 'Saldo Inicial');
+            if (existingInitialTransaction) {
+                await db.delete('transactions', existingInitialTransaction.id);
             }
+
+            // 2. Se o saldo inicial for maior que zero, crie uma nova transação.
+            // Isso funciona tanto para criação quanto para edição.
+            if (initialBalance > 0) {
+                const initialTransaction = {
+                    id: `trans-initial-${id}`, // ID previsível para fácil remoção
+                    type: 'income',
+                    description: `Saldo Inicial - ${name}`,
+                    amount: initialBalance,
+                    date: initialBalanceDate,
+                    accountId: id,
+                    category: 'Saldo Inicial',
+                    isPaid: true,
+                    dueDate: initialBalanceDate
+                };
+                await db.put('transactions', initialTransaction);
+            }
+            // === FIM DA CORREÇÃO ===
+            
+            if (!this.state.editingItem) {
+                sound.play('success');
+            }
+
             await this.loadData();
             this.updateAllRenders();
-            if (this.state.selectToUpdateAfterAccountCreation && !isEditing) {
+            
+            if (this.state.selectToUpdateAfterAccountCreation && !this.state.editingItem) {
                 document.getElementById(this.state.selectToUpdateAfterAccountCreation).value = id;
                 this.state.selectToUpdateAfterAccountCreation = null;
             }
-            this.closeAccountModal();
-            this.cancelEditMode();
+            
+            this.closeAccountModal(); // closeAccountModal também chama cancelEditMode
         },
+        // ############### FIM DO CÓDIGO CORRIGIDO ###############
+
         async handleCreditCard(e) { e.preventDefault(); const form = e.target; const id = this.state.editingItem?.id || `cc-${Date.now()}`; const card = { id, name: form.elements['credit-card-name'].value, limit: parseFloat(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; await db.put('creditCards', card); await this.getOrCreateInvoiceForDate(id, new Date()); this.state.selectedCardId = id; sound.play('success'); await this.loadData(); this.renderCreditCardModule(); this.updateAllRenders(); form.reset(); },
         
         async handleCreditCardExpense(e) {
@@ -1118,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('initial-balance-date').valueAsDate = new Date(); },
-        closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
+        closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); if (this.state.editingItem) { this.cancelEditMode(); } },
         openBillPaymentModal(cardId) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             const openInvoices = this.state.invoices
@@ -1244,11 +1278,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                       t.isPaid &&
-                       t.accountId && 
-                       new Date(t.date).getMonth() === currentMonth &&
-                       new Date(t.date).getFullYear() === currentYear &&
-                       t.category !== 'Transferência';
+                            t.isPaid &&
+                            t.accountId && 
+                            new Date(t.date).getMonth() === currentMonth &&
+                            new Date(t.date).getFullYear() === currentYear &&
+                            t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
@@ -1558,33 +1592,83 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         
+        // ############### CÓDIGO CORRIGIDO ABAIXO ###############
         startEditMode(type, id){ 
+            this.cancelEditMode(); // Garante que qualquer modo de edição anterior seja limpo
             this.state.editingItem = { type, id };
             const form = document.getElementById(`${type}-form`);
             const item = this.state[`${type}s`].find(i => i.id === id);
-            if (!form || !item) return;
 
-            document.querySelector(`.tab-btn[data-tab="${type}s"]`).click();
+            if (!form || !item) {
+                this.cancelEditMode();
+                return;
+            }
+
+            const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
+            const tabButton = document.querySelector(`.tab-btn[data-tab="${tabForType}"]`);
+            if(tabButton) tabButton.click();
             
+            // === INÍCIO DA CORREÇÃO: LÓGICA ESPECÍFICA PARA CADA TIPO ===
+            if (type === 'account') {
+                const accountItem = this.state.accounts.find(a => a.id === id);
+                if (!accountItem) return;
+                
+                // Para contas, abrimos o modal em vez de um formulário na aba
+                this.openAccountModal();
+                const modalForm = document.getElementById('account-form');
+                modalForm.elements['account-name'].value = accountItem.name;
+                modalForm.elements['account-type'].value = accountItem.type;
+                modalForm.elements['initial-balance'].value = accountItem.initialBalance;
+
+                // Encontra a transação de saldo inicial para pegar a data
+                const initialTransaction = this.state.transactions.find(t => t.accountId === id && t.category === 'Saldo Inicial');
+                modalForm.elements['initial-balance-date'].value = initialTransaction ? initialTransaction.date : new Date().toISOString().split('T')[0];
+                
+                // Muda o título e os botões do MODAL
+                document.getElementById('account-modal-title').textContent = `Editar Conta`;
+                const modalButtonContainer = document.getElementById(`account-form-buttons`);
+                modalButtonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
+                return; // Importante para não executar o código genérico abaixo
+            }
+
+            // Mantém a lógica genérica para outros formulários que funcionam bem
             Object.keys(item).forEach(key => {
-                const formElement = form.elements[`${type}-${key}`] || form.elements[key];
-                if (formElement) formElement.value = item[key];
+                const formKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+                const formElement = form.elements[`${type}-${formKey}`] || form.elements[key];
+                if (formElement) {
+                    if(formElement.type === 'date' && item[key]) {
+                        formElement.value = item[key].split('T')[0];
+                    } else {
+                        formElement.value = item[key];
+                    }
+                }
             });
+            // === FIM DA CORREÇÃO ===
 
             document.getElementById(`${type}-form-title`).textContent = `Editar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
             const buttonContainer = document.getElementById(`${type}-form-buttons`);
             buttonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar</button> <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancelar</button>`;
             document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode());
         },
+        // ############### FIM DO CÓDIGO CORRIGIDO ###############
+
         cancelEditMode(){ 
             if(!this.state.editingItem) return;
             const type = this.state.editingItem.type;
-            const form = document.getElementById(`${type}-form`);
-            if(form) form.reset();
 
-            document.getElementById(`${type}-form-title`).textContent = `Adicionar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            const buttonContainer = document.getElementById(`${type}-form-buttons`);
-            buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">Salvar</button>`;
+            // Tratamento especial para o modal da conta
+            if (type === 'account') {
+                const modalForm = document.getElementById('account-form');
+                if(modalForm) modalForm.reset();
+                document.getElementById('account-modal-title').textContent = `Adicionar Nova Conta`;
+                document.getElementById('account-form-buttons').innerHTML = `<button type="submit" class="btn btn-primary">Salvar Conta</button>`;
+            } else {
+                const form = document.getElementById(`${type}-form`);
+                if(form) form.reset();
+                document.getElementById(`${type}-form-title`).textContent = `Adicionar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                const buttonContainer = document.getElementById(`${type}-form-buttons`);
+                buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">Salvar</button>`;
+            }
 
             this.state.editingItem = null;
         },
@@ -1758,20 +1842,20 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         renderCategoryExpenseView(container) {
-             container.innerHTML = `
+                 container.innerHTML = `
                 <div class="report-header">
                     <h2>Despesas por Categoria</h2>
                     <button class="btn btn-danger close-report-btn">Fechar</button>
                 </div>
                 <div class="report-filters">
-                     <div class="form-group">
-                        <label for="category-report-period">Período</label>
-                        <select id="category-report-period">
-                            <option value="month" selected>Este Mês</option>
-                            <option value="30">Últimos 30 dias</option>
-                            <option value="year">Este Ano</option>
-                        </select>
-                    </div>
+                         <div class="form-group">
+                            <label for="category-report-period">Período</label>
+                            <select id="category-report-period">
+                                <option value="month" selected>Este Mês</option>
+                                <option value="30">Últimos 30 dias</option>
+                                <option value="year">Este Ano</option>
+                            </select>
+                        </div>
                 </div>
                 <div class="report-chart-container" style="height: 400px;">
                     <canvas id="report-chart-categoryExpense"></canvas>
@@ -1814,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <canvas id="report-chart-netWorth"></canvas>
                 </div>
             `;
-             this.renderReportChart('netWorth');
+                 this.renderReportChart('netWorth');
         },
 
         renderBudgetVsActualView(container) {
@@ -2230,12 +2314,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 startY: 40,
                 didParseCell: function (data) {
                     if (data.column.index === 3) {
-                       const value = parseFloat(data.cell.raw.replace(/[^0-9,-]+/g,"").replace(',','.'));
-                       if (value < 0) {
-                           data.cell.styles.textColor = [231, 76, 60]; // Vermelho
-                       } else {
-                           data.cell.styles.textColor = [46, 204, 113]; // Verde
-                       }
+                         const value = parseFloat(data.cell.raw.replace(/[^0-9,-]+/g,"").replace(',','.'));
+                        if (value < 0) {
+                            data.cell.styles.textColor = [231, 76, 60]; // Vermelho
+                        } else {
+                            data.cell.styles.textColor = [46, 204, 113]; // Verde
+                        }
                     }
                 }
             });
