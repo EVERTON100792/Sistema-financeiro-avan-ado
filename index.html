@@ -1820,17 +1820,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         buildReportFilters(reportId) {
-            // CORREÇÃO APLICADA AQUI
-            // Pega os componentes da data (ano, mês, dia) a partir da data local do usuário
+            // CORREÇÃO APLICADA: Gera a string YYYY-MM-DD a partir da data local, evitando erros de fuso horário.
             const todayDate = new Date();
             const year = todayDate.getFullYear();
-            const month = String(todayDate.getMonth() + 1).padStart(2, '0'); // Meses em JS são de 0 a 11
+            const month = String(todayDate.getMonth() + 1).padStart(2, '0'); // Meses em JS são de 0-11, então +1
             const day = String(todayDate.getDate()).padStart(2, '0');
             const today = `${year}-${month}-${day}`;
 
-            // Calcula 30 dias atrás a partir da data local de hoje
             const thirtyDaysAgoDate = new Date();
-            thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+            thirtyDaysAgoDate.setDate(todayDate.getDate() - 30);
             const year30 = thirtyDaysAgoDate.getFullYear();
             const month30 = String(thirtyDaysAgoDate.getMonth() + 1).padStart(2, '0');
             const day30 = String(thirtyDaysAgoDate.getDate()).padStart(2, '0');
@@ -2213,5 +2211,3 @@ document.addEventListener('DOMContentLoaded', () => {
     financeApp.init();
 });
 </script>
-</body>
-</html>
