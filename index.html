@@ -1045,18 +1045,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const dueDate = form.elements['due-date'].value;
             const existing = this.state.editingItem?.id ? this.state.transactions.find(t => t.id === id) : null;
             const newT = { id, type, description, amount, date, accountId, category, dueDate: type === 'expense' ? dueDate : null, isPaid: existing ? existing.isPaid : type === 'income' };
+            
             await db.put('transactions', newT);
+            this.state.transactions.push(newT); // Manually update state
+
             if (type === 'expense' && !this.state.editingItem && form.elements['make-recurring-checkbox'].checked) {
                 if (!this.state.recurrences.some(r => r.description.toLowerCase() === description.toLowerCase())) {
                     const nextMonthDate = new Date(dueDate + 'T00:00:00');
                     nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
                     const newR = { id: `rec-${Date.now()}`, description, amount, type, accountId, category, frequency: 'monthly', startDate: date, nextDueDate: nextMonthDate.toISOString().split('T')[0] };
                     await db.put('recurrences', newR);
+                    this.state.recurrences.push(newR); // Manually update state
                 }
             }
             this.showToast(this.state.editingItem ? 'Transação atualizada!' : 'Transação adicionada!', 'success');
-            await this.loadData();
-            this.updateAllRenders();
+            
+            this.updateAllRenders(); // Render with updated state
             this.cancelEditMode();
             form.reset();
             document.getElementById('date').valueAsDate = new Date();
@@ -1076,14 +1080,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const account = { id, name, type };
             await db.put('accounts', account);
             
+            if (isEditing) {
+                const index = this.state.accounts.findIndex(a => a.id === id);
+                if (index !== -1) this.state.accounts[index] = account;
+            } else {
+                this.state.accounts.push(account);
+            }
+            
             this.showToast(isEditing ? 'Conta atualizada!' : 'Conta adicionada!', 'success');
-            await this.loadData();
             this.updateAllRenders();
             
             if (this.state.selectToUpdateAfterAccountCreation && !isEditing) {
                 const selectEl = document.getElementById(this.state.selectToUpdateAfterAccountCreation);
                 if(selectEl) selectEl.value = id;
-                this.validateTransactionForm(); // Re-validar o formulário de transação
+                this.validateTransactionForm();
                 this.state.selectToUpdateAfterAccountCreation = null;
             }
             
@@ -1096,10 +1106,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = this.state.editingItem?.id || `cc-${Date.now()}`; 
             const card = { id, name: form.elements['credit-card-name'].value, limit: this.parseCurrency(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; 
             await db.put('creditCards', card); 
+            
+            if (this.state.editingItem) {
+                const index = this.state.creditCards.findIndex(c => c.id === id);
+                if (index > -1) this.state.creditCards[index] = card;
+            } else {
+                this.state.creditCards.push(card);
+            }
             await this.getOrCreateInvoiceForDate(id, new Date()); 
+            
             this.state.selectedCardId = id; 
             this.showToast('Cartão de crédito salvo!', 'success'); 
-            await this.loadData(); 
             this.updateAllRenders();
             form.reset(); 
             this.cancelEditMode();
@@ -1174,14 +1191,23 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllBalances();
             if (sourceAccount.currentBalance < paymentAmount) { this.showToast("Saldo insuficiente na conta de origem.", 'error'); return; }
             const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate };
-            await db.put('transactions', expenseTransaction);
+            
             invoice.status = 'paid';
-            await db.put('invoices', invoice);
+            
+            await Promise.all([
+                db.put('transactions', expenseTransaction),
+                db.put('invoices', invoice)
+            ]);
+
+            this.state.transactions.push(expenseTransaction);
+            const invIndex = this.state.invoices.findIndex(i => i.id === invoice.id);
+            if(invIndex > -1) this.state.invoices[invIndex].status = 'paid';
+
             await this.getOrCreateInvoiceForDate(cardId, new Date());
-            await this.loadData();
+            
+            this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
             this.updateAllRenders();
             this.closeBillPaymentModal();
-            this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
         },
         
         async handleCategorySubmit(e) { 
@@ -1291,8 +1317,11 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         async deleteTransaction(id) { 
-            const t = this.state.transactions.find(t=>t.id===id); 
-            if(!t) return; 
+            const tIndex = this.state.transactions.findIndex(t=>t.id===id);
+            if(tIndex === -1) return; 
+            
+            const t = this.state.transactions[tIndex];
+            
             if(t.creditCardId) { 
                 const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); 
                 if(invoice) { 
@@ -1300,8 +1329,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.put('invoices', invoice); 
                 } 
             } 
+            
             await db.delete('transactions', id); 
-            await this.loadData(); 
+            this.state.transactions.splice(tIndex, 1); // Manual state update
+            
             this.showToast('Transação deletada.', 'success'); 
             this.updateAllRenders(); 
         },
@@ -1316,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...associatedRecurrences.map(r => db.delete('recurrences', r.id))
             ]);
 
-            await this.loadData();
+            await this.loadData(); // Reload after massive delete
             this.showToast(`Conta "${accountName}" e todas as suas transações e recorrências foram deletadas.`, 'success');
             this.updateAllRenders();
         },
@@ -1325,8 +1356,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const toDeleteT = this.state.transactions.filter(t => t.creditCardId === id); 
             const toDeleteI = this.state.invoices.filter(i => i.creditCardId === id); 
             await Promise.all([ db.delete('creditCards', id), ...toDeleteT.map(t => db.delete('transactions', t.id)), ...toDeleteI.map(i => db.delete('invoices', i.id)) ]); 
+            
             this.state.selectedCardId = null; 
-            await this.loadData(); 
+            await this.loadData(); // Reload after massive delete
+
             this.showToast('Cartão e suas transações deletados.', 'success'); 
             this.updateAllRenders(); 
         },
@@ -1665,42 +1698,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-
-            let cardDebt = 0;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            // Calcula a dívida apenas das faturas "atuais" e "vencidas"
-            this.state.creditCards.forEach(card => {
-                const todayDay = today.getDate();
-
-                // Identifica a data de fechamento do ciclo ATUAL
-                let closingMonth = today.getMonth();
-                let closingYear = today.getFullYear();
-                if (todayDay > card.closingDay) {
-                    closingMonth += 1;
-                    if (closingMonth > 11) {
-                        closingMonth = 0;
-                        closingYear += 1;
-                    }
-                }
-                const currentClosingDate = new Date(closingYear, closingMonth, card.closingDay);
-                const currentClosingDateStr = currentClosingDate.toISOString().split('T')[0];
-
-                // Soma o valor de todas as faturas abertas que já fecharam OU que são do ciclo atual
-                const relevantInvoices = this.state.invoices.filter(inv =>
-                    inv.creditCardId === card.id &&
-                    inv.status === 'open' &&
-                    (new Date(inv.closingDate + 'T00:00:00') < today || inv.closingDate === currentClosingDateStr)
-                );
-
-                relevantInvoices.forEach(inv => {
-                    cardDebt += (inv.amount || 0);
-                });
-            });
-
-
-            const netWorth = accountBalance - cardDebt; 
+            
+            // A dívida do cartão não é mais subtraída diretamente aqui.
+            // Ela se reflete na diminuição do 'accountBalance' quando a fatura é paga.
+            const netWorth = accountBalance; 
 
             const balanceEl = document.getElementById('balance');
             balanceEl.textContent = this.formatCurrency(netWorth);
