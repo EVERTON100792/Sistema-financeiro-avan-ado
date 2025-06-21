@@ -219,10 +219,11 @@
         .summary-item .label { font-size: 0.9rem; color: var(--text-muted-color); }
         .summary-item .value { font-size: 1.4rem; font-weight: 600; }
         
+        .report-table-wrapper { overflow-x: auto; }
         .report-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Previne que colunas largas quebrem o layout */
+            table-layout: fixed;
         }
         .report-table th, .report-table td {
             padding: 12px 15px;
@@ -239,13 +240,12 @@
         body.light-mode .report-table tbody tr:nth-child(even) {
             background-color: var(--secondary-color);
         }
-        .report-table td:nth-child(2) { /* Coluna de Descrição */
-            max-width: 300px; /* Limita a largura máxima */
-            word-wrap: break-word; /* Fallback */
-            overflow-wrap: break-word; /* Padrão CSS */
-            word-break: break-all; /* Força a quebra de palavras longas */
+        .report-table td:nth-child(2) {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
         }
-        .report-table td:not(:first-child):not(:nth-child(2)) { /* Colunas de valor */
+        .report-table td:not(:first-child):not(:nth-child(2)) {
             text-align: right;
         }
 
@@ -316,6 +316,52 @@
                 box-shadow: 0 0 40px rgba(0,0,0,0.5);
             }
             .sidebar-nav.visible { transform: translateX(0); }
+
+            /* NOVAS REGRAS PARA TABELAS DE RELATÓRIO RESPONSIVAS */
+            .report-table-wrapper {
+                overflow-x: initial; /* Desativa o scroll horizontal */
+            }
+            .report-table {
+                border: none;
+            }
+            .report-table thead {
+                display: none; /* Esconde o cabeçalho da tabela */
+            }
+            .report-table tr {
+                display: block;
+                margin-bottom: 15px;
+                border-radius: var(--border-radius);
+                padding: 15px;
+                background-color: var(--primary-color);
+                border: 1px solid var(--secondary-color);
+            }
+            body.light-mode .report-table tr {
+                background-color: var(--secondary-color);
+            }
+            .report-table td {
+                display: block;
+                text-align: right;
+                border-bottom: 1px dotted color-mix(in srgb, var(--text-muted-color) 40%, transparent);
+                padding: 10px 0;
+            }
+            .report-table td:last-child {
+                border-bottom: none;
+            }
+            .report-table td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: 600;
+                color: var(--text-color);
+                margin-right: 10px;
+            }
+             .report-table td:not(:first-child):not(:nth-child(2)) {
+                 text-align: right;
+            }
+            .report-table td:nth-child(2) {
+                text-align: right;
+                word-break: break-all;
+                overflow-wrap: break-word;
+            }
         }
 
     </style>
@@ -1247,7 +1293,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return isNaN(number) ? 0 : number;
         },
 
-        formatCurrency(value) { return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); },
         formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString + 'T00:00:00'); return date.toLocaleDateString('pt-BR'); },
         
         showToast(message, type = 'success') {
@@ -1940,11 +1985,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const rows = transactions.map(t => `
                 <tr>
-                    <td>${this.formatDate(t.date)}</td>
-                    <td>${t.description}</td>
-                    <td>${t.category}</td>
-                    <td class="positive">${t.type === 'income' ? this.formatCurrency(t.amount) : '—'}</td>
-                    <td class="negative">${t.type === 'expense' ? this.formatCurrency(t.amount) : '—'}</td>
+                    <td data-label="Data">${this.formatDate(t.date)}</td>
+                    <td data-label="Descrição">${t.description}</td>
+                    <td data-label="Categoria">${t.category}</td>
+                    <td data-label="Entrada" class="positive">${t.type === 'income' ? this.formatCurrency(t.amount) : '—'}</td>
+                    <td data-label="Saída" class="negative">${t.type === 'expense' ? this.formatCurrency(t.amount) : '—'}</td>
                 </tr>
             `).join('');
 
@@ -1954,9 +1999,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="summary-item"><div class="label">Total Saídas</div><div class="value negative">${this.formatCurrency(totalExpense)}</div></div>
                     <div class="summary-item"><div class="label">Saldo do Período</div><div class="value ${balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(balance)}</div></div>
                 </div>
-                <div style="overflow-x:auto;">
+                <div class="report-table-wrapper">
                     <table class="report-table">
-                        <thead><tr><th style="width:15%">Data</th><th style="width:40%">Descrição</th><th style="width:20%">Categoria</th><th style="width:12.5%">Entrada</th><th style="width:12.5%">Saída</th></tr></thead>
+                        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Entrada</th><th>Saída</th></tr></thead>
                         <tbody>${rows}</tbody>
                     </table>
                 </div>
@@ -1985,8 +2030,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const rows = sortedCategories.map(([category, total]) => `
                 <tr>
-                    <td>${category}</td>
-                    <td class="negative">${this.formatCurrency(total)}</td>
+                    <td data-label="Categoria">${category}</td>
+                    <td data-label="Total Gasto" class="negative">${this.formatCurrency(total)}</td>
                 </tr>
             `).join('');
 
@@ -1995,7 +2040,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      <div class="summary-item"><div class="label">Total Gasto no Período</div><div class="value negative">${this.formatCurrency(totalSpent)}</div></div>
                 </div>
                 <div class="grid-layout">
-                    <div style="overflow-x:auto;">
+                    <div class="report-table-wrapper">
                         <table class="report-table">
                             <thead><tr><th>Categoria</th><th>Total Gasto</th></tr></thead>
                             <tbody>${rows}</tbody>
@@ -2050,10 +2095,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const monthName = new Date(month + '-02T00:00:00').toLocaleString('pt-BR', {month: 'long', year: 'numeric'});
                 return `
                     <tr>
-                        <td>${monthName}</td>
-                        <td class="positive">${this.formatCurrency(data.income)}</td>
-                        <td class="negative">${this.formatCurrency(data.expense)}</td>
-                        <td class="${balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(balance)}</td>
+                        <td data-label="Mês">${monthName}</td>
+                        <td data-label="Receitas" class="positive">${this.formatCurrency(data.income)}</td>
+                        <td data-label="Despesas" class="negative">${this.formatCurrency(data.expense)}</td>
+                        <td data-label="Saldo" class="${balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(balance)}</td>
                     </tr>
                 `;
             }).join('');
@@ -2062,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="report-chart-container" style="min-height: 350px; margin-bottom: 20px;">
                     <canvas id="report-chart"></canvas>
                 </div>
-                <div style="overflow-x:auto;">
+                <div class="report-table-wrapper">
                     <table class="report-table">
                         <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead>
                         <tbody>${rows}</tbody>
@@ -2110,19 +2155,19 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                   return `
                        <tr>
-                           <td>${this.formatDate(t.date)}</td>
-                           <td>${t.description}</td>
-                           <td>${this.formatDate(t.dueDate)}</td>
-                           <td>${this.formatCurrency(t.amount)}</td>
-                           <td class="${statusClass}">${statusText}</td>
+                           <td data-label="Data">${this.formatDate(t.date)}</td>
+                           <td data-label="Descrição">${t.description}</td>
+                           <td data-label="Vencimento">${this.formatDate(t.dueDate)}</td>
+                           <td data-label="Valor">${this.formatCurrency(t.amount)}</td>
+                           <td data-label="Status" class="${statusClass}">${statusText}</td>
                        </tr>
                    `;
              }).join('');
 
              resultsArea.innerHTML = `
-                 <div style="overflow-x:auto;">
+                 <div class="report-table-wrapper">
                      <table class="report-table">
-                         <thead><tr><th style="width:15%">Data</th><th style="width:40%">Descrição</th><th style="width:15%">Vencimento</th><th style="width:15%">Valor</th><th style="width:15%">Status</th></tr></thead>
+                         <thead><tr><th>Data</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead>
                          <tbody>${rows}</tbody>
                      </table>
                  </div>`;
@@ -2152,10 +2197,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const monthName = new Date(monthKey + '-02T00:00:00').toLocaleString('pt-BR', {month: 'long'});
                 return `
                     <tr>
-                        <td>${monthName}</td>
-                        <td class="positive">${this.formatCurrency(data.income)}</td>
-                        <td class="negative">${this.formatCurrency(data.expense)}</td>
-                        <td class="${data.balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(data.balance)}</td>
+                        <td data-label="Mês">${monthName}</td>
+                        <td data-label="Receitas" class="positive">${this.formatCurrency(data.income)}</td>
+                        <td data-label="Despesas" class="negative">${this.formatCurrency(data.expense)}</td>
+                        <td data-label="Saldo" class="${data.balance >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(data.balance)}</td>
                     </tr>
                 `;
             }).join('');
@@ -2164,7 +2209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="report-chart-container" style="min-height: 350px; margin-bottom: 20px;">
                     <canvas id="report-chart"></canvas>
                 </div>
-                <div style="overflow-x:auto;">
+                <div class="report-table-wrapper">
                     <table class="report-table">
                         <thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Saldo</th></tr></thead>
                         <tbody>${tableRows}</tbody>
