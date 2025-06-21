@@ -1100,8 +1100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.selectedCardId = id; 
             this.showToast('Cartão de crédito salvo!', 'success'); 
             await this.loadData(); 
-            this.renderCreditCardModule(); 
-            this.updateAllRenders(); 
+            this.updateAllRenders();
             form.reset(); 
             this.cancelEditMode();
         },
@@ -1117,8 +1116,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const category = form.elements['expense-category'].value;
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
 
+            const tempPurchaseDate = new Date(purchaseDate);
+
             if (installments === 1) {
-                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, purchaseDate);
+                const openInvoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
                 if (!openInvoice) { this.showToast("Não foi possível encontrar ou criar uma fatura para este cartão.", 'error'); return; }
                 const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: openInvoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category: category, isPaid: false };
                 await db.put('transactions', expense);
@@ -1130,8 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let sumOfInstallments = 0;
 
                 for (let i = 0; i < installments; i++) {
-                    const installmentPurchaseDate = new Date(purchaseDate); 
-                    const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentPurchaseDate);
+                    const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
                     if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
 
                     let currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
@@ -1142,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.put('invoices', invoice);
                     
                     sumOfInstallments += currentInstallmentAmount;
-                    purchaseDate.setMonth(purchaseDate.getMonth() + 1); // Increment month for the next installment's invoice
+                    tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
                 }
             }
 
@@ -1364,7 +1364,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let invoiceMonth = purchaseDate.getMonth();
             let invoiceYear = purchaseDate.getFullYear();
 
-            // Se o dia da compra for maior que o dia de fechamento, a fatura pertence ao próximo mês.
             if (purchaseDate.getDate() > card.closingDay) {
                 invoiceMonth += 1;
                 if (invoiceMonth > 11) {
@@ -1402,7 +1401,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             await db.put('invoices', newInvoice);
-            this.state.invoices.push(newInvoice); // Atualiza o estado local para evitar recarregar tudo
+            this.state.invoices.push(newInvoice);
             return newInvoice;
         },
         
@@ -1659,7 +1658,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+            let cardDebt = 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Calcula a dívida apenas das faturas "atuais" e "vencidas"
+            this.state.creditCards.forEach(card => {
+                const todayDay = today.getDate();
+
+                // Identifica a data de fechamento do ciclo ATUAL
+                let closingMonth = today.getMonth();
+                let closingYear = today.getFullYear();
+                if (todayDay > card.closingDay) {
+                    closingMonth += 1;
+                    if (closingMonth > 11) {
+                        closingMonth = 0;
+                        closingYear += 1;
+                    }
+                }
+                const currentClosingDate = new Date(closingYear, closingMonth, card.closingDay);
+                const currentClosingDateStr = currentClosingDate.toISOString().split('T')[0];
+
+                // Soma o valor de todas as faturas abertas que já fecharam ou que são do ciclo atual
+                const relevantInvoices = this.state.invoices.filter(inv =>
+                    inv.creditCardId === card.id &&
+                    inv.status === 'open' &&
+                    (new Date(inv.closingDate + 'T00:00:00') <= today || inv.closingDate === currentClosingDateStr)
+                );
+
+                relevantInvoices.forEach(inv => {
+                    cardDebt += (inv.amount || 0);
+                });
+            });
+
             const netWorth = accountBalance - cardDebt; 
 
             const balanceEl = document.getElementById('balance');
@@ -2572,7 +2604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
                     const statusFilter = document.getElementById('filter-payment-status')?.value;
-                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= endDate);
 
                     if (statusFilter && statusFilter !== 'all') {
                         expenses = expenses.filter(t => {
