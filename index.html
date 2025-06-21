@@ -1820,10 +1820,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         buildReportFilters(reportId) {
-            const today = new Date().toISOString().split('T')[0];
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+            // CORREÇÃO APLICADA AQUI
+            // Pega os componentes da data (ano, mês, dia) a partir da data local do usuário
+            const todayDate = new Date();
+            const year = todayDate.getFullYear();
+            const month = String(todayDate.getMonth() + 1).padStart(2, '0'); // Meses em JS são de 0 a 11
+            const day = String(todayDate.getDate()).padStart(2, '0');
+            const today = `${year}-${month}-${day}`;
+
+            // Calcula 30 dias atrás a partir da data local de hoje
+            const thirtyDaysAgoDate = new Date();
+            thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+            const year30 = thirtyDaysAgoDate.getFullYear();
+            const month30 = String(thirtyDaysAgoDate.getMonth() + 1).padStart(2, '0');
+            const day30 = String(thirtyDaysAgoDate.getDate()).padStart(2, '0');
+            const thirtyDaysAgoStr = `${year30}-${month30}-${day30}`;
+            
             const accountOptions = this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 
             switch (reportId) {
@@ -2166,7 +2178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const categoryTotals = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
                     body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
                     break;
-                case 'paymentStatus':
+                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
                      body = this.state.transactions
                         .filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate)
