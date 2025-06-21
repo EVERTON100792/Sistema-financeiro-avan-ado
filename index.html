@@ -239,7 +239,6 @@
         body.light-mode .report-table tbody tr:nth-child(even) {
             background-color: var(--secondary-color);
         }
-        /* CORREÇÃO APLICADA AQUI */
         .report-table td:nth-child(2) { /* Coluna de Descrição */
             overflow-wrap: break-word; /* Garante a quebra de palavras longas para não estourar a célula */
             max-width: 300px; /* Limita a largura máxima */
@@ -1872,7 +1871,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // CORREÇÃO APLICADA AQUI
         buildReportFilters(reportId) {
             const todayDate = new Date();
             const year = todayDate.getFullYear();
@@ -2099,7 +2097,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // CORREÇÃO APLICADA AQUI
         renderPaymentStatusResults() {
              const startDate = document.getElementById('filter-start-date').value;
              const endDate = document.getElementById('filter-end-date').value;
@@ -2217,6 +2214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
+        // CORREÇÃO APLICADA AQUI
         generateReportPDF(reportId) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -2247,20 +2245,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'categoryExpense':
                     head = [['Categoria', 'Total Gasto']];
-                    const expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
-                    const categoryTotals = expenses.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
+                    const expensesCat = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    const categoryTotals = expensesCat.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
                     body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
                     break;
-                 case 'paymentStatus':
+                case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
-                     body = this.state.transactions
-                         .filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate)
-                         .sort((a, b) => new Date(a.date) - new Date(b.date))
-                         .map(t => {
-                             let statusText = t.isPaid ? 'Pago' : (new Date(t.dueDate + 'T00:00:00') < new Date(new Date().toDateString()) ? 'Atrasado' : 'Pendente');
-                             return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
-                         });
-                     break;
+                    const statusFilter = document.getElementById('filter-payment-status')?.value;
+                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+
+                    if (statusFilter && statusFilter !== 'all') {
+                        expenses = expenses.filter(t => {
+                            const isPaid = t.isPaid;
+                            if (statusFilter === 'paid') return isPaid;
+                            if (statusFilter === 'unpaid') return !isPaid;
+                            return false;
+                        });
+                    }
+
+                    body = expenses
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .map(t => {
+                            let statusText = '';
+                            if (t.isPaid) {
+                                statusText = 'Pago';
+                            } else {
+                                const today = new Date(); today.setHours(0,0,0,0);
+                                const dueDate = new Date(t.dueDate + 'T00:00:00');
+                                statusText = dueDate < today ? 'Atrasado' : 'Pendente';
+                            }
+                            return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
+                        });
+                    break;
                 // Outros relatórios podem ser adicionados aqui
             }
 
