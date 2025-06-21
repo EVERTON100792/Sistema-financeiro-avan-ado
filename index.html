@@ -277,6 +277,49 @@
                 grid-template-columns: 1fr; 
             }
         }
+        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR V2 === */
+        @media (max-width: 768px) {
+            body { 
+                line-height: 1.5; 
+                -webkit-text-size-adjust: 100%; /* Previne zoom automático de fontes em iPhones */
+            }
+            .container { 
+                padding: 15px; /* Reduz o espaçamento lateral da página */
+            }
+            .card { 
+                padding: 15px; /* Reduz o espaçamento interno dos cards */
+            }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
+
+            /* Força todos os principais layouts de grid a terem uma única coluna e aumenta o espaço entre eles */
+            .summary-section, .grid-layout, .dashboard-layout, .account-card-grid, .account-details, .credit-card-module-layout, .report-filters {
+                grid-template-columns: 1fr;
+                gap: 20px; /* Aumenta o espaço vertical entre os itens */
+            }
+
+            /* Trata especificamente os cards de resumo dos relatórios */
+            .report-summary, .credit-card-summary {
+                display: block; /* Remove o grid e faz os itens se comportarem como blocos */
+            }
+            .report-summary .summary-item, .credit-card-summary .info-item {
+                text-align: left; /* Alinha o texto à esquerda para melhor leitura */
+                padding: 10px 0;
+                border-bottom: 1px solid var(--secondary-color);
+            }
+             .report-summary .summary-item:last-child, .credit-card-summary .info-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-bottom: 0;
+            }
+             .report-summary .summary-item:not(:last-child), .credit-card-summary .info-item:not(:last-child) {
+                margin-bottom: 10px;
+            }
+             
+            header, .report-header { 
+                row-gap: 10px; 
+            }
+        }
 
     </style>
 </head>
