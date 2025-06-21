@@ -395,7 +395,7 @@
                     </section>
                     
                     <section class="card" style="margin-bottom: 30px;">
-                        <h2>Acompanhamento de Orçamentos (Mês Atual)</h2>
+                        <h2 id="dashboard-chart-title">Acompanhamento de Orçamentos (Mês Atual)</h2>
                         <div id="main-overview-chart-container">
                             <canvas id="main-overview-chart"></canvas>
                             <div id="main-chart-placeholder" style="display: none; justify-content: center; align-items: center; color: var(--text-muted-color); position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
@@ -1701,8 +1701,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
             
-            // A dívida do cartão não é mais subtraída diretamente aqui.
-            // Ela se reflete na diminuição do 'accountBalance' quando a fatura é paga.
             const netWorth = accountBalance; 
 
             const balanceEl = document.getElementById('balance');
@@ -2020,7 +2018,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = this.state[`${type}s`]?.find(i => i.id === id);
             
             let form;
-            // A lógica do modal de conta é diferente
             if (type === 'account') {
                 const accountItem = this.state.accounts.find(a => a.id === id);
                 if (!accountItem) return;
@@ -2100,9 +2097,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateDashboardCharts() {
             if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
-            const commonOptions = this.getChartOptions();
-            this.renderDashboardBudgetChart();
+            this.renderDashboardMainChart(); // A chamada foi atualizada aqui
 
+            const commonOptions = this.getChartOptions();
             const accountTransactions = this.state.transactions.filter(t => t.accountId);
             const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort();
             
@@ -2145,34 +2142,93 @@ document.addEventListener('DOMContentLoaded', () => {
             this.charts.evolutionChart.update();
         },
         
-        renderDashboardBudgetChart() {
+        renderDashboardMainChart() {
             const chartCanvas = document.getElementById('main-overview-chart');
             const placeholder = document.getElementById('main-chart-placeholder');
+            const chartTitle = document.getElementById('dashboard-chart-title');
             const chart = this.charts.mainOverviewChart;
-            const now = new Date();
+            
             const budgets = this.state.budgets.filter(b => b.amount > 0);
 
             if (budgets.length === 0) {
+                // Cenário 1: Não há orçamentos. Mostrar gráfico de Top 5 Despesas.
+                chartTitle.textContent = "Top 5 Despesas do Mês";
+                this._renderTopExpensesChart(chart, chartCanvas, placeholder);
+            } else {
+                // Cenário 2: Há orçamentos. Mostrar o gráfico de acompanhamento.
+                chartTitle.textContent = "Acompanhamento de Orçamentos (Mês Atual)";
+                
+                chartCanvas.style.display = 'block';
+                placeholder.style.display = 'none';
+
+                const now = new Date();
+                const labels = budgets.map(b => b.category);
+                const spentData = budgets.map(b => {
+                    return this.state.transactions
+                        .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
+                        .reduce((sum, t) => sum + t.amount, 0);
+                });
+                const budgetData = budgets.map(b => b.amount);
+
+                const commonOptions = this.getChartOptions();
+                chart.config.type = 'bar'; // Garante que o tipo do gráfico é 'bar'
+                chart.data.labels = labels;
+                chart.data.datasets = [
+                    { label: 'Gasto', data: spentData, backgroundColor: 'rgba(233, 69, 96, 0.8)' },
+                    { label: 'Orçamento', data: budgetData, backgroundColor: 'rgba(75, 85, 99, 0.5)' }
+                ];
+                chart.options = { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, stacked: false }, y: { ...commonOptions.scales.y, beginAtZero: true } }, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => { const label = context.dataset.label || ''; const value = context.parsed.y || 0; return `${label}: ${this.formatCurrency(value)}`; } } } } };
+                chart.update();
+            }
+        },
+
+        _renderTopExpensesChart(chart, chartCanvas, placeholder) {
+            const now = new Date();
+            const expensesThisMonth = this.state.transactions.filter(t => 
+                t.type === 'expense' && 
+                new Date(t.date).getMonth() === now.getMonth() && 
+                new Date(t.date).getFullYear() === now.getFullYear() &&
+                t.category !== 'Transferência' && t.category !== 'Pagamento de Fatura'
+            );
+
+            if (expensesThisMonth.length === 0) {
                 chartCanvas.style.display = 'none';
                 placeholder.style.display = 'flex';
+                placeholder.innerHTML = `<p>Nenhuma despesa este mês. Que ótimo! Ou comece a registrar. 😉</p>`;
                 return;
             }
 
             chartCanvas.style.display = 'block';
             placeholder.style.display = 'none';
 
-            const labels = budgets.map(b => b.category);
-            const spentData = budgets.map(b => {
-                return this.state.transactions
-                    .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear())
-                    .reduce((sum, t) => sum + t.amount, 0);
-            });
-            const budgetData = budgets.map(b => b.amount);
+            const categoryTotals = expensesThisMonth.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
 
-            chart.data.labels = labels;
-            chart.data.datasets = [ { label: 'Gasto', data: spentData, backgroundColor: 'rgba(233, 69, 96, 0.8)' }, { label: 'Orçamento', data: budgetData, backgroundColor: 'rgba(75, 85, 99, 0.5)' } ];
+            const sortedCategories = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a);
+            
+            const top5 = sortedCategories.slice(0, 5);
+            const labels = top5.map(([category]) => category);
+            const data = top5.map(([, total]) => total);
+
             const commonOptions = this.getChartOptions();
-            chart.options = { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, x: { ...commonOptions.scales.x, stacked: false }, y: { ...commonOptions.scales.y, beginAtZero: true } }, plugins: { ...commonOptions.plugins, tooltip: { callbacks: { label: (context) => { const label = context.dataset.label || ''; const value = context.parsed.y || 0; return `${label}: ${this.formatCurrency(value)}`; } } } } };
+            chart.config.type = 'doughnut'; // Muda o tipo do gráfico para rosca
+            chart.data.labels = labels;
+            chart.data.datasets = [{
+                label: 'Gasto',
+                data: data,
+                backgroundColor: [
+                    '#e94560', 
+                    '#f1c40f', 
+                    '#3498db', 
+                    '#9b59b6', 
+                    '#e74c3c',
+                ],
+                borderColor: 'var(--card-bg-color)',
+                borderWidth: 2
+            }];
+            chart.options = { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: {}, plugins: { ...commonOptions.plugins, legend: { position: 'top' }, tooltip: { callbacks: { label: (context) => { const label = context.label || ''; const value = context.parsed || 0; return `${label}: ${this.formatCurrency(value)}`; } } } } };
             chart.update();
         },
 
