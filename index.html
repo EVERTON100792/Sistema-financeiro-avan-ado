@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.reportViewContainer.addEventListener('click', e => {
                  const closeBtn = e.target.closest('.close-report-btn');
                  if(closeBtn) {
-                       this.hideAllReportViews();
+                        this.hideAllReportViews();
                  }
             });
         },
@@ -1300,11 +1300,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                            t.isPaid &&
-                            t.accountId && 
-                            new Date(t.date).getMonth() === currentMonth &&
-                            new Date(t.date).getFullYear() === currentYear &&
-                            t.category !== 'Transferência';
+                                 t.isPaid &&
+                                 t.accountId && 
+                                 new Date(t.date).getMonth() === currentMonth &&
+                                 new Date(t.date).getFullYear() === currentYear &&
+                                 t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
@@ -1739,7 +1739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 {
                     label: 'Orçamento',
                     data: budgetData,
-                     backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(229, 231, 235, 0.5)' : 'rgba(75, 85, 99, 0.5)',
+                    backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(229, 231, 235, 0.5)' : 'rgba(75, 85, 99, 0.5)',
                     borderColor: document.body.classList.contains('light-mode') ? '#d1d5db' : '#4b5563',
                     borderWidth: 1,
                     borderRadius: 6,
@@ -1865,13 +1865,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="report-filters">
                          <div class="form-group">
-                            <label for="category-report-period">Período</label>
-                            <select id="category-report-period">
-                                <option value="month" selected>Este Mês</option>
-                                <option value="30">Últimos 30 dias</option>
-                                <option value="year">Este Ano</option>
-                            </select>
-                        </div>
+                             <label for="category-report-period">Período</label>
+                             <select id="category-report-period">
+                                 <option value="month" selected>Este Mês</option>
+                                 <option value="30">Últimos 30 dias</option>
+                                 <option value="year">Este Ano</option>
+                             </select>
+                         </div>
                 </div>
                 <div class="report-chart-container" style="height: 400px;">
                     <canvas id="report-chart-categoryExpense"></canvas>
@@ -1974,17 +1974,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="transaction-list-container" style="max-height: 500px; margin-top: 20px;">
                      <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--secondary-color);">
-                                <th style="padding: 10px;">Data</th>
-                                <th style="padding: 10px;">Descrição</th>
-                                <th style="padding: 10px;">Categoria</th>
-                                <th style="padding: 10px;">Valor</th>
-                                <th style="padding: 10px;">Saldo</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
+                         <thead>
+                             <tr style="border-bottom: 1px solid var(--secondary-color);">
+                                 <th style="padding: 10px;">Data</th>
+                                 <th style="padding: 10px;">Descrição</th>
+                                 <th style="padding: 10px;">Categoria</th>
+                                 <th style="padding: 10px;">Valor</th>
+                                 <th style="padding: 10px;">Saldo</th>
+                             </tr>
+                         </thead>
+                         <tbody>${tableRows}</tbody>
+                     </table>
                 </div>
             `;
         },
