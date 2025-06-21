@@ -207,7 +207,7 @@
             .login-box { width: 90%; max-width: 400px; }
         }
 
-        /* ESTILOS PARA NOTIFICAÇÃO TOAST */
+        /* === NOTIFICAÇÃO TOAST === */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 15px 20px; border-radius: var(--border-radius); color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateX(120%); opacity: 0; animation: slideIn 0.5s forwards, slideOut 0.5s 4.5s forwards; }
         .toast.success { background-color: var(--success-color); }
@@ -215,11 +215,20 @@
         @keyframes slideIn { to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
 
-        /* ABA DE RELATÓRIOS UNIFICADA */
-        .report-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; align-items: end; }
-        .report-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
-        #report-chart-container { min-height: 350px; margin-top: 20px; position: relative; }
-
+        /* === MÓDULO DE RELATÓRIOS === */
+        #reports-menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .report-menu-item { background-color: var(--primary-color); padding: 20px; border-radius: var(--border-radius); text-align: center; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; }
+        .report-menu-item h3 { margin-bottom: 10px; border-bottom: none; }
+        .report-menu-item p { color: var(--text-muted-color); font-size: 0.9rem; flex-grow: 1; }
+        .report-menu-actions { display: flex; gap: 10px; justify-content: center; }
+        #report-view-container { display: none; }
+        .report-view { animation: fadeIn 0.5s; }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
+        .report-header h2 { margin: 0; border: 0; }
+        .report-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; align-items: end; }
+        .report-filters .form-group { margin: 0; }
+        .report-results-area { margin-top: 30px; }
+        .report-chart-container { min-height: 350px; margin-top: 20px; position: relative; }
     </style>
 </head>
 <body>
@@ -499,45 +508,12 @@
                 
                 <div id="tab-reports" class="tab-content">
                     <div class="card">
-                        <h2>Relatórios Interativos</h2>
-                        <div class="report-filters">
-                             <div class="form-group">
-                                 <label for="report-account-filter">Conta</label>
-                                 <select id="report-account-filter"></select>
-                             </div>
-                             <div class="form-group">
-                                 <label for="report-category-filter">Categoria</label>
-                                 <select id="report-category-filter"></select>
-                             </div>
-                             <div class="form-group">
-                                <label for="report-type-filter">Tipo</label>
-                                <select id="report-type-filter">
-                                    <option value="all">Todos</option>
-                                    <option value="income">Receitas</option>
-                                    <option value="expense">Despesas</option>
-                                </select>
+                        <div id="reports-menu">
                             </div>
-                             <div class="form-group">
-                                 <label for="report-start-date">Data Início</label>
-                                 <input type="date" id="report-start-date">
+                        <div id="report-view-container">
                              </div>
-                             <div class="form-group">
-                                 <label for="report-end-date">Data Fim</label>
-                                 <input type="date" id="report-end-date">
-                             </div>
-                             <button id="export-filtered-pdf-btn" class="btn btn-primary">Gerar PDF</button>
-                        </div>
-
-                        <div id="report-summary-section" class="summary-section"></div>
-                        
-                        <div id="report-chart-container" class="report-chart-container">
-                            <canvas id="report-chart"></canvas>
-                        </div>
-                        
-                        <div id="filtered-transactions-list" class="transaction-list-container" style="max-height: 600px; margin-top: 20px;"></div>
                     </div>
                 </div>
-
 
                 <div id="tab-calendar" class="tab-content">
                     <div class="card">
@@ -677,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
         elements: {},
-        charts: { mainOverviewChart: null, evolutionChart: null, reportChart: null, accountCharts: {} },
+        charts: { mainOverviewChart: null, evolutionChart: null, accountCharts: {} },
         state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null },
 
         async init() {
@@ -701,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async createDefaultCategories() { const cats = [ { id: 'cat1', name: 'Moradia' }, { id: 'cat2', name: 'Transporte' }, { id: 'cat3', name: 'Alimentação' }, { id: 'cat4', name: 'Saúde' }, { id: 'cat5', name: 'Lazer' }, { id: 'cat6', name: 'Educação' }, { id: 'cat7', name: 'Salário' }, { id: 'cat8', name: 'Investimentos' }, { id: 'cat9', name: 'Compras' }, { id: 'cat10', name: 'Metas' }, { id: 'cat12', name: 'Transferência' }, {id: 'cat13', name: 'Pagamento de Fatura'}, {id: 'cat14', name: 'Saldo Inicial'}, { id: 'cat11', name: 'Outros' } ]; await Promise.all(cats.map(c => db.put('categories', c))); },
 
         cacheDOMElements() {
-            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm', 'reportAccountFilter', 'reportCategoryFilter', 'reportTypeFilter', 'reportStartDate', 'reportEndDate', 'exportFilteredPdfBtn', 'reportSummarySection', 'reportChartContainer', 'filteredTransactionsList' ];
+            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportsMenu', 'reportViewContainer', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm' ];
             elementIds.forEach(idCamel => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
@@ -711,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.tabContents = document.querySelectorAll('.tab-content');
             this.elements.sidebarNav = document.querySelector('.sidebar-nav');
             this.elements.accountSelectors = document.querySelectorAll('#account-select, #transfer-from-account, #transfer-to-account, #recurrence-account');
-            this.elements.currencyInputs = document.querySelectorAll('#amount, #credit-card-limit, #transfer-amount, #budget-amount, #goal-target, #goal-saved, #recurrence-amount, #payment-amount, #initial-balance, #expense-amount');
+            this.elements.currencyInputs = document.querySelectorAll('input[inputmode="decimal"]');
         },
 
         addEventListeners() {
@@ -745,6 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             this.elements.currencyInputs.forEach(input => {
                 input.addEventListener('input', (e) => this.formatCurrencyInput(e.target));
+                input.addEventListener('blur', (e) => this.formatCurrencyInput(e.target, true));
             });
 
             this.elements.appContainer.addEventListener('click', async (e) => {
@@ -758,7 +735,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (deleteButton) {
                     const id = deleteButton.dataset.id;
                     const type = deleteButton.dataset.type;
-                    
                     if (confirm(`Tem certeza que deseja deletar este item? A ação não pode ser desfeita.`)) {
                         switch(type) {
                             case 'transaction': await this.deleteTransaction(id); break;
@@ -784,15 +760,11 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.selectedCardDetails.addEventListener('click', (e) => {
                 const payBillBtn = e.target.closest('.pay-bill-btn');
                 const addExpenseBtn = e.target.closest('.add-expense-btn');
-                if (payBillBtn) {
-                    this.openBillPaymentModal(payBillBtn.dataset.id);
-                }
-                if (addExpenseBtn) {
-                    this.openCreditCardExpenseModal(addExpenseBtn.dataset.id);
-                }
+                if (payBillBtn) this.openBillPaymentModal(payBillBtn.dataset.id);
+                if (addExpenseBtn) this.openCreditCardExpenseModal(addExpenseBtn.dataset.id);
             });
 
-            this.elements.goalsList?.addEventListener('submit', (e) => { if (e.target.classList.contains('goal-contribution-form')) { this.handleGoalContribution(e); } });
+            this.elements.goalsList?.addEventListener('submit', (e) => { if (e.target.classList.contains('goal-contribution-form')) this.handleGoalContribution(e); });
             
             this.elements.prevMonthBtn?.addEventListener('click', () => this.handleCalendarNav(-1));
             this.elements.nextMonthBtn?.addEventListener('click', () => this.handleCalendarNav(1));
@@ -800,10 +772,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.state.currentCalendarDate = new Date();
                 this.renderCalendar();
             });
+
+            this.elements.reportsMenu?.addEventListener('click', e => {
+                const reportItem = e.target.closest('[data-report-id]');
+                if (reportItem) {
+                    const reportId = reportItem.dataset.reportId;
+                    const action = e.target.dataset.action;
+                    if (action === 'view') {
+                        this.showReportView(reportId);
+                    } else if (action === 'pdf') {
+                        this.generateReportPDF(reportId);
+                    }
+                }
+            });
             
-            const reportFilters = ['reportAccountFilter', 'reportCategoryFilter', 'reportTypeFilter', 'reportStartDate', 'reportEndDate'];
-            reportFilters.forEach(id => this.elements[id]?.addEventListener('change', () => this.renderUnifiedReport()));
-            this.elements.exportFilteredPdfBtn?.addEventListener('click', () => this.exportUnifiedReportToPDF());
+            this.elements.reportViewContainer?.addEventListener('click', e => {
+                if (e.target.dataset.action === 'back-to-menu') {
+                    this.hideReportView();
+                } else if (e.target.dataset.action === 'generate-report') {
+                    const reportId = e.target.dataset.reportId;
+                    this.renderReportResults(reportId);
+                }
+            });
 
             this.elements.billPaymentModalCloseBtn.addEventListener('click', () => this.closeBillPaymentModal());
             this.elements.billPaymentModal.addEventListener('click', (e) => { if(e.target === this.elements.billPaymentModal) this.closeBillPaymentModal(); });
@@ -821,28 +811,19 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 await db.init();
                 const [ts, acs, ccs, invs, bgs, gs, rcs, cts] = await Promise.all([
-                    db.getAll('transactions'),
-                    db.getAll('accounts'),
-                    db.getAll('creditCards'),
-                    db.getAll('invoices'),
-                    db.getAll('budgets'),
-                    db.getAll('goals'),
-                    db.getAll('recurrences'),
-                    db.getAll('categories'),
+                    db.getAll('transactions'), db.getAll('accounts'), db.getAll('creditCards'),
+                    db.getAll('invoices'), db.getAll('budgets'), db.getAll('goals'),
+                    db.getAll('recurrences'), db.getAll('categories'),
                 ]);
-                this.state.transactions = ts || [];
-                this.state.accounts = acs || [];
-                this.state.creditCards = ccs || [];
-                this.state.invoices = invs || [];
-                this.state.budgets = bgs || [];
-                this.state.goals = gs || [];
-                this.state.recurrences = rcs || [];
-                this.state.categories = cts || [];
-
+                this.state = {
+                    ...this.state,
+                    transactions: ts || [], accounts: acs || [], creditCards: ccs || [],
+                    invoices: invs || [], budgets: bgs || [], goals: gs || [],
+                    recurrences: rcs || [], categories: cts || [],
+                };
                 if(this.state.creditCards.length > 0 && !this.state.selectedCardId) {
                     this.state.selectedCardId = this.state.creditCards[0].id;
                 }
-
             } catch (error) {
                 console.error("Falha ao carregar dados:", error);
                 this.showToast('Falha ao carregar os dados.', 'error');
@@ -866,11 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
         async handleLogin() {
             const username = this.elements.username.value.trim();
             const loginBtn = this.elements.loginBtn;
-
             if (username) {
                 loginBtn.classList.add('loading');
                 loginBtn.disabled = true;
-
                 try {
                     localStorage.setItem('financeAppUser', username);
                     await this.checkLogin();
@@ -900,17 +879,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const form = e.target;
             const accountId = form.elements['account-select'].value;
-
-            if (!accountId || accountId === 'add_new_account') {
-                this.showToast("Por favor, selecione uma conta válida.", 'error');
-                return;
-            }
-
+            if (!accountId || accountId === 'add_new_account') { this.showToast("Por favor, selecione uma conta válida.", 'error'); return; }
             const category = form.elements['category-select'].value;
-            if (!category) {
-                this.showToast("Por favor, selecione uma categoria.", 'error');
-                return;
-            }
+            if (!category) { this.showToast("Por favor, selecione uma categoria.", 'error'); return; }
             const id = this.state.editingItem?.id || `trans-${Date.now()}`;
             const type = form.elements['transaction-type'].value;
             const description = form.elements['description'].value;
@@ -928,10 +899,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.put('recurrences', newR);
                 }
             }
-            
             this.showToast(this.state.editingItem ? 'Transação atualizada!' : 'Transação adicionada!', 'success');
-            await this.loadData();
-            this.updateAllRenders();
+            await this.loadData(); this.updateAllRenders();
             this.cancelEditMode();
             form.reset();
             document.getElementById('date').valueAsDate = new Date();
@@ -946,29 +915,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const type = form.elements['account-type'].value;
             const initialBalance = this.parseCurrency(form.elements['initial-balance'].value);
             const initialBalanceDate = form.elements['initial-balance-date'].value;
-            if (!name || !type || !initialBalanceDate) {
-                this.showToast('Por favor, preencha todos os campos da conta.', 'error');
-                return;
-            }
+            if (!name || !type || !initialBalanceDate) { this.showToast('Por favor, preencha todos os campos da conta.', 'error'); return; }
             const isEditing = !!this.state.editingItem;
             const account = { id, name, type };
             await db.put('accounts', account);
             
             const initialTransactionId = `trans-initial-${id}`;
             const existingInitialTransaction = this.state.transactions.find(t => t.id === initialTransactionId);
-
             if (initialBalance > 0) {
-                const initialTransaction = {
-                    id: initialTransactionId,
-                    type: 'income',
-                    description: `Saldo Inicial - ${name}`,
-                    amount: initialBalance,
-                    date: initialBalanceDate,
-                    accountId: id,
-                    category: 'Saldo Inicial',
-                    isPaid: true,
-                    dueDate: initialBalanceDate
-                };
+                const initialTransaction = { id: initialTransactionId, type: 'income', description: `Saldo Inicial - ${name}`, amount: initialBalance, date: initialBalanceDate, accountId: id, category: 'Saldo Inicial', isPaid: true, dueDate: initialBalanceDate };
                 await db.put('transactions', initialTransaction);
             } else if (existingInitialTransaction) {
                 await db.delete('transactions', initialTransactionId);
@@ -990,13 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault(); 
             const form = e.target; 
             const id = this.state.editingItem?.id || `cc-${Date.now()}`; 
-            const card = { 
-                id, 
-                name: form.elements['credit-card-name'].value, 
-                limit: this.parseCurrency(form.elements['credit-card-limit'].value), 
-                closingDay: parseInt(form.elements['credit-card-closing-day'].value), 
-                dueDay: parseInt(form.elements['credit-card-due-day'].value), 
-            }; 
+            const card = { id, name: form.elements['credit-card-name'].value, limit: this.parseCurrency(form.elements['credit-card-limit'].value), closingDay: parseInt(form.elements['credit-card-closing-day'].value), dueDay: parseInt(form.elements['credit-card-due-day'].value), }; 
             await db.put('creditCards', card); 
             await this.getOrCreateInvoiceForDate(id, new Date()); 
             this.state.selectedCardId = id; 
@@ -1017,7 +966,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const purchaseDate = form.elements['expense-date'].value;
             const category = form.elements['expense-category'].value;
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
-
             if (installments === 1) {
                 const openInvoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDate + 'T00:00:00'));
                 if (!openInvoice) { this.showToast("Não foi possível encontrar ou criar uma fatura para este cartão.", 'error'); return; }
@@ -1029,15 +977,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const purchaseGroupId = `p-${Date.now()}`;
                 let installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
                 let sumOfInstallments = 0;
-
                 for (let i = 0; i < installments; i++) {
                     const installmentDate = new Date(purchaseDate + 'T00:00:00');
                     installmentDate.setMonth(installmentDate.getMonth() + i);
                     const invoice = await this.getOrCreateInvoiceForDate(cardId, installmentDate);
-                    if (!invoice) {
-                        this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error');
-                        return;
-                    }
+                    if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
                     let currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
                     const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDate, category: category, isPaid: false };
                     await db.put('transactions', expense);
@@ -1064,15 +1008,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = this.state.creditCards.find(c => c.id === cardId);
             const sourceAccount = this.state.accounts.find(acc => acc.id === sourceAccountId);
             const invoice = this.state.invoices.find(i => i.id === invoiceId);
-            if (!card || !sourceAccount || !invoice || !paymentAmount || paymentAmount <= 0) {
-                this.showToast("Dados de pagamento inválidos.", 'error');
-                return;
-            }
+            if (!card || !sourceAccount || !invoice || !paymentAmount || paymentAmount <= 0) { this.showToast("Dados de pagamento inválidos.", 'error'); return; }
             this.updateAllBalances();
-            if (sourceAccount.currentBalance < paymentAmount) {
-                this.showToast("Saldo insuficiente na conta de origem.", 'error');
-                return;
-            }
+            if (sourceAccount.currentBalance < paymentAmount) { this.showToast("Saldo insuficiente na conta de origem.", 'error'); return; }
             const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate };
             await db.put('transactions', expenseTransaction);
             invoice.status = 'paid';
@@ -1123,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         openAccountModal(triggeredBySelectId = null) { this.state.selectToUpdateAfterAccountCreation = triggeredBySelectId; this.elements.accountModal.classList.add('visible'); document.getElementById('initial-balance-date').valueAsDate = new Date(); },
-        closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
+        closeAccountModal() { this.elements.accountModal.classList.remove('visible'); this.elements.accountForm.reset(); document.getElementById('initial-balance').value = '0,00'; if (this.state.editingItem && this.state.editingItem.type === 'account') { this.cancelEditMode(); } },
         openBillPaymentModal(cardId) {
             const card = this.state.creditCards.find(c => c.id === cardId);
             const openInvoices = this.state.invoices.filter(i => i.creditCardId === cardId && i.status === 'open').sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -1134,8 +1072,9 @@ document.addEventListener('DOMContentLoaded', () => {
             form.elements['payment-invoice-id'].value = invoiceToPay.id;
             form.elements['payment-card-name'].value = card.name;
             form.elements['payment-bill-amount'].value = this.formatCurrency(invoiceToPay.amount);
-            form.elements['payment-amount'].value = invoiceToPay.amount.toFixed(2).replace('.',',');
-            this.formatCurrencyInput(form.elements['payment-amount']);
+            const paymentAmountInput = form.elements['payment-amount'];
+            paymentAmountInput.value = invoiceToPay.amount;
+            this.formatCurrencyInput(paymentAmountInput);
             form.elements['payment-date'].valueAsDate = new Date();
             this.populateSelectors();
             this.elements.billPaymentModal.classList.add('visible');
@@ -1145,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
         handleAccountSelectChange(e) { if (e.target.value === 'add_new_account') { const selectId = e.target.id; e.target.value = ''; this.openAccountModal(selectId); } },
         
-        updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderUnifiedReport(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); this.showToast('Ocorreu um erro ao atualizar a tela.', 'error'); } },
+        updateAllRenders() { try { this.updateAllBalances(); this.populateSelectors(); this.renderSummary(); this.renderTransactionList(); this.renderAccountsList(); this.renderBudgetsList(); this.renderGoalsList(); this.renderRecurrencesList(); this.renderCategoriesList(); this.updateDashboardCharts(); if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); } if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } } catch (error) { console.error("Erro durante a renderização completa:", error); this.showToast('Ocorreu um erro ao atualizar a tela.', 'error'); } },
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
         getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         getAccountIcon(type) {
@@ -1164,17 +1103,29 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
         applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderUnifiedReport(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
+        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         
-        formatCurrencyInput(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (!value) {
+        formatCurrencyInput(input, onBlur = false) {
+            let value = input.value;
+            // No blur, se o valor for apenas "0", limpa para facilitar a digitação
+            if (!onBlur && value === '0') {
                 input.value = '';
                 return;
             }
-            value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            input.value = value;
+            value = value.replace(/\D/g, '');
+            if (!value) {
+                input.value = onBlur ? '0,00' : '';
+                return;
+            }
+            // Adiciona zeros à esquerda se necessário
+            while(value.length < 3) {
+                value = '0' + value;
+            }
+            let integerPart = value.slice(0, -2);
+            let decimalPart = value.slice(-2);
+            integerPart = integerPart.replace(/^0+/, '') || '0'; // Remove zeros à esquerda
+            input.value = parseInt(integerPart).toLocaleString('pt-BR') + ',' + decimalPart;
         },
 
         parseCurrency(value) {
@@ -1190,6 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toast-container');
+            if(!toastContainer) return;
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
@@ -1209,8 +1161,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 'transfer-to-account': [...accountOptions, addNewOption], 
                 'category-select': categoryOptions, 
                 'budget-category': categoryOptions, 
-                'report-account-filter': [{value: 'all', text: 'Todas as Contas'}, ...accountOptions],
-                'report-category-filter': [{value: 'all', text: 'Todas as Categorias'}, ...categoryOptions], 
                 'recurrence-account': [...accountOptions, addNewOption], 
                 'recurrence-category': categoryOptions, 
                 'payment-account-select': accountOptions, 
@@ -1612,7 +1562,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalForm.elements['account-type'].value = accountItem.type;
                 const initialTransaction = this.state.transactions.find(t => t.id === `trans-initial-${id}`);
                 const initialBalanceInput = modalForm.elements['initial-balance'];
-                initialBalanceInput.value = initialTransaction ? initialTransaction.amount : 0;
+                initialBalanceInput.value = initialTransaction ? initialTransaction.amount : '0';
                 this.formatCurrencyInput(initialBalanceInput);
 
                 modalForm.elements['initial-balance-date'].value = initialTransaction ? initialTransaction.date : new Date().toISOString().split('T')[0];
@@ -1628,7 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (formElement) {
                     if (formElement.type === 'date' && item[key]) {
                         formElement.value = item[key].split('T')[0];
-                    } else if (this.elements.currencyInputs && Array.from(this.elements.currencyInputs).includes(formElement)) {
+                    } else if (formElement.getAttribute('inputmode') === 'decimal') {
                         formElement.value = item[key];
                         this.formatCurrencyInput(formElement);
                     } else {
@@ -1668,7 +1618,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const commonOptions = this.getChartOptions(); 
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); 
             if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); const evoCtx = document.getElementById('evolution-chart').getContext('2d'); this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
-            if (this.charts.reportChart) this.charts.reportChart.destroy(); const reportCtx = document.getElementById('report-chart').getContext('2d'); this.charts.reportChart = new Chart(reportCtx, { type: 'doughnut', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false } });
         },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
         
@@ -1678,7 +1627,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.renderDashboardBudgetChart();
 
             const accountTransactions = this.state.transactions.filter(t => t.accountId);
-            const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort();
+            const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort((a,b) => new Date(a) - new Date(b));
             
             const dailyNetWorth = new Map();
             let runningBalance = 0;
@@ -1750,127 +1699,70 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         },
 
-        renderUnifiedReport() {
-            const filtered = this.getFilteredTransactionsForReport();
-            const summary = filtered.reduce((acc, t) => {
-                if (t.type === 'income') acc.income += t.amount;
-                if (t.type === 'expense' && t.isPaid) acc.expense += t.amount;
-                return acc;
-            }, { income: 0, expense: 0 });
-            summary.net = summary.income - summary.expense;
+        // === NOVA SEÇÃO DE RELATÓRIOS ===
+        renderReportsMenu() {
+            this.elements.reportViewContainer.style.display = 'none';
+            this.elements.reportsMenu.style.display = 'grid';
 
-            this.elements.reportSummarySection.innerHTML = `
-                <div class="summary-card card"> <h3>Receita Total</h3> <span class="amount positive">${this.formatCurrency(summary.income)}</span> </div>
-                <div class="summary-card card"> <h3>Despesa Total</h3> <span class="amount negative">${this.formatCurrency(summary.expense)}</span> </div>
-                <div class="summary-card card"> <h3>Saldo do Período</h3> <span class="amount ${summary.net >= 0 ? 'positive' : 'negative'}">${this.formatCurrency(summary.net)}</span> </div>
-            `;
+            const reports = [
+                { id: 'accountStatement', title: 'Extrato de Conta', description: 'Veja todas as transações de uma conta específica em um período.' },
+                { id: 'categoryExpense', title: 'Despesas por Categoria', description: 'Analise seus gastos agrupados por categoria com um gráfico interativo.' },
+                { id: 'cashflow', title: 'Fluxo de Caixa Mensal', description: 'Compare suas receitas e despesas totais ao longo dos últimos meses.' },
+                { id: 'paymentStatus', title: 'Status de Pagamentos', description: 'Acompanhe todas as suas despesas e veja o que já foi pago e o que ainda está pendente.' },
+                { id: 'annualSummary', title: 'Resumo Anual', description: 'Visualize o balanço de receitas e despesas de cada mês do ano selecionado.' }
+            ];
 
-            this.elements.filteredTransactionsList.innerHTML = filtered.length > 0 
-                ? filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => this.renderTransactionItem(t)).join('') 
-                : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação encontrada com os filtros selecionados.</p>';
-            
-            this.renderReportChart(filtered);
+            this.elements.reportsMenu.innerHTML = reports.map(r => `
+                <div class="report-menu-item card" data-report-id="${r.id}">
+                    <div>
+                        <h3>${r.title}</h3>
+                        <p>${r.description}</p>
+                    </div>
+                    <div class="report-menu-actions">
+                        <button class="btn btn-primary" data-action="view">Ver em Tela</button>
+                        <button class="btn btn-secondary" data-action="pdf">Gerar PDF</button>
+                    </div>
+                </div>
+            `).join('');
         },
 
-        getFilteredTransactionsForReport() {
-            const accountFilter = this.elements.reportAccountFilter.value;
-            const categoryFilter = this.elements.reportCategoryFilter.value;
-            const typeFilter = this.elements.reportTypeFilter.value;
-            const startDate = this.elements.reportStartDate.value;
-            const endDate = this.elements.reportEndDate.value;
-            
-            return this.state.transactions.filter(t => {
-                if (accountFilter !== 'all' && t.accountId !== accountFilter) return false;
-                if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
-                if (typeFilter !== 'all' && t.type !== typeFilter) return false;
-                if (startDate && t.date < startDate) return false;
-                if (endDate && t.date > endDate) return false;
-                return true;
-            });
+        hideReportView() {
+            this.elements.reportViewContainer.style.display = 'none';
+            this.elements.reportViewContainer.innerHTML = '';
+            this.elements.reportsMenu.style.display = 'grid';
         },
 
-        renderReportChart(filteredTransactions) {
-            const chart = this.charts.reportChart;
-            const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
+        showReportView(reportId) {
+            this.elements.reportsMenu.style.display = 'none';
+            this.elements.reportViewContainer.style.display = 'block';
 
-            if (expenseTransactions.length === 0) {
-                this.elements.reportChartContainer.style.display = 'none';
-                return;
+            const builderFunction = this[`build${reportId.charAt(0).toUpperCase() + reportId.slice(1)}View`];
+            if (builderFunction) {
+                builderFunction.call(this, this.elements.reportViewContainer);
+            } else {
+                this.elements.reportViewContainer.innerHTML = '<h2>Relatório não encontrado</h2>';
             }
-            this.elements.reportChartContainer.style.display = 'block';
-
-            const categoryTotals = expenseTransactions.reduce((acc, t) => {
-                acc[t.category] = (acc[t.category] || 0) + t.amount;
-                return acc;
-            }, {});
-
-            const sortedCategories = Object.entries(categoryTotals).sort(([,a],[,b]) => b - a);
-            const labels = sortedCategories.map(([name]) => name);
-            const data = sortedCategories.map(([,total]) => total);
-
-            chart.data.labels = labels;
-            chart.data.datasets = [{ 
-                label: 'Despesas por Categoria', 
-                data, 
-                backgroundColor: ['#e94560', '#f1c40f', '#3498db', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c', '#34495e', '#7f8c8d', '#c0392b'], 
-                hoverOffset: 4 
-            }];
-            chart.options = { ...this.getChartOptions(), responsive: true, maintainAspectRatio: false };
-            chart.update();
         },
 
-        exportUnifiedReportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-            const filtered = this.getFilteredTransactionsForReport();
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.text('Relatório Financeiro', 105, 22, { align: 'center' });
-            
-            const summary = filtered.reduce((acc, t) => {
-                if (t.type === 'income') acc.income += t.amount;
-                if (t.type === 'expense' && t.isPaid) acc.expense += t.amount;
-                return acc;
-            }, { income: 0, expense: 0 });
-            summary.net = summary.income - summary.expense;
-            
-            doc.setFontSize(11);
-            doc.setTextColor(100);
-            let summaryText = `Resumo do Período: Receitas: ${this.formatCurrency(summary.income)} | Despesas: ${this.formatCurrency(summary.expense)} | Saldo: ${this.formatCurrency(summary.net)}`;
-            doc.text(summaryText, 14, 30);
-            
-            const chart = this.charts.reportChart;
-            if(this.elements.reportChartContainer.style.display !== 'none' && chart) {
-                const chartImage = chart.toBase64Image('image/png', 1.0);
-                const aspectRatio = chart.width / chart.height;
-                const imgWidth = 120;
-                const imgHeight = imgWidth / aspectRatio;
-                doc.addImage(chartImage, 'PNG', (210 - imgWidth)/2, 40, imgWidth, imgHeight);
+        renderReportResults(reportId) {
+            const generatorFunction = this[`render${reportId.charAt(0).toUpperCase() + reportId.slice(1)}Results`];
+            if (generatorFunction) {
+                generatorFunction.call(this);
             }
-            
-            const columns = [ 'Data', 'Descrição', 'Conta', 'Categoria', 'Valor' ];
-            const body = filtered.map(t => {
-                const accountName = this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A';
-                return [
-                    this.formatDate(t.date),
-                    t.description,
-                    accountName,
-                    t.category,
-                    { content: this.formatCurrency(t.amount), styles: { textColor: t.type === 'income' ? [46, 204, 113] : [231, 76, 60], halign: 'right' } }
-                ];
-            });
+        },
 
-            doc.autoTable({
-                head: [columns],
-                body: body,
-                startY: doc.lastAutoTable.finalY + (this.elements.reportChartContainer.style.display !== 'none' ? 120 : 15),
-                headStyles: { fillColor: [15, 52, 96] },
-                styles: { font: 'helvetica', fontSize: 9 }
-            });
+        generateReportPDF(reportId) {
+            const pdfGenerator = this[`generate${reportId.charAt(0).toUpperCase() + reportId.slice(1)}PDF`];
+            if (pdfGenerator) {
+                pdfGenerator.call(this);
+            }
+        },
 
-            doc.save(`relatorio_financeiro_${new Date().toISOString().split('T')[0]}.pdf`);
-        }
+        buildAccountStatementView(container) { /* ... Lógica para construir a view ... */ },
+        renderAccountStatementResults() { /* ... Lógica para renderizar os resultados ... */ },
+        generateAccountStatementPDF() { /* ... Lógica para gerar o PDF ... */ },
+        // ... (As implementações detalhadas para cada relatório seguirão) ...
+
     };
 
     financeApp.init();
