@@ -908,6 +908,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const action = button.dataset.action;
                     if (action === 'view') {
                         this.showReportView(reportId);
+                    } else if (action === 'pdf') {
+                        this.generateReportPDF(reportId, true); // Generate with default filters first
                     }
                 }
             });
@@ -920,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.renderReportResults(reportId);
                 } else if (e.target.dataset.action === 'export-pdf') {
                     const reportId = e.target.dataset.reportId;
-                    this.generateReportPDF(reportId);
+                    this.generateReportPDF(reportId, false); // Generate with applied filters
                 }
             });
 
@@ -1587,6 +1589,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
+        renderTransactionItem(t, isCardExpense = false) {
+            const accountName = t.accountId ? (this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A') : (this.state.creditCards.find(c => c.id === t.creditCardId)?.name || 'N/A');
+            const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
+        },
+
         renderTransactionList() { 
             const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); 
             if (this.state.accounts.length === 0) {
@@ -1614,37 +1621,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const monthlyExpense = this.state.transactions.filter(t => {
                 return t.type === 'expense' &&
-                       t.isPaid &&
-                       t.accountId && 
-                       new Date(t.date).getMonth() === currentMonth &&
-                       new Date(t.date).getFullYear() === currentYear &&
-                       t.category !== 'Transferência';
+                                             t.isPaid &&
+                                             t.accountId && 
+                                             new Date(t.date).getMonth() === currentMonth &&
+                                             new Date(t.date).getFullYear() === currentYear &&
+                                             t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-            
-            // ===================================================================
-            // === NOVA LÓGICA HÍBRIDA PARA DÍVIDA DO CARTÃO DE CRÉDITO ===
-            // ===================================================================
-            let relevantCardDebt = 0;
-            this.state.creditCards.forEach(card => {
-                // Encontra todas as faturas abertas para o cartão atual
-                const openInvoicesForCard = this.state.invoices.filter(i => 
-                    i.creditCardId === card.id && i.status === 'open'
-                );
-
-                if (openInvoicesForCard.length > 0) {
-                    // Ordena para achar a que vence primeiro (a próxima a ser paga)
-                    openInvoicesForCard.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-                    const nextInvoiceToPay = openInvoicesForCard[0];
-                    relevantCardDebt += nextInvoiceToPay.amount || 0;
-                }
-            });
-            // ===================================================================
-            // === FIM DA NOVA LÓGICA ===
-            // ===================================================================
-
-            const netWorth = accountBalance - relevantCardDebt; 
+            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            const netWorth = accountBalance - cardDebt; 
 
             const balanceEl = document.getElementById('balance');
             balanceEl.textContent = this.formatCurrency(netWorth);
@@ -1960,6 +1946,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.state.editingItem = { type, id };
             const item = this.state[`${type}s`]?.find(i => i.id === id);
             
+            let form;
             // A lógica do modal de conta é diferente
             if (type === 'account') {
                 const accountItem = this.state.accounts.find(a => a.id === id);
@@ -1976,7 +1963,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const form = document.getElementById(`${type}-form`);
+            form = document.getElementById(`${type}-form`);
             if (!form || !item) { this.cancelEditMode(); return; }
 
             const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
@@ -2470,13 +2457,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.state.transactions.forEach(t => {
-                if(t.date.startsWith(year) && t.accountId && t.category !== 'Transferência'){
+                if(t.date.startsWith(year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
                     const month = parseInt(t.date.substring(5, 7), 10) - 1;
                     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-                    if(asMonthlyData[monthKey]) {
-                        if(t.type === 'income') asMonthlyData[monthKey].income += t.amount;
-                        if(t.type === 'expense' && t.isPaid) asMonthlyData[monthKey].expense += t.amount;
-                    }
+                    if(t.type === 'income') monthlyData[monthKey].income += t.amount;
+                    if(t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
                 }
             });
 
@@ -2534,97 +2519,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 accountId: document.getElementById('filter-account')?.value,
                 startDate: document.getElementById('filter-start-date')?.value,
                 endDate: document.getElementById('filter-end-date')?.value,
-                year: document.getElementById('filter-year')?.value,
-                status: document.getElementById('filter-payment-status')?.value
+                year: document.getElementById('filter-year')?.value
             };
             
             let body = [];
             let head = [];
-            let foot = [];
-            let finalY;
 
             switch(reportId) {
                 case 'accountStatement':
                     head = [['Data', 'Descrição', 'Categoria', 'Entrada', 'Saída']];
-                    const transactions = this.state.transactions
+                    body = this.state.transactions
                         .filter(t => t.accountId === filters.accountId && t.date >= filters.startDate && t.date <= filters.endDate)
-                        .sort((a,b) => new Date(a.date) - new Date(b.date));
-                    body = transactions.map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' ? this.formatCurrency(t.amount) : '']);
-                    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-                    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-                    const balance = totalIncome - totalExpense;
-                    foot = [['', 'Saldo do Período:', this.formatCurrency(balance), this.formatCurrency(totalIncome), this.formatCurrency(totalExpense)]];
+                        .sort((a,b) => new Date(a.date) - new Date(b.date))
+                        .map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' ? this.formatCurrency(t.amount) : '']);
                     break;
-                    
                 case 'categoryExpense':
                     head = [['Categoria', 'Total Gasto']];
                     const expensesCat = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
                     const categoryTotals = expensesCat.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
                     body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
-                    const totalSpent = expensesCat.reduce((sum, t) => sum + t.amount, 0);
-                    foot = [['Total Gasto', this.formatCurrency(totalSpent)]];
                     break;
-                    
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
+                    const statusFilter = document.getElementById('filter-payment-status')?.value;
                     let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
-                    if (filters.status && filters.status !== 'all') {
+
+                    if (statusFilter && statusFilter !== 'all') {
                         expenses = expenses.filter(t => {
                             const isPaid = t.isPaid;
-                            if (filters.status === 'paid') return isPaid;
-                            if (filters.status === 'unpaid') return !isPaid;
+                            if (statusFilter === 'paid') return isPaid;
+                            if (statusFilter === 'unpaid') return !isPaid;
                             return false;
                         });
                     }
+
                     body = expenses
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
                         .map(t => {
-                            let statusText = t.isPaid ? 'Pago' : (new Date(t.dueDate + 'T00:00:00') < new Date()) ? 'Atrasado' : 'Pendente';
+                            let statusText = '';
+                            if (t.isPaid) {
+                                statusText = 'Pago';
+                            } else {
+                                const today = new Date(); today.setHours(0,0,0,0);
+                                const dueDate = new Date(t.dueDate + 'T00:00:00');
+                                statusText = dueDate < today ? 'Atrasado' : 'Pendente';
+                            }
                             return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
                         });
-                    break;
-                    
-                case 'cashflow':
-                    head = [['Mês', 'Receitas', 'Despesas', 'Saldo']];
-                    const cfMonthlyData = {};
-                    this.state.transactions.forEach(t => {
-                        const tDate = new Date(t.date + 'T00:00:00');
-                        if (tDate >= new Date(filters.startDate) && tDate <= new Date(filters.endDate) && t.accountId) {
-                            const monthKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
-                            if (!cfMonthlyData[monthKey]) cfMonthlyData[monthKey] = { income: 0, expense: 0 };
-                            if (t.type === 'income' && t.category !== 'Transferência') cfMonthlyData[monthKey].income += t.amount;
-                            if (t.type === 'expense' && t.isPaid && t.category !== 'Transferência') cfMonthlyData[monthKey].expense += t.amount;
-                        }
-                    });
-                    body = Object.keys(cfMonthlyData).sort().map(monthKey => {
-                        const data = cfMonthlyData[monthKey];
-                        const balance = data.income - data.expense;
-                        const monthName = new Date(monthKey + '-02').toLocaleString('pt-BR', {month: 'long', year: 'numeric'});
-                        return [monthName, this.formatCurrency(data.income), this.formatCurrency(data.expense), this.formatCurrency(balance)];
-                    });
-                    break;
-
-                case 'annualSummary':
-                    head = [['Mês', 'Receitas', 'Despesas', 'Saldo']];
-                    const asMonthlyData = {};
-                    for(let i=0; i<12; i++) {
-                        asMonthlyData[`${filters.year}-${String(i + 1).padStart(2, '0')}`] = { income: 0, expense: 0 };
-                    }
-                    this.state.transactions.forEach(t => {
-                        if(t.date.startsWith(filters.year) && t.accountId && t.category !== 'Transferência'){
-                            const monthKey = t.date.substring(0, 7);
-                            if(asMonthlyData[monthKey]) {
-                                if(t.type === 'income') asMonthlyData[monthKey].income += t.amount;
-                                if(t.type === 'expense' && t.isPaid) asMonthlyData[monthKey].expense += t.amount;
-                            }
-                        }
-                    });
-                    body = Object.keys(asMonthlyData).map(monthKey => {
-                        const data = asMonthlyData[monthKey];
-                        const balance = data.income - data.expense;
-                        const monthName = new Date(monthKey + '-02').toLocaleString('pt-BR', {month: 'long'});
-                        return [monthName, this.formatCurrency(data.income), this.formatCurrency(data.expense), this.formatCurrency(balance)];
-                    });
                     break;
             }
 
@@ -2636,20 +2577,10 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.autoTable({
                 head: head,
                 body: body,
-                foot: foot.length > 0 ? foot : undefined,
                 startY: 30,
                 theme: 'grid',
-                headStyles: { fillColor: [22, 33, 62] },
-                footStyles: { fillColor: [22, 33, 62], fontStyle: 'bold', textColor: [255,255,255] }
+                headStyles: { fillColor: [22, 33, 62] }, // --primary-color
             });
-            
-            // Add final text after the table
-            if (reportId === 'accountStatement') {
-                finalY = doc.lastAutoTable.finalY || doc.autoTable.previous.finalY;
-                const balance = (transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)) - (transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
-                doc.setFontSize(10);
-                doc.text(`Saldo Final do Período: ${this.formatCurrency(balance)}`, 14, finalY + 10);
-            }
             
             doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
         }
