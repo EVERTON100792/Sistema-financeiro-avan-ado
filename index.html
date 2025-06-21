@@ -383,7 +383,7 @@
                 <div id="tab-dashboard" class="tab-content active">
                     <section class="summary-section">
                         <div class="summary-card card">
-                            <h3>Saldo em Contas</h3>
+                            <h3>Patrimônio Líquido</h3>
                             <span id="balance" class="amount">R$ 0,00</span>
                         </div>
                         <div class="summary-card card">
@@ -463,7 +463,7 @@
                         </section>
                     </div>
                     <section class="card" style="margin-top: 30px;">
-                        <h2>Evolução do Saldo em Contas</h2>
+                        <h2>Evolução do Patrimônio</h2>
                         <div id="evolution-chart-container">
                             <canvas id="evolution-chart"></canvas>
                         </div>
@@ -1324,7 +1324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         renderTransactionList() { const cashTransactions = this.state.transactions.filter(t => t.accountId).sort((a,b) => new Date(b.date) - new Date(a.date)); this.elements.transactionList.innerHTML = cashTransactions.slice(0, 50).map(t => this.renderTransactionItem(t)).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma transação nas contas.</p>';},
         
-        // ALTERAÇÃO APLICADA AQUI
         renderSummary() {
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -1348,15 +1347,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                      t.category !== 'Transferência';
             }).reduce((sum, t) => sum + (t.amount || 0), 0);
 
-            // Calcula o saldo total somando o saldo de todas as contas.
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
-            
-            // O saldo a ser exibido agora é apenas o saldo das contas, ignorando dívidas de cartão.
-            const displayBalance = accountBalance;
+            const cardDebt = this.state.invoices.filter(i => i.status === 'open').reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            const netWorth = accountBalance - cardDebt; 
 
             const balanceEl = document.getElementById('balance');
-            balanceEl.textContent = this.formatCurrency(displayBalance);
-            balanceEl.className = `amount ${displayBalance >= 0 ? 'positive' : 'negative'}`;
+            balanceEl.textContent = this.formatCurrency(netWorth);
+            balanceEl.className = `amount ${netWorth >= 0 ? 'positive' : 'negative'}`;
             document.getElementById('total-income').textContent = this.formatCurrency(monthlyIncome);
             document.getElementById('total-expense').textContent = this.formatCurrency(monthlyExpense);
         },
@@ -1743,7 +1740,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         getChartOptions() { const isLight = document.body.classList.contains('light-mode'); const textColor = isLight ? '#1f2937' : '#ffffff'; const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'; return { plugins: { legend: { labels: { color: textColor } }, tooltip: { bodyFont: { family: 'Poppins' }, titleFont: { family: 'Poppins' } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }; },
         
-        // ALTERAÇÃO APLICADA AQUI
         updateDashboardCharts() {
             if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
             const commonOptions = this.getChartOptions();
@@ -1780,7 +1776,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
             this.charts.evolutionChart.data.datasets = [{
-                label: 'Saldo em Contas',
+                label: 'Patrimônio (Soma das Contas)',
                 data: balanceHistory,
                 borderColor: document.body.classList.contains('light-mode') ? '#3b82f6' : '#e94560',
                 backgroundColor: document.body.classList.contains('light-mode') ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 69, 96, 0.1)',
@@ -2218,6 +2214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
+        // CORREÇÃO APLICADA AQUI
         generateReportPDF(reportId) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
