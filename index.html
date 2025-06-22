@@ -75,18 +75,21 @@
         .chart-toggle-buttons .btn.active { background-color: var(--accent-color); color: white; font-weight: 600; }
 
         #reminders-container {
-            display: none; 
+            display: none;
             background-color: color-mix(in srgb, var(--warning-color) 15%, var(--card-bg-color) 85%);
             border-left: 5px solid var(--warning-color);
             border-radius: var(--border-radius);
             padding: 20px;
             margin-bottom: 30px;
             position: relative;
+            animation: fadeIn 0.3s;
         }
         body.light-mode #reminders-container { background-color: #fffbe6; }
         #reminders-container h3 { margin-top: 0; margin-bottom: 10px; color: var(--warning-color); }
-        #reminders-list { list-style: none; padding-left: 5px; }
-        #reminders-list li { margin-bottom: 8px; display: flex; justify-content: space-between; }
+        #reminders-list { list-style: none; padding-left: 5px; max-height: 150px; overflow-y: auto; }
+        #reminders-list li { margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+        #reminders-list li .description { flex-grow: 1; }
+        #reminders-list li .details { flex-shrink: 0; }
         #reminder-close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted-color); }
 
         .transaction-list-container { max-height: 400px; overflow-y: auto; padding-right: 10px; }
@@ -899,15 +902,14 @@
 
 
 <script>
-// *** MUDANÇA: Registro do Service Worker para funcionalidades PWA ***
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
             .then(registration => {
-                console.log('Service Worker registrado com sucesso:', registration);
+                console.log('PWA: Service Worker registrado com sucesso:', registration);
             })
             .catch(error => {
-                console.log('Falha ao registrar o Service Worker:', error);
+                console.log('PWA: Falha ao registrar o Service Worker:', error);
             });
     });
 }
@@ -2326,24 +2328,17 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode());
         },
 
-        // =================================================================
-        // ======================== FUNÇÃO CORRIGIDA =======================
-        // =================================================================
         cancelEditMode() {
             if (!this.state.editingItem) return;
             const type = this.state.editingItem.type;
 
-            // Se o item a ser cancelado for uma conta, a lógica de fechar o modal já trata disso.
             if (type === 'account') {
                 this.closeAccountModal();
             } else {
-                // Busca o formulário e seus componentes
                 const form = document.getElementById(`${type}-form`);
                 const titleEl = document.getElementById(`${type}-form-title`);
                 const buttonContainer = document.getElementById(`${type}-form-buttons`);
 
-                // --- Início da Correção ---
-                // Apenas modifica os elementos se eles forem encontrados no DOM atual.
                 if (form) {
                     form.reset();
                 }
@@ -2371,13 +2366,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${buttonTextMap[type] || `Salvar`}</button>`;
                 }
-                // --- Fim da Correção ---
             }
             
-            // Zera o estado de edição após a limpeza
             this.state.editingItem = null;
 
-            // Garante que o estado visual do formulário de transação seja resetado
             if (type === 'transaction') {
                 this.handleTransactionTypeChange();
             }
@@ -2409,7 +2401,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             this.renderActiveDashboardChart();
 
-            // Lógica do gráfico de evolução do patrimônio (sem alteração)
             const commonOptions = this.getChartOptions();
             const accountTransactions = this.state.transactions.filter(t => t.accountId);
             const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort();
@@ -2432,7 +2423,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
             if (balanceHistory.length === 0) {
-                             balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+                         balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
             }
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
             this.charts.evolutionChart.data.datasets = [{
@@ -3349,10 +3340,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isOverdue = new Date(bill.dueDate + 'T00:00:00') < today;
                 return `
                     <li>
-                        <span>${bill.description}</span>
-                        <strong class="${isOverdue ? 'negative' : 'warning'}">
-                            ${this.formatCurrency(bill.amount)} em ${this.formatDate(bill.dueDate)}
-                        </strong>
+                        <span class="description">${bill.description}</span>
+                        <span class="details">
+                            <strong class="${isOverdue ? 'negative' : 'warning'}">
+                                ${this.formatCurrency(bill.amount)} em ${this.formatDate(bill.dueDate)}
+                            </strong>
+                        </span>
                     </li>
                 `;
             }).join('');
