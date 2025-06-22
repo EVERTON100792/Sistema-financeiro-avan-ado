@@ -364,7 +364,7 @@
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid var(--secondary-color);
-            white-space: nowrap; /* Impede que o texto quebre, forçando a rolagem */
+            white-space: nowrap;
         }
         .report-table th {
             font-weight: 600;
@@ -377,8 +377,8 @@
             background-color: var(--secondary-color);
         }
         .report-table-wrapper {
-            overflow-x: auto; /* Adiciona a rolagem horizontal */
-            -webkit-overflow-scrolling: touch; /* Melhora a experiência em iOS */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* === NOTIFICAÇÃO TOAST === */
@@ -896,13 +896,21 @@ document.addEventListener('DOMContentLoaded', () => {
         elements: {},
         charts: { mainOverviewChart: null, evolutionChart: null, reportChart: null, accountCharts: {} },
         state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null },
+        
+        // ===================================================================
+        // INÍCIO DO BLOCO ALTERADO
+        // ===================================================================
         reports: {
             accountStatement: { title: 'Extrato de Conta', description: 'Veja todas as transações de uma conta específica em um período.' },
             categoryExpense: { title: 'Despesas por Categoria', description: 'Analise seus gastos agrupados por categoria com um gráfico interativo.' },
             cashflow: { title: 'Fluxo de Caixa Mensal', description: 'Compare suas receitas e despesas totais ao longo dos últimos meses.' },
             paymentStatus: { title: 'Status de Pagamentos', description: 'Acompanhe todas as suas despesas e veja o que já foi pago e o que ainda está pendente.' },
-            annualSummary: { title: 'Resumo Anual', description: 'Visualize o balanço de receitas e despesas de cada mês do ano selecionado.' }
+            annualSummary: { title: 'Resumo Anual', description: 'Visualize o balanço de receitas e despesas de cada mês do ano selecionado.' },
+            creditCardInvoiceDetail: { title: 'Detalhe de Faturas do Cartão', description: 'Visualize as despesas da sua fatura atual e da próxima, com os totais de cada uma, para um cartão específico.' }
         },
+        // ===================================================================
+        // FIM DO BLOCO ALTERADO
+        // ===================================================================
 
         async init() {
             this.cacheDOMElements();
@@ -1972,9 +1980,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
-        // ===================================================================
-        // INÍCIO DA FUNÇÃO ALTERADA
-        // ===================================================================
         renderCreditCardModule() {
             const selectorList = this.elements.creditCardSelectorList;
             selectorList.innerHTML = this.state.creditCards.map(c => `
@@ -1991,22 +1996,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // --- NOVA LÓGICA PARA SEPARAR FATURAS ---
-            
-            // 1. Pega todas as faturas abertas do cartão selecionado e ordena por data de fechamento
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === selectedCard.id && i.status === 'open')
                 .sort((a, b) => new Date(a.closingDate) - new Date(b.closingDate));
 
-            const currentInvoice = openInvoices[0]; // A primeira da lista é a "Fatura Atual"
-            const nextInvoice = openInvoices[1];    // A segunda é a "Próxima Fatura"
+            const currentInvoice = openInvoices[0];
+            const nextInvoice = openInvoices[1];
 
-            // 2. Calcula os valores totais para o resumo
             const totalOpenAmount = openInvoices.reduce((sum, inv) => sum + inv.amount, 0);
             const availableLimit = selectedCard.limit - totalOpenAmount;
             const currentInvoiceAmount = currentInvoice ? currentInvoice.amount : 0;
 
-            // 3. Pega as transações de cada fatura
             const currentInvoiceTransactions = currentInvoice 
                 ? this.state.transactions.filter(t => t.invoiceId === currentInvoice.id).sort((a,b) => new Date(b.date) - new Date(a.date))
                 : [];
@@ -2015,7 +2015,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? this.state.transactions.filter(t => t.invoiceId === nextInvoice.id).sort((a,b) => new Date(b.date) - new Date(a.date))
                 : [];
             
-            // 4. Renderiza o novo HTML com as seções separadas
             detailsContainer.innerHTML = `
                 <div class="card-header">
                     <h2>${selectedCard.name}</h2>
@@ -2082,9 +2081,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         },
-        // ===================================================================
-        // FIM DA FUNÇÃO ALTERADA
-        // ===================================================================
         
         renderCategoriesList() { this.elements.categoriesList.innerHTML = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(cat => ` <div class="category-item"> <div class="list-item-header"> <div class="main-info"><h3>${cat.name}</h3></div> <div class="actions"> <button class="edit-btn" data-type="category" data-id="${cat.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="category" data-id="${cat.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join(''); },
         renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
@@ -2425,6 +2421,9 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         },
 
+        // ===================================================================
+        // INÍCIO DO BLOCO ALTERADO E ADICIONADO
+        // ===================================================================
         renderReportsMenu() {
             this.hideReportView();
             const menuEl = this.elements.reportsMenu;
@@ -2486,6 +2485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const firstDayOfYear = `${year}-01-01`;
 
             const accountOptions = this.state.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            const cardOptions = this.state.creditCards.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
             switch (reportId) {
                 case 'accountStatement':
@@ -2518,6 +2518,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     let yearOptions = '';
                     for (let y = currentYear; y >= currentYear - 5; y--) { yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`; }
                     return `<div class="form-group"><label for="filter-year">Ano</label><select id="filter-year">${yearOptions}</select></div>`;
+                
+                case 'creditCardInvoiceDetail':
+                    if (this.state.creditCards.length === 0) {
+                        return '<p style="color: var(--text-muted-color);">Nenhum cartão de crédito cadastrado.</p>';
+                    }
+                    return `<div class="form-group"><label for="filter-credit-card">Cartão de Crédito</label><select id="filter-credit-card">${cardOptions}</select></div>`;
 
                 default:
                     return '<p>Filtros não disponíveis.</p>';
@@ -2535,7 +2541,138 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'cashflow': this.renderCashflowResults(); break;
                 case 'paymentStatus': this.renderPaymentStatusResults(); break;
                 case 'annualSummary': this.renderAnnualSummaryResults(); break;
+                case 'creditCardInvoiceDetail': this.renderCreditCardInvoiceDetailResults(); break;
             }
+        },
+
+        renderCreditCardInvoiceDetailResults() {
+            const resultsArea = document.getElementById('report-results-area');
+            const cardId = document.getElementById('filter-credit-card')?.value;
+
+            if (!cardId) {
+                resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Por favor, selecione um cartão e gere o relatório.</p>';
+                return;
+            }
+
+            const openInvoices = this.state.invoices
+                .filter(i => i.creditCardId === cardId && i.status === 'open')
+                .sort((a, b) => new Date(a.closingDate) - new Date(b.closingDate));
+
+            const currentInvoice = openInvoices[0];
+            const nextInvoice = openInvoices[1];
+
+            const currentInvoiceTransactions = currentInvoice
+                ? this.state.transactions.filter(t => t.invoiceId === currentInvoice.id).sort((a, b) => new Date(a.date) - new Date(b.date))
+                : [];
+            
+            const nextInvoiceTransactions = nextInvoice
+                ? this.state.transactions.filter(t => t.invoiceId === nextInvoice.id).sort((a, b) => new Date(a.date) - new Date(b.date))
+                : [];
+
+            const buildTableRows = (transactions) => {
+                if (transactions.length === 0) return '<tr><td colspan="4" style="text-align:center; color: var(--text-muted-color);">Nenhuma despesa encontrada.</td></tr>';
+                return transactions.map(t => `
+                    <tr>
+                        <td>${this.formatDate(t.date)}</td>
+                        <td>${t.description}</td>
+                        <td>${t.category}</td>
+                        <td class="negative" style="text-align: right;">${this.formatCurrency(t.amount)}</td>
+                    </tr>
+                `).join('');
+            };
+
+            const currentInvoiceTotal = currentInvoice ? currentInvoice.amount : 0;
+            const nextInvoiceTotal = nextInvoice ? nextInvoice.amount : 0;
+
+            resultsArea.innerHTML = `
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <div class="report-summary" style="grid-template-columns: 1fr; text-align: left;">
+                        <div class="summary-item">
+                            <div class="label">Total da Fatura Atual (Vence em ${currentInvoice ? this.formatDate(currentInvoice.dueDate) : 'N/A'})</div>
+                            <div class="value negative">${this.formatCurrency(currentInvoiceTotal)}</div>
+                        </div>
+                    </div>
+                    <div class="report-table-wrapper">
+                        <table class="report-table">
+                            <thead><tr><th>Data da Compra</th><th>Descrição</th><th>Categoria</th><th style="text-align: right;">Valor</th></tr></thead>
+                            <tbody>${buildTableRows(currentInvoiceTransactions)}</tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <div class="report-summary" style="grid-template-columns: 1fr; text-align: left;">
+                        <div class="summary-item">
+                            <div class="label">Total Parcial da Próxima Fatura (Fecha em ${nextInvoice ? this.formatDate(nextInvoice.closingDate) : 'N/A'})</div>
+                            <div class="value negative">${this.formatCurrency(nextInvoiceTotal)}</div>
+                        </div>
+                    </div>
+                    <div class="report-table-wrapper">
+                        <table class="report-table">
+                            <thead><tr><th>Data da Compra</th><th>Descrição</th><th>Categoria</th><th style="text-align: right;">Valor</th></tr></thead>
+                            <tbody>${buildTableRows(nextInvoiceTransactions)}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        },
+
+        generateCreditCardInvoiceDetailPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const cardId = document.getElementById('filter-credit-card')?.value;
+
+            if (!cardId) {
+                this.showToast("Selecione um cartão de crédito primeiro.", "error");
+                return;
+            }
+
+            const selectedCard = this.state.creditCards.find(c => c.id === cardId);
+            if (!selectedCard) return;
+
+            const openInvoices = this.state.invoices.filter(i => i.creditCardId === cardId && i.status === 'open').sort((a,b) => new Date(a.closingDate) - new Date(b.closingDate));
+            const currentInvoice = openInvoices[0];
+            const nextInvoice = openInvoices[1];
+            
+            doc.setFontSize(18);
+            doc.text('Detalhe de Faturas do Cartão', 14, 22);
+            doc.setFontSize(12);
+            doc.text(`Cartão: ${selectedCard.name}`, 14, 30);
+
+            let lastY = 35;
+
+            if (currentInvoice) {
+                const currentTotal = currentInvoice.amount;
+                const head = [['Data', 'Descrição', 'Categoria', 'Valor']];
+                const body = this.state.transactions
+                    .filter(t => t.invoiceId === currentInvoice.id)
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                    .map(t => [this.formatDate(t.date), t.description, t.category, this.formatCurrency(t.amount)]);
+                
+                doc.setFontSize(11);
+                doc.setTextColor(100);
+                doc.text(`Fatura Atual - Total: ${this.formatCurrency(currentTotal)} (Vencimento: ${this.formatDate(currentInvoice.dueDate)})`, 14, lastY + 5);
+                
+                doc.autoTable({ head, body, startY: lastY + 8, theme: 'grid' });
+                lastY = doc.autoTable.previous.finalY;
+            }
+
+            if (nextInvoice) {
+                const nextTotal = nextInvoice.amount;
+                const head = [['Data', 'Descrição', 'Categoria', 'Valor']];
+                const body = this.state.transactions
+                    .filter(t => t.invoiceId === nextInvoice.id)
+                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                    .map(t => [this.formatDate(t.date), t.description, t.category, this.formatCurrency(t.amount)]);
+                
+                doc.setFontSize(11);
+                doc.setTextColor(100);
+                doc.text(`Próxima Fatura - Total Parcial: ${this.formatCurrency(nextTotal)} (Fechamento: ${this.formatDate(nextInvoice.closingDate)})`, 14, lastY + 15);
+                
+                doc.autoTable({ head, body, startY: lastY + 18, theme: 'grid' });
+            }
+
+            doc.save(`relatorio_faturas_${selectedCard.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
         },
 
         renderAccountStatementResults() {
@@ -2827,7 +2964,19 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         generateReportPDF(reportId) {
+            if (!window.jspdf || !window.jspdf.jsPDF.autoTable) {
+                this.showToast("Erro ao carregar a biblioteca de PDF.", "error");
+                return;
+            }
             const { jsPDF } = window.jspdf;
+
+            switch(reportId) {
+                case 'creditCardInvoiceDetail':
+                    this.generateCreditCardInvoiceDetailPDF();
+                    return;
+                // Adicione outros cases específicos aqui se necessário
+            }
+
             const doc = new jsPDF();
             const report = this.reports[reportId];
             
@@ -2863,7 +3012,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
                     const statusFilter = document.getElementById('filter-payment-status')?.value;
-                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= endDate);
 
                     if (statusFilter && statusFilter !== 'all') {
                         expenses = expenses.filter(t => {
@@ -2900,13 +3049,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: body,
                 startY: 30,
                 theme: 'grid',
-                headStyles: { fillColor: [22, 33, 62] }, // --primary-color
+                headStyles: { fillColor: [22, 33, 62] }, 
             });
             
             doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
         }
-
-
+        // ===================================================================
+        // FIM DO BLOCO ALTERADO E ADICIONADO
+        // ===================================================================
     };
 
     financeApp.init();
