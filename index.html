@@ -876,9 +876,7 @@
             </form>
         </div>
     </div>
-
-
-<script>
+    <script>
 document.addEventListener('DOMContentLoaded', () => {
 
     const db = {
@@ -1270,6 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.cancelEditMode();
         },
         
+        // INÍCIO DA FUNÇÃO CORRIGIDA
         async handleCreditCardExpense(e) {
             e.preventDefault();
             const form = e.target;
@@ -1277,14 +1276,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalAmount = this.parseCurrency(form.elements['expense-amount'].value);
             const originalDescription = form.elements['expense-description'].value;
             const purchaseDateStr = form.elements['expense-date'].value;
-            const purchaseDate = new Date(purchaseDateStr + 'T00:00:00');
             const category = form.elements['expense-category'].value;
             const installments = parseInt(form.elements['expense-installments'].value, 10) || 1;
             
             const dbPromises = [];
 
             if (installments === 1) {
-                const invoice = await this.getOrCreateInvoiceForDate(cardId, purchaseDate);
+                const invoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDateStr + 'T00:00:00'));
                 if (!invoice) { this.showToast("Não foi possível processar a fatura.", 'error'); return; }
 
                 const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category, isPaid: false };
@@ -1298,7 +1296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const purchaseGroupId = `p-${Date.now()}`;
                 const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
                 let sumOfInstallments = 0;
-                const tempPurchaseDate = new Date(purchaseDate);
+                const tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00');
 
                 for (let i = 0; i < installments; i++) {
                     const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
@@ -1323,6 +1321,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllRenders();
             this.closeCreditCardExpenseModal();
         },
+        // FIM DA FUNÇÃO CORRIGIDA
 
         async handleBillPayment(e) {
             e.preventDefault();
@@ -2112,7 +2111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCell.appendChild(eventsContainer);
 
                 const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
-                                                            .sort((a,b) => a.amount - b.amount);
+                                                                .sort((a,b) => a.amount - b.amount);
 
                 dayTransactions.forEach((t, index) => {
                     if(index < MAX_VISIBLE_EVENTS) {
@@ -2229,8 +2228,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const buttonContainer = document.getElementById(`${type}-form-buttons`);
                 if(buttonContainer) {
-                      const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                      buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
+                        const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                        buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
                 }
             }
             this.state.editingItem = null;
