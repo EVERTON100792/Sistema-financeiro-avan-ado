@@ -903,8 +903,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cashflow: { title: 'Fluxo de Caixa Mensal', description: 'Compare suas receitas e despesas totais ao longo dos últimos meses.' },
             paymentStatus: { title: 'Status de Pagamentos', description: 'Acompanhe todas as suas despesas e veja o que já foi pago e o que ainda está pendente.' },
             annualSummary: { title: 'Resumo Anual', description: 'Visualize o balanço de receitas e despesas de cada mês do ano selecionado.' },
-            currentCardInvoice: { title: 'Relatório da Fatura Atual', description: 'Gere um relatório detalhado com todas as despesas da fatura aberta (atual) de um cartão de crédito.' },
-            nextCardInvoice: { title: 'Relatório da Próxima Fatura', description: 'Veja um relatório com as despesas já lançadas na sua próxima fatura (parcial) de um cartão de crédito.' },
+            // *** MUDANÇA 1: Unificando o relatório de fatura ***
+            cardInvoice: { title: 'Detalhes da Fatura do Cartão', description: 'Gere um relatório detalhado para a fatura atual ou próxima de um cartão de crédito.' },
         },
 
         async init() {
@@ -2531,12 +2531,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let y = currentYear; y >= currentYear - 5; y--) { yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`; }
                     return `<div class="form-group"><label for="filter-year">Ano</label><select id="filter-year">${yearOptions}</select></div>`;
                 
-                case 'currentCardInvoice':
-                case 'nextCardInvoice':
+                // *** MUDANÇA 2: Adicionando o novo filtro de fatura ***
+                case 'cardInvoice':
                     if (this.state.creditCards.length === 0) {
                         return '<p style="color: var(--text-muted-color);">Nenhum cartão de crédito cadastrado.</p>';
                     }
-                    return `<div class="form-group"><label for="filter-credit-card">Cartão de Crédito</label><select id="filter-credit-card">${cardOptions}</select></div>`;
+                    return `
+                        <div class="form-group">
+                           <label for="filter-credit-card">Cartão de Crédito</label>
+                           <select id="filter-credit-card">${cardOptions}</select>
+                        </div>
+                        <div class="form-group">
+                           <label for="filter-invoice-type">Selecionar Fatura</label>
+                           <select id="filter-invoice-type">
+                               <option value="current">Fatura Atual</option>
+                               <option value="next">Próxima Fatura</option>
+                           </select>
+                        </div>
+                    `;
 
                 default:
                     return '<p>Filtros não disponíveis.</p>';
@@ -2554,8 +2566,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'cashflow': this.renderCashflowResults(); break;
                 case 'paymentStatus': this.renderPaymentStatusResults(); break;
                 case 'annualSummary': this.renderAnnualSummaryResults(); break;
-                case 'currentCardInvoice': this.renderSingleInvoiceReport('current'); break;
-                case 'nextCardInvoice': this.renderSingleInvoiceReport('next'); break;
+                // *** MUDANÇA 3: Roteamento para a nova função, lendo o filtro ***
+                case 'cardInvoice': 
+                    const invoiceType = document.getElementById('filter-invoice-type').value;
+                    this.renderSingleInvoiceReport(invoiceType); 
+                    break;
             }
         },
         
@@ -2568,6 +2583,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // *** LÓGICA CORRIGIDA: Ordena por data de vencimento para garantir a ordem correta ***
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === cardId && i.status === 'open')
                 .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -2914,8 +2930,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (reportId === 'currentCardInvoice' || reportId === 'nextCardInvoice') {
-                this.generateSingleInvoicePDF(reportId === 'currentCardInvoice' ? 'current' : 'next');
+            // *** MUDANÇA 4: Roteamento para a nova função de PDF ***
+            if (reportId === 'cardInvoice') {
+                const invoiceType = document.getElementById('filter-invoice-type').value;
+                this.generateSingleInvoicePDF(invoiceType);
                 return;
             }
 
@@ -3066,7 +3084,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === cardId && i.status === 'open')
-                .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)); // Correção: Ordenar por data de vencimento
+                .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
             
             const targetInvoice = invoiceType === 'current' ? openInvoices[0] : openInvoices[1];
 
@@ -3075,7 +3093,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const reportTitle = invoiceType === 'current' ? 'Relatório da Fatura Atual' : 'Relatório da Próxima Fatura';
+            const reportTitle = "Detalhes da Fatura do Cartão";
+            const invoiceTitle = invoiceType === 'current' ? 'Fatura Atual' : 'Próxima Fatura';
+
             const summaryLabel = invoiceType === 'current' 
                 ? `Total: ${this.formatCurrency(targetInvoice.amount)} (Vencimento: ${this.formatDate(targetInvoice.dueDate)})`
                 : `Total Parcial: ${this.formatCurrency(targetInvoice.amount)} (Fechamento: ${this.formatDate(targetInvoice.closingDate)})`;
@@ -3083,7 +3103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.setFontSize(18);
             doc.text(reportTitle, 14, 22);
             doc.setFontSize(12);
-            doc.text(`Cartão: ${selectedCard.name}`, 14, 30);
+            doc.text(`Cartão: ${selectedCard.name} (${invoiceTitle})`, 14, 30);
             doc.setFontSize(11);
             doc.setTextColor(100);
             doc.text(summaryLabel, 14, 36);
