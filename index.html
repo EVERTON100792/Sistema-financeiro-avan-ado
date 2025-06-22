@@ -11,6 +11,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -111,16 +113,150 @@
         /* === ESTILOS PARA O MENU LATERAL === */
         #menu-toggle { display: none; font-size: 1.5rem; padding: 5px 12px; }
         .app-layout { display: flex; gap: 20px; align-items: flex-start; }
-        .sidebar-nav { width: 240px; flex-shrink: 0; padding: 15px; display: flex; flex-direction: column; gap: 5px; }
-        .tab-btn { border: none; background-color: transparent; cursor: pointer; transition: all 0.3s; color: var(--text-muted-color); }
-        .sidebar-nav .tab-btn { width: 100%; text-align: left; border-left: 4px solid transparent; padding: 12px 15px; border-radius: var(--border-radius); font-weight: 500; }
-        .sidebar-nav .tab-btn:hover { background-color: var(--secondary-color); color: var(--text-color); }
-        .sidebar-nav .tab-btn.active { border-left-color: var(--accent-color); background-color: var(--primary-color); color: var(--accent-color); font-weight: 600; }
+        .sidebar-nav { width: 240px; flex-shrink: 0; transition: transform 0.3s ease-in-out; }
         main { flex-grow: 1; width: 100%; }
-
         #menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; backdrop-filter: blur(2px); }
         #menu-overlay.visible { opacity: 1; visibility: visible; }
         
+        /* === MELHORIAS VISUAIS PARA SIDEBAR (NOVO) === */
+        .sidebar-nav {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 5px;
+            margin-bottom: 15px;
+        }
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            border-radius: var(--border-radius);
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px color-mix(in srgb, var(--accent-color) 30%, transparent);
+        }
+        .sidebar-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .sidebar-nav .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-muted-color);
+            border-left: 4px solid transparent;
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+        }
+        .sidebar-nav .tab-btn span {
+            flex-grow: 1;
+        }
+        .sidebar-nav .tab-btn i {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+            color: var(--text-muted-color);
+            transition: color 0.3s;
+        }
+        .sidebar-nav .tab-btn:hover {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        .sidebar-nav .tab-btn.active {
+            border-left-color: var(--accent-color);
+            background-color: var(--primary-color);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        .sidebar-nav .tab-btn:hover i,
+        .sidebar-nav .tab-btn.active i {
+            color: var(--accent-color);
+        }
+        .sidebar-divider {
+            border: none;
+            border-top: 1px solid var(--secondary-color);
+            margin: 10px 0;
+        }
+        .sidebar-group-title {
+            font-size: 0.7rem;
+            color: var(--text-muted-color);
+            text-transform: uppercase;
+            padding: 15px 15px 5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin: 0; border: 0;
+        }
+        .sidebar-spacer {
+            flex-grow: 1;
+        }
+        .sidebar-user-profile {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: var(--primary-color);
+            border-radius: var(--border-radius);
+        }
+        .sidebar-user-profile .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+        }
+        .sidebar-user-profile .user-avatar {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .sidebar-user-profile .user-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-user-profile .btn-logout {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 5px;
+        }
+        .sidebar-user-profile .btn-logout:hover {
+            color: var(--error-color);
+        }
+
         /* === ESTILOS DO CALENDÁRIO === */
         #tab-calendar .card { background-color: var(--primary-color); padding: 0; overflow: hidden; }
         #calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--secondary-color); gap: 15px; flex-wrap: wrap; }
@@ -255,10 +391,14 @@
 
         /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR === */
         @media (max-width: 768px) {
-            body { line-height: 1.5; }
-            .container { padding: 10px; }
+            body { 
+                line-height: 1.5; 
+                -webkit-text-size-adjust: 100%;
+            }
+            .container { padding: 15px; }
             .card { padding: 15px; }
-            h2 { font-size: 1.5rem; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
             
             #login-container { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, var(--bg-color) 0%, var(--primary-color) 100%); }
             .login-wrapper { grid-template-columns: 1fr; }
@@ -268,52 +408,31 @@
 
             #menu-toggle { display: block; }
             .app-layout { position: relative; }
-            .sidebar-nav { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; background-color: var(--card-bg-color); transform: translateX(-100%); transition: transform 0.3s ease-in-out; border-radius: 0 var(--border-radius) var(--border-radius) 0; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+            .sidebar-nav { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; background-color: var(--card-bg-color); transform: translateX(-100%); border-radius: 0 var(--border-radius) var(--border-radius) 0; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
             .sidebar-nav.visible { transform: translateX(0); }
 
-            .grid-layout, .dashboard-layout, .report-summary, .account-card-grid, .account-details, .credit-card-module-layout { 
-                grid-template-columns: 1fr; 
-            }
-        }
-        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR V2 === */
-        @media (max-width: 768px) {
-            body { 
-                line-height: 1.5; 
-                -webkit-text-size-adjust: 100%; /* Previne zoom automático de fontes em iPhones */
-            }
-            .container { 
-                padding: 15px; /* Reduz o espaçamento lateral da página */
-            }
-            .card { 
-                padding: 15px; /* Reduz o espaçamento interno dos cards */
-            }
-            h1 { font-size: 1.8rem; }
-            h2 { font-size: 1.4rem; }
-
-            /* Força todos os principais layouts de grid a terem uma única coluna e aumenta o espaço entre eles */
             .summary-section, .grid-layout, .dashboard-layout, .account-card-grid, .account-details, .credit-card-module-layout, .report-filters {
                 grid-template-columns: 1fr;
-                gap: 20px; /* Aumenta o espaço vertical entre os itens */
+                gap: 20px;
             }
 
-            /* Trata especificamente os cards de resumo dos relatórios */
             .report-summary, .credit-card-summary {
-                display: block; /* Remove o grid e faz os itens se comportarem como blocos */
+                display: block;
             }
             .report-summary .summary-item, .credit-card-summary .info-item {
-                text-align: left; /* Alinha o texto à esquerda para melhor leitura */
+                text-align: left;
                 padding: 10px 0;
                 border-bottom: 1px solid var(--secondary-color);
             }
-             .report-summary .summary-item:last-child, .credit-card-summary .info-item:last-child {
+            .report-summary .summary-item:last-child, .credit-card-summary .info-item:last-child {
                 border-bottom: none;
                 padding-bottom: 0;
                 margin-bottom: 0;
-             }
-             .report-summary .summary-item:not(:last-child), .credit-card-summary .info-item:not(:last-child) {
+            }
+            .report-summary .summary-item:not(:last-child), .credit-card-summary .info-item:not(:last-child) {
                 margin-bottom: 10px;
-             }
-             
+            }
+            
             header, .report-header { 
                 row-gap: 10px; 
             }
@@ -335,7 +454,7 @@
             </div>
             <div class="login-form-wrapper">
                 <div class="login-box card">
-                    <div class="login-logo">S</div>
+                    <div class="login-logo">EM</div>
                     <h1>Acesso Seguro</h1>
                     <p style="margin-bottom: 25px; color: var(--text-muted-color);">Para começar, digite seu nome. Seus dados são salvos localmente.</p>
                     <div class="form-group form-group-with-icon">
@@ -356,25 +475,47 @@
             <div class="header-actions">
                 <button id="menu-toggle" class="btn btn-secondary">☰</button>
                 <button id="theme-toggle" title="Alterar Tema">🌙</button>
-                <button id="logout-btn" class="btn btn-secondary">Sair</button>
-            </div>
+                </div>
         </header>
 
         <div id="menu-overlay"></div>
 
         <div class="app-layout">
             <aside class="sidebar-nav card">
-                <button class="tab-btn active" data-tab="dashboard">Painel</button>
-                <button class="tab-btn" data-tab="accounts">Contas</button>
-                <button class="tab-btn" data-tab="credit-cards">Cartões de Crédito</button>
-                <button class="tab-btn" data-tab="categories">Categorias</button>
-                <button class="tab-btn" data-tab="transfers">Transferências</button>
-                <button class="tab-btn" data-tab="budgets">Orçamentos</button>
-                <button class="tab-btn" data-tab="goals">Metas</button>
-                <button class="tab-btn" data-tab="recurrences">Recorrências</button>
-                <button class="tab-btn" data-tab="reports">Relatórios</button>
-                <button class="tab-btn" data-tab="calendar">Calendário</button>
-                <button class="tab-btn" data-tab="settings">Configurações</button>
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">EM</div>
+                    <h3 class="sidebar-title">Everton Moura<br>Financeiro</h3>
+                </div>
+
+                <button class="tab-btn active" data-tab="dashboard"><i class="fa-solid fa-house"></i><span>Painel</span></button>
+                <hr class="sidebar-divider">
+
+                <h4 class="sidebar-group-title">GESTÃO</h4>
+                <button class="tab-btn" data-tab="accounts"><i class="fa-solid fa-wallet"></i><span>Contas</span></button>
+                <button class="tab-btn" data-tab="credit-cards"><i class="fa-regular fa-credit-card"></i><span>Cartões</span></button>
+                <button class="tab-btn" data-tab="categories"><i class="fa-solid fa-tags"></i><span>Categorias</span></button>
+                <button class="tab-btn" data-tab="transfers"><i class="fa-solid fa-right-left"></i><span>Transferências</span></button>
+                
+                <h4 class="sidebar-group-title">PLANEJAMENTO</h4>
+                <button class="tab-btn" data-tab="budgets"><i class="fa-solid fa-chart-pie"></i><span>Orçamentos</span></button>
+                <button class="tab-btn" data-tab="goals"><i class="fa-solid fa-bullseye"></i><span>Metas</span></button>
+                <button class="tab-btn" data-tab="recurrences"><i class="fa-solid fa-repeat"></i><span>Recorrências</span></button>
+                
+                <h4 class="sidebar-group-title">ANÁLISE</h4>
+                <button class="tab-btn" data-tab="reports"><i class="fa-solid fa-chart-simple"></i><span>Relatórios</span></button>
+                <button class="tab-btn" data-tab="calendar"><i class="fa-regular fa-calendar-days"></i><span>Calendário</span></button>
+                
+                <div class="sidebar-spacer"></div>
+
+                <button class="tab-btn" data-tab="settings"><i class="fa-solid fa-gear"></i><span>Configurações</span></button>
+                
+                <div class="sidebar-user-profile">
+                    <div class="user-info">
+                         <div class="user-avatar" id="sidebar-user-avatar"></div>
+                         <span class="user-name" id="sidebar-username"></span>
+                    </div>
+                    <button id="sidebar-logout-btn" class="btn-logout" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
             </aside>
 
             <main>
@@ -774,7 +915,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!this.state.categories || this.state.categories.length === 0) { await this.createDefaultCategories(); await this.loadData(); }
             await this.generateRecurringTransactions();
             this.applySavedTheme();
+
+            // Seta o nome do usuário no header, na sidebar e as iniciais no avatar
             this.elements.welcomeMessage.textContent = `Olá, ${this.state.user}!`;
+            this.elements.sidebarUsername.textContent = this.state.user;
+            const userInitials = this.state.user.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            this.elements.sidebarUserAvatar.textContent = userInitials;
+
             document.getElementById('date').valueAsDate = new Date();
             this.initCharts();
             this.handleTransactionTypeChange();
@@ -795,12 +942,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         cacheDOMElements() {
-            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'logoutBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportsMenu', 'reportViewContainer', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm' ];
+            // IDs para busca automática
+            const elementIds = [ 'loginContainer', 'appContainer', 'loginBtn', 'username', 'welcomeMessage', 'themeToggle', 'dueDate', 'dueDateGroup', 'transactionType', 'transactionForm', 'makeRecurringGroup', 'makeRecurringCheckbox', 'menuToggle', 'menuOverlay', 'monthYearDisplay', 'calendarGrid', 'prevMonthBtn', 'nextMonthBtn', 'transactionList', 'accountsList', 'categoriesList', 'budgetsList', 'goalsList', 'recurrencesList', 'reportsMenu', 'reportViewContainer', 'billPaymentModal', 'billPaymentModalCloseBtn', 'billPaymentForm', 'accountModal', 'accountModalCloseBtn', 'accountForm', 'accountModalTitle', 'creditCardForm', 'creditCardSelectorList', 'selectedCardDetails', 'creditCardExpenseModal', 'creditCardExpenseModalCloseBtn', 'creditCardExpenseForm', 'addAccountBtnTab', 'addAccountBtnForm', 'sidebarLogoutBtn', 'sidebarUsername', 'sidebarUserAvatar' ];
             elementIds.forEach(idCamel => {
                 const idKebab = idCamel.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
                 const el = document.getElementById(idKebab);
                 if (el) this.elements[idCamel] = el;
             });
+
+            // Seletores de múltiplos elementos
             this.elements.tabButtons = document.querySelectorAll('.tab-btn');
             this.elements.tabContents = document.querySelectorAll('.tab-content');
             this.elements.sidebarNav = document.querySelector('.sidebar-nav');
@@ -816,6 +966,9 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.menuToggle.addEventListener('click', () => { this.elements.sidebarNav.classList.toggle('visible'); this.elements.menuOverlay.classList.toggle('visible'); });
             this.elements.menuOverlay.addEventListener('click', () => { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); });
             
+            // Botão de Logout da Sidebar
+            this.elements.sidebarLogoutBtn.addEventListener('click', () => this.handleLogout());
+
             this.elements.addAccountBtnTab.addEventListener('click', () => this.openAccountModal());
             this.elements.addAccountBtnForm.addEventListener('click', () => this.openAccountModal('account-select'));
             
@@ -830,7 +983,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('category-form').addEventListener('submit', (e) => this.handleCategorySubmit(e));
             document.getElementById('transfer-form').addEventListener('submit', (e) => this.handleTransfer(e));
             this.elements.transactionType.addEventListener('change', () => this.handleTransactionTypeChange());
-            this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
             document.getElementById('export-btn').addEventListener('click', () => this.exportBackup());
             document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
             document.getElementById('import-file-input').addEventListener('change', (e) => this.importBackup(e));
@@ -1960,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCell.appendChild(eventsContainer);
 
                 const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
-                                                                .sort((a,b) => a.amount - b.amount);
+                                                            .sort((a,b) => a.amount - b.amount);
 
                 dayTransactions.forEach((t, index) => {
                     if(index < MAX_VISIBLE_EVENTS) {
@@ -2097,7 +2249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateDashboardCharts() {
             if (!this.charts.mainOverviewChart || !this.charts.evolutionChart) return;
-            this.renderDashboardMainChart(); // A chamada foi atualizada aqui
+            this.renderDashboardMainChart();
 
             const commonOptions = this.getChartOptions();
             const accountTransactions = this.state.transactions.filter(t => t.accountId);
@@ -2304,7 +2456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'categoryExpense':
                 case 'cashflow':
-                      return `
+                        return `
                         <div class="form-group"><label for="filter-start-date">Data Início</label><input type="date" id="filter-start-date" value="${firstDayOfYear}"></div>
                         <div class="form-group"><label for="filter-end-date">Data Fim</label><input type="date" id="filter-end-date" value="${today}"></div>`;
 
@@ -2567,12 +2719,12 @@ document.addEventListener('DOMContentLoaded', () => {
              }).join('');
 
              resultsArea.innerHTML = `
-                <div class="report-table-wrapper">
+                 <div class="report-table-wrapper">
                      <table class="report-table">
                          <thead><tr><th>Data</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead>
                          <tbody>${rows}</tbody>
                      </table>
-                </div>`;
+                 </div>`;
         },
 
         renderAnnualSummaryResults() {
