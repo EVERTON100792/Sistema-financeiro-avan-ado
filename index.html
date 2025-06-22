@@ -511,8 +511,8 @@
                 
                 <div class="sidebar-user-profile">
                     <div class="user-info">
-                         <div class="user-avatar" id="sidebar-user-avatar"></div>
-                         <span class="user-name" id="sidebar-username"></span>
+                           <div class="user-avatar" id="sidebar-user-avatar"></div>
+                           <span class="user-name" id="sidebar-username"></span>
                     </div>
                     <button id="sidebar-logout-btn" class="btn-logout" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
@@ -1104,27 +1104,27 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async generateRecurringTransactions() {
-             const today = new Date(); today.setHours(0, 0, 0, 0); 
-             let hasChanges = false; 
-             for (const r of this.state.recurrences) { 
-                 if (!r.nextDueDate) continue; 
-                 let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); 
-                 while (nextDueDate <= today) { 
-                     const newT = { id: `trans-${Date.now()}${Math.random()}`, type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; 
-                     await db.put('transactions', newT); 
-                     hasChanges = true; 
-                     if (r.frequency === 'monthly') { 
-                         nextDueDate.setMonth(nextDueDate.getMonth() + 1); 
-                     } else if (r.frequency === 'weekly') { 
-                         nextDueDate.setDate(nextDueDate.getDate() + 7); 
-                     } else if (r.frequency === 'yearly') { 
-                         nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
-                     } 
-                     r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
-                     await db.put('recurrences', r); 
-                 } 
-             } 
-             if (hasChanges) await this.loadData(); 
+            const today = new Date(); today.setHours(0, 0, 0, 0); 
+            let hasChanges = false; 
+            for (const r of this.state.recurrences) { 
+                if (!r.nextDueDate) continue; 
+                let nextDueDate = new Date(r.nextDueDate + 'T00:00:00'); 
+                while (nextDueDate <= today) { 
+                    const newT = { id: `trans-${Date.now()}${Math.random()}`, type: r.type, description: r.description, amount: r.amount, date: r.nextDueDate, accountId: r.accountId, category: r.category, isPaid: r.type === 'income', dueDate: r.nextDueDate, }; 
+                    await db.put('transactions', newT); 
+                    hasChanges = true; 
+                    if (r.frequency === 'monthly') { 
+                        nextDueDate.setMonth(nextDueDate.getMonth() + 1); 
+                    } else if (r.frequency === 'weekly') { 
+                        nextDueDate.setDate(nextDueDate.getDate() + 7); 
+                    } else if (r.frequency === 'yearly') { 
+                        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); 
+                    } 
+                    r.nextDueDate = nextDueDate.toISOString().split('T')[0]; 
+                    await db.put('recurrences', r); 
+                } 
+            } 
+            if (hasChanges) await this.loadData(); 
         },
 
         async checkLogin() {
@@ -1571,7 +1571,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let dueYear = closingDate.getFullYear();
             if (card.dueDay <= card.closingDay) {
                 dueMonth += 1;
-                 if (dueMonth > 11) {
+                if (dueMonth > 11) {
                     dueMonth = 0;
                     dueYear += 1;
                 }
@@ -1665,7 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         getDeleteIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>`; },
-        getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
+        getEditIconSVG() { return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M5.433 13.917l1.262-3.155A4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>`; },
         getAccountIcon(type) {
             switch (type) {
                 case 'checking': return '🏦';
@@ -1682,7 +1682,19 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         toggleTheme() { document.body.classList.toggle('light-mode'); const isLight = document.body.classList.contains('light-mode'); this.elements.themeToggle.textContent = isLight ? '🌙' : '☀️'; localStorage.setItem('financeTheme', isLight ? 'light' : 'dark'); this.updateAllRenders(); },
         applySavedTheme() { const savedTheme = localStorage.getItem('financeTheme'); if (savedTheme === 'light') { document.body.classList.add('light-mode'); this.elements.themeToggle.textContent = '🌙'; } else { document.body.classList.remove('light-mode'); this.elements.themeToggle.textContent = '☀️'; } },
-        handleTabClick(e) { if (this.state.editingItem) { this.cancelEditMode(); } this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); this.elements.tabContents.forEach(content => content.classList.remove('active')); const tabButton = e.currentTarget; tabButton.classList.add('active'); document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); } if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } },
+        handleTabClick(e) { 
+            if (this.state.editingItem) { this.cancelEditMode(); } 
+            this.elements.tabButtons.forEach(tab => tab.classList.remove('active')); 
+            this.elements.tabContents.forEach(content => content.classList.remove('active')); 
+            const tabButton = e.currentTarget; 
+            tabButton.classList.add('active'); 
+            document.getElementById(`tab-${tabButton.dataset.tab}`).classList.add('active'); 
+            if (this.elements.sidebarNav.classList.contains('visible')) { this.elements.sidebarNav.classList.remove('visible'); this.elements.menuOverlay.classList.remove('visible'); } 
+            if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } 
+            if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); } 
+            if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } 
+            if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } 
+        },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         
         formatCurrencyInput(input, onBlur = false) {
@@ -1954,13 +1966,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
                     if (impact !== 0) {
-                          const transactionDate = new Date(t.date + "T00:00:00");
-                          for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
-                            const dateStr = d.toISOString().split('T')[0];
-                            if(dailyData.has(dateStr)) {
-                                dailyData.set(dateStr, dailyData.get(dateStr) + impact);
-                            }
-                          }
+                             const transactionDate = new Date(t.date + "T00:00:00");
+                             for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                                 const dateStr = d.toISOString().split('T')[0];
+                                 if(dailyData.has(dateStr)) {
+                                     dailyData.set(dateStr, dailyData.get(dateStr) + impact);
+                                 }
+                             }
                     }
                 }
             });
@@ -2145,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCell.appendChild(eventsContainer);
 
                 const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
-                                                                .sort((a,b) => a.amount - b.amount);
+                                                             .sort((a,b) => a.amount - b.amount);
 
                 dayTransactions.forEach((t, index) => {
                     if(index < MAX_VISIBLE_EVENTS) {
@@ -2203,22 +2215,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = this.state[`${type}s`]?.find(i => i.id === id);
             
             let form;
+            let formTitleElement;
+            let formButtonsContainer;
+
             if (type === 'account') {
                 const accountItem = this.state.accounts.find(a => a.id === id);
                 if (!accountItem) return;
                 
                 this.openAccountModal();
-                const modalForm = document.getElementById('account-form');
-                modalForm.elements['account-name'].value = accountItem.name;
-                modalForm.elements['account-type'].value = accountItem.type;
+                form = document.getElementById('account-form');
+                form.elements['account-name'].value = accountItem.name;
+                form.elements['account-type'].value = accountItem.type;
                 
-                document.getElementById('account-modal-title').textContent = `Editar Conta`;
-                const modalButtonContainer = document.getElementById(`account-form-buttons`);
-                modalButtonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
+                formTitleElement = document.getElementById('account-modal-title');
+                formButtonsContainer = document.getElementById('account-form-buttons');
+
+                formTitleElement.textContent = `Editar Conta`;
+                formButtonsContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
                 return;
             }
 
             form = document.getElementById(`${type}-form`);
+            formTitleElement = document.getElementById(`${type}-form-title`);
+            formButtonsContainer = document.getElementById(`${type}-form-buttons`);
+
             if (!form || !item) { this.cancelEditMode(); return; }
 
             const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
@@ -2240,9 +2260,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            document.getElementById(`${type}-form-title`).textContent = `Editar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            const buttonContainer = document.getElementById(`${type}-form-buttons`);
-            buttonContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar</button> <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancelar</button>`;
+            formTitleElement.textContent = `Editar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            formButtonsContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar</button> <button type="button" class="btn btn-secondary" id="cancel-edit-btn">Cancelar</button>`;
             document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode());
         },
 
@@ -2311,7 +2330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
 
             if (balanceHistory.length === 0) {
-                 balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+                     balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
             }
 
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
@@ -2449,7 +2468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="report-filters" id="report-filters-${reportId}">
                         ${this.buildReportFilters(reportId)}
                     </div>
-                     <button class="btn btn-primary" style="width: 100%;" data-action="generate-report" data-report-id="${reportId}">Gerar Relatório</button>
+                    <button class="btn btn-primary" style="width: 100%;" data-action="generate-report" data-report-id="${reportId}">Gerar Relatório</button>
                     <div class="report-results-area" id="report-results-area">
                         <p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Selecione os filtros e gere o relatório para ver os resultados.</p>
                     </div>
@@ -2687,7 +2706,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpense = transactions.filter(t => t.type === 'expense' && t.isPaid).reduce((sum, t) => sum + t.amount, 0);
             const balance = totalIncome - totalExpense;
 
             const rows = transactions.map(t => `
@@ -2875,14 +2894,14 @@ document.addEventListener('DOMContentLoaded', () => {
                          statusText = 'Pendente'; statusClass = 'warning';
                      }
                  }
-                  return `
-                      <tr>
-                          <td>${this.formatDate(t.date)}</td>
-                          <td>${t.description}</td>
-                          <td>${this.formatDate(t.dueDate)}</td>
-                          <td>${this.formatCurrency(t.amount)}</td>
-                          <td class="${statusClass}">${statusText}</td>
-                      </tr>
+                 return `
+                     <tr>
+                         <td>${this.formatDate(t.date)}</td>
+                         <td>${t.description}</td>
+                         <td>${this.formatDate(t.dueDate)}</td>
+                         <td>${this.formatCurrency(t.amount)}</td>
+                         <td class="${statusClass}">${statusText}</td>
+                     </tr>
                  `;
              }).join('');
 
@@ -2996,7 +3015,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body = this.state.transactions
                         .filter(t => t.accountId === filters.accountId && t.date >= filters.startDate && t.date <= filters.endDate)
                         .sort((a,b) => new Date(a.date) - new Date(b.date))
-                        .map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' ? this.formatCurrency(t.amount) : '']);
+                        .map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' && t.isPaid ? this.formatCurrency(t.amount) : '']);
                     break;
                 
                 case 'categoryExpense':
@@ -3006,18 +3025,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
                     break;
 
+                case 'cashflow':
+                    head = [['Mês', 'Receitas', 'Despesas', 'Saldo']];
+                    const cashflowMonthlyData = {};
+                    const cashflowStartDate = new Date(filters.startDate + 'T00:00:00');
+                    const cashflowEndDate = new Date(filters.endDate + 'T00:00:00');
+
+                    this.state.transactions.forEach(t => {
+                        const tDate = new Date(t.date + 'T00:00:00');
+                        if (tDate >= cashflowStartDate && tDate <= cashflowEndDate && t.accountId) {
+                            const monthKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
+                            if (!cashflowMonthlyData[monthKey]) {
+                                cashflowMonthlyData[monthKey] = { income: 0, expense: 0 };
+                            }
+                            if (t.type === 'income' && t.category !== 'Transferência') cashflowMonthlyData[monthKey].income += t.amount;
+                            if (t.type === 'expense' && t.isPaid && t.category !== 'Transferência') cashflowMonthlyData[monthKey].expense += t.amount;
+                        }
+                    });
+                    body = Object.keys(cashflowMonthlyData).sort().map(month => {
+                        const data = cashflowMonthlyData[month];
+                        const balance = data.income - data.expense;
+                        const monthName = new Date(month + '-02').toLocaleString('pt-BR', {month: 'long', year: 'numeric'});
+                        return [monthName, this.formatCurrency(data.income), this.formatCurrency(data.expense), this.formatCurrency(balance)];
+                    });
+                    break;
+
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
-                    let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    let expensesStatus = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
                     if (filters.status && filters.status !== 'all') {
-                        expenses = expenses.filter(t => {
+                        expensesStatus = expensesStatus.filter(t => {
                             const isPaid = t.isPaid;
                             if (filters.status === 'paid') return isPaid;
                             if (filters.status === 'unpaid') return !isPaid;
                             return false;
                         });
                     }
-                    body = expenses
+                    body = expensesStatus
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
                         .map(t => {
                             let statusText = '';
@@ -3030,6 +3074,29 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
                         });
+                    break;
+
+                case 'annualSummary':
+                    head = [['Mês', 'Receitas', 'Despesas', 'Saldo']];
+                    const annualMonthlyData = {};
+                    for(let i=0; i<12; i++){
+                        const monthKey = `${filters.year}-${String(i + 1).padStart(2, '0')}`;
+                        annualMonthlyData[monthKey] = { income: 0, expense: 0, balance: 0 };
+                    }
+                    this.state.transactions.forEach(t => {
+                        if(t.date.startsWith(filters.year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
+                            const month = parseInt(t.date.substring(5, 7), 10) - 1;
+                            const monthKey = `${filters.year}-${String(month + 1).padStart(2, '0')}`;
+                            if(t.type === 'income') annualMonthlyData[monthKey].income += t.amount;
+                            if(t.type === 'expense' && t.isPaid) annualMonthlyData[monthKey].expense += t.amount;
+                        }
+                    });
+                    body = Object.keys(annualMonthlyData).map(monthKey => {
+                        const data = annualMonthlyData[monthKey];
+                        data.balance = data.income - data.expense;
+                        const monthName = new Date(monthKey + '-02').toLocaleString('pt-BR', {month: 'long'});
+                        return [monthName, this.formatCurrency(data.income), this.formatCurrency(data.expense), this.formatCurrency(data.balance)];
+                    });
                     break;
             }
 
