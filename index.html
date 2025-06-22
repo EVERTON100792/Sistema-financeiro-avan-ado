@@ -2415,9 +2415,6 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         },
 
-        // ===================================================================
-        // INÍCIO DO BLOCO DE CÓDIGO COM TODAS AS ALTERAÇÕES DE RELATÓRIO
-        // ===================================================================
         renderReportsMenu() {
             this.hideReportView();
             const menuEl = this.elements.reportsMenu;
@@ -2962,17 +2959,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.showToast("Erro ao carregar a biblioteca de PDF.", "error");
                 return;
             }
-            const { jsPDF } = window.jspdf;
 
-            switch(reportId) {
-                case 'creditCardInvoiceDetail':
-                    this.generateCreditCardInvoiceDetailPDF();
-                    return; 
+            if (reportId === 'creditCardInvoiceDetail') {
+                this.generateCreditCardInvoiceDetailPDF();
+                return;
             }
 
+            const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const report = this.reports[reportId];
             
+            if (!report) {
+                this.showToast("Relatório não encontrado.", "error");
+                return;
+            }
+
             doc.setFontSize(18);
             doc.text(report.title, 14, 22);
             doc.setFontSize(11);
@@ -2982,11 +2983,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 accountId: document.getElementById('filter-account')?.value,
                 startDate: document.getElementById('filter-start-date')?.value,
                 endDate: document.getElementById('filter-end-date')?.value,
-                year: document.getElementById('filter-year')?.value
+                year: document.getElementById('filter-year')?.value,
+                status: document.getElementById('filter-payment-status')?.value
             };
             
-            let body = [];
             let head = [];
+            let body = [];
 
             switch(reportId) {
                 case 'accountStatement':
@@ -2996,26 +2998,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         .sort((a,b) => new Date(a.date) - new Date(b.date))
                         .map(t => [this.formatDate(t.date), t.description, t.category, t.type === 'income' ? this.formatCurrency(t.amount) : '', t.type === 'expense' ? this.formatCurrency(t.amount) : '']);
                     break;
+                
                 case 'categoryExpense':
                     head = [['Categoria', 'Total Gasto']];
                     const expensesCat = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
                     const categoryTotals = expensesCat.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {});
                     body = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([cat, total]) => [cat, this.formatCurrency(total)]);
                     break;
+
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
-                    const statusFilter = document.getElementById('filter-payment-status')?.value;
                     let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
-
-                    if (statusFilter && statusFilter !== 'all') {
+                    if (filters.status && filters.status !== 'all') {
                         expenses = expenses.filter(t => {
                             const isPaid = t.isPaid;
-                            if (statusFilter === 'paid') return isPaid;
-                            if (statusFilter === 'unpaid') return !isPaid;
+                            if (filters.status === 'paid') return isPaid;
+                            if (filters.status === 'unpaid') return !isPaid;
                             return false;
                         });
                     }
-
                     body = expenses
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
                         .map(t => {
@@ -3032,7 +3033,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
 
-            if(body.length === 0){
+            if (body.length === 0) {
                 this.showToast("Nenhum dado para exportar com os filtros selecionados.", "error");
                 return;
             }
