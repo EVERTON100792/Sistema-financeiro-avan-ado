@@ -903,7 +903,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cashflow: { title: 'Fluxo de Caixa Mensal', description: 'Compare suas receitas e despesas totais ao longo dos últimos meses.' },
             paymentStatus: { title: 'Status de Pagamentos', description: 'Acompanhe todas as suas despesas e veja o que já foi pago e o que ainda está pendente.' },
             annualSummary: { title: 'Resumo Anual', description: 'Visualize o balanço de receitas e despesas de cada mês do ano selecionado.' },
-            // *** MUDANÇA 1: Relatórios de cartão divididos ***
             currentCardInvoice: { title: 'Relatório da Fatura Atual', description: 'Gere um relatório detalhado com todas as despesas da fatura aberta (atual) de um cartão de crédito.' },
             nextCardInvoice: { title: 'Relatório da Próxima Fatura', description: 'Veja um relatório com as despesas já lançadas na sua próxima fatura (parcial) de um cartão de crédito.' },
         },
@@ -2007,7 +2006,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === selectedCard.id && i.status === 'open')
-                .sort((a, b) => new Date(a.closingDate) - new Date(b.closingDate));
+                .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
             const currentInvoice = openInvoices[0];
             const nextInvoice = openInvoices[1];
@@ -2532,7 +2531,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let y = currentYear; y >= currentYear - 5; y--) { yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`; }
                     return `<div class="form-group"><label for="filter-year">Ano</label><select id="filter-year">${yearOptions}</select></div>`;
                 
-                // *** MUDANÇA 2: Filtro para os novos relatórios de cartão ***
                 case 'currentCardInvoice':
                 case 'nextCardInvoice':
                     if (this.state.creditCards.length === 0) {
@@ -2556,13 +2554,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'cashflow': this.renderCashflowResults(); break;
                 case 'paymentStatus': this.renderPaymentStatusResults(); break;
                 case 'annualSummary': this.renderAnnualSummaryResults(); break;
-                // *** MUDANÇA 3: Roteamento para a nova função de renderização ***
                 case 'currentCardInvoice': this.renderSingleInvoiceReport('current'); break;
                 case 'nextCardInvoice': this.renderSingleInvoiceReport('next'); break;
             }
         },
         
-        // *** MUDANÇA 4: Nova função para renderizar um relatório de fatura única ***
         renderSingleInvoiceReport(invoiceType) {
             const resultsArea = document.getElementById('report-results-area');
             const cardId = document.getElementById('filter-credit-card')?.value;
@@ -2574,7 +2570,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === cardId && i.status === 'open')
-                .sort((a, b) => new Date(a.closingDate) - new Date(b.closingDate));
+                .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
             const targetInvoice = invoiceType === 'current' ? openInvoices[0] : openInvoices[1];
 
@@ -2912,14 +2908,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
-        // *** MUDANÇA 5: Lógica de geração de PDF atualizada ***
         generateReportPDF(reportId) {
             if (!window.jspdf || !window.jspdf.jsPDF.API.autoTable) {
                 this.showToast("Erro ao carregar a biblioteca PDF ou o plugin de tabelas.", "error");
                 return;
             }
 
-            // Roteia para a nova função de PDF de fatura única
             if (reportId === 'currentCardInvoice' || reportId === 'nextCardInvoice') {
                 this.generateSingleInvoicePDF(reportId === 'currentCardInvoice' ? 'current' : 'next');
                 return;
@@ -3057,7 +3051,6 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
         },
         
-        // *** MUDANÇA 6: Nova função para gerar o PDF de uma fatura única ***
         generateSingleInvoicePDF(invoiceType) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -3073,7 +3066,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const openInvoices = this.state.invoices
                 .filter(i => i.creditCardId === cardId && i.status === 'open')
-                .sort((a,b) => new Date(a.closingDate) - new Date(b.closingDate));
+                .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)); // Correção: Ordenar por data de vencimento
             
             const targetInvoice = invoiceType === 'current' ? openInvoices[0] : openInvoices[1];
 
