@@ -511,8 +511,8 @@
                 
                 <div class="sidebar-user-profile">
                     <div class="user-info">
-                           <div class="user-avatar" id="sidebar-user-avatar"></div>
-                           <span class="user-name" id="sidebar-username"></span>
+                            <div class="user-avatar" id="sidebar-user-avatar"></div>
+                            <span class="user-name" id="sidebar-username"></span>
                     </div>
                     <button id="sidebar-logout-btn" class="btn-logout" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
@@ -1658,6 +1658,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (document.getElementById('tab-calendar')?.classList.contains('active')) { this.renderCalendar(); } 
                 if (document.getElementById('tab-reports')?.classList.contains('active')) { this.renderReportsMenu(); this.hideReportView(); } 
                 if (document.getElementById('tab-credit-cards')?.classList.contains('active')) { this.renderCreditCardModule(); } 
+                if (document.getElementById('tab-accounts')?.classList.contains('active')) { this.renderAccountsList(); } 
             } catch (error) { 
                 console.error("Erro durante a renderização completa:", error); 
                 this.showToast('Ocorreu um erro ao atualizar a tela.', 'error'); 
@@ -1966,13 +1967,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
                     if (impact !== 0) {
-                             const transactionDate = new Date(t.date + "T00:00:00");
-                             for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
-                                 const dateStr = d.toISOString().split('T')[0];
-                                 if(dailyData.has(dateStr)) {
-                                     dailyData.set(dateStr, dailyData.get(dateStr) + impact);
-                                 }
-                             }
+                                  const transactionDate = new Date(t.date + "T00:00:00");
+                                  for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                                      const dateStr = d.toISOString().split('T')[0];
+                                      if(dailyData.has(dateStr)) {
+                                          dailyData.set(dateStr, dailyData.get(dateStr) + impact);
+                                      }
+                                  }
                     }
                 }
             });
@@ -2157,7 +2158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCell.appendChild(eventsContainer);
 
                 const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
-                                                             .sort((a,b) => a.amount - b.amount);
+                                                                .sort((a,b) => a.amount - b.amount);
 
                 dayTransactions.forEach((t, index) => {
                     if(index < MAX_VISIBLE_EVENTS) {
@@ -2330,7 +2331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
 
             if (balanceHistory.length === 0) {
-                     balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+                         balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
             }
 
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
@@ -2974,8 +2975,9 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         generateReportPDF(reportId) {
-            if (!window.jspdf || typeof window.jspdf.jsPDF.prototype.autoTable !== 'function') {
-                this.showToast("Erro ao carregar a biblioteca de PDF.", "error");
+            // *** CORREÇÃO APLICADA AQUI ***
+            if (!window.jspdf || !window.jspdf.jsPDF.API.autoTable) {
+                this.showToast("Erro ao carregar a biblioteca PDF ou o plugin de tabelas.", "error");
                 return;
             }
 
