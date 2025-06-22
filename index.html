@@ -876,7 +876,9 @@
             </form>
         </div>
     </div>
-    <script>
+
+
+<script>
 document.addEventListener('DOMContentLoaded', () => {
 
     const db = {
@@ -993,8 +995,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.addEventListener('blur', (e) => this.formatCurrencyInput(e.target, true));
             });
 
-            // CORREÇÃO: Listener principal para delegar eventos de clique.
-            // Isso resolve o bug dos botões que paravam de funcionar.
             this.elements.appContainer.addEventListener('click', async (e) => {
                 const target = e.target;
                 const deleteButton = target.closest('.delete-button');
@@ -1006,7 +1006,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (editButton) { this.startEditMode(editButton.dataset.type, editButton.dataset.id); }
                 if (payButton) { await this.markAsPaid(payButton.dataset.id); }
 
-                // BOTÕES DO CARTÃO DE CRÉDITO
                 if (payBillBtn) { this.openBillPaymentModal(payBillBtn.dataset.id); }
                 if (addExpenseBtn) { this.openCreditCardExpenseModal(addExpenseBtn.dataset.id); }
 
@@ -1268,7 +1267,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.cancelEditMode();
         },
         
-        // INÍCIO DA FUNÇÃO CORRIGIDA
         async handleCreditCardExpense(e) {
             e.preventDefault();
             const form = e.target;
@@ -1321,7 +1319,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllRenders();
             this.closeCreditCardExpenseModal();
         },
-        // FIM DA FUNÇÃO CORRIGIDA
 
         async handleBillPayment(e) {
             e.preventDefault();
@@ -1338,7 +1335,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.updateAllBalances();
             if (sourceAccount.currentBalance < paymentAmount) { this.showToast("Saldo insuficiente na conta de origem.", 'error'); return; }
             
-            // ESCLARECIMENTO: É esta transação que deduz do patrimônio, pois ela tem um `accountId`.
             const expenseTransaction = { id: `trans-${Date.now()}-pay`, type: 'expense', description: `Pagamento da fatura - ${card.name}`, amount: paymentAmount, date: paymentDate, accountId: sourceAccountId, category: 'Pagamento de Fatura', isPaid: true, dueDate: paymentDate };
             
             invoice.status = 'paid';
@@ -1547,14 +1543,12 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async getOrCreateInvoiceForDate(cardId, purchaseDate) {
-            // ESCLARECIMENTO: Esta função implementa a lógica de fechamento e vencimento.
             const card = this.state.creditCards.find(c => c.id === cardId);
             if (!card) return null;
 
             let invoiceMonth = purchaseDate.getMonth();
             let invoiceYear = purchaseDate.getFullYear();
 
-            // Se a data da compra for maior que o dia do fechamento, joga para o próximo mês.
             if (purchaseDate.getDate() > card.closingDay) {
                 invoiceMonth += 1;
                 if (invoiceMonth > 11) {
@@ -1571,7 +1565,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return invoice;
             }
             
-            // Calcula a data de vencimento da nova fatura
             let dueMonth = closingDate.getMonth();
             let dueYear = closingDate.getFullYear();
             if (card.dueDay <= card.closingDay) {
@@ -1851,7 +1844,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const accountBalance = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
             
-            // ESCLARECIMENTO: O patrimônio é a soma do saldo das contas. Despesas de cartão não entram aqui.
             const netWorth = accountBalance; 
 
             const balanceEl = document.getElementById('balance');
@@ -1980,6 +1972,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         
+        // ===================================================================
+        // INÍCIO DA FUNÇÃO ALTERADA
+        // ===================================================================
         renderCreditCardModule() {
             const selectorList = this.elements.creditCardSelectorList;
             selectorList.innerHTML = this.state.creditCards.map(c => `
@@ -1991,19 +1986,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const detailsContainer = this.elements.selectedCardDetails;
             const selectedCard = this.state.creditCards.find(c => c.id === this.state.selectedCardId);
             
-            if(!selectedCard) {
+            if (!selectedCard) {
                 detailsContainer.innerHTML = '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Selecione ou adicione um cartão para ver os detalhes.</p>';
                 return;
             }
 
-            const openInvoices = this.state.invoices.filter(i => i.creditCardId === selectedCard.id && i.status === 'open');
+            // --- NOVA LÓGICA PARA SEPARAR FATURAS ---
+            
+            // 1. Pega todas as faturas abertas do cartão selecionado e ordena por data de fechamento
+            const openInvoices = this.state.invoices
+                .filter(i => i.creditCardId === selectedCard.id && i.status === 'open')
+                .sort((a, b) => new Date(a.closingDate) - new Date(b.closingDate));
+
+            const currentInvoice = openInvoices[0]; // A primeira da lista é a "Fatura Atual"
+            const nextInvoice = openInvoices[1];    // A segunda é a "Próxima Fatura"
+
+            // 2. Calcula os valores totais para o resumo
             const totalOpenAmount = openInvoices.reduce((sum, inv) => sum + inv.amount, 0);
             const availableLimit = selectedCard.limit - totalOpenAmount;
-            
-            const nextInvoiceToPay = openInvoices.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
-            const invoiceAmount = nextInvoiceToPay ? nextInvoiceToPay.amount : 0;
-            const invoiceTransactions = nextInvoiceToPay ? this.state.transactions.filter(t => t.invoiceId === nextInvoiceToPay.id) : [];
+            const currentInvoiceAmount = currentInvoice ? currentInvoice.amount : 0;
 
+            // 3. Pega as transações de cada fatura
+            const currentInvoiceTransactions = currentInvoice 
+                ? this.state.transactions.filter(t => t.invoiceId === currentInvoice.id).sort((a,b) => new Date(b.date) - new Date(a.date))
+                : [];
+
+            const nextInvoiceTransactions = nextInvoice
+                ? this.state.transactions.filter(t => t.invoiceId === nextInvoice.id).sort((a,b) => new Date(b.date) - new Date(a.date))
+                : [];
+            
+            // 4. Renderiza o novo HTML com as seções separadas
             detailsContainer.innerHTML = `
                 <div class="card-header">
                     <h2>${selectedCard.name}</h2>
@@ -2012,10 +2024,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="delete-button" data-type="creditCard" data-id="${selectedCard.id}" title="Deletar Cartão">${this.getDeleteIconSVG()}</button>
                     </div>
                 </div>
+                
                 <div class="credit-card-summary">
                     <div class="info-item">
-                        <div class="label">Próxima Fatura</div>
-                        <div class="value expense">${this.formatCurrency(invoiceAmount)}</div>
+                        <div class="label">Fatura Atual</div>
+                        <div class="value expense">${this.formatCurrency(currentInvoiceAmount)}</div>
                     </div>
                     <div class="info-item">
                         <div class="label">Limite Disponível</div>
@@ -2023,24 +2036,55 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="info-item">
                         <div class="label">Vencimento</div>
-                        <div class="value">${nextInvoiceToPay ? this.formatDate(nextInvoiceToPay.dueDate) : 'N/A'}</div>
+                        <div class="value">${currentInvoice ? this.formatDate(currentInvoice.dueDate) : 'N/A'}</div>
                     </div>
                 </div>
+                
                 <div class="progress-bar-container" title="Limite Total: ${this.formatCurrency(selectedCard.limit)}">
                     <div class="progress-bar ${ (totalOpenAmount / selectedCard.limit * 100) > 80 ? 'over' : ''}" style="width: ${Math.min(totalOpenAmount / selectedCard.limit * 100, 100)}%;"></div>
                 </div>
+                
                 <div class="credit-card-actions">
                     <button class="btn btn-primary add-expense-btn" data-id="${selectedCard.id}">Adicionar Despesa</button>
-                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}" ${!nextInvoiceToPay || invoiceAmount <= 0 ? 'disabled' : ''}>Pagar Fatura</button>
+                    <button class="btn btn-success pay-bill-btn" data-id="${selectedCard.id}" ${!currentInvoice || currentInvoiceAmount <= 0 ? 'disabled' : ''}>Pagar Fatura</button>
                 </div>
-                <h3 style="margin-top: 30px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">Compras na Próxima Fatura</h3>
-                <div class="transaction-list-container" style="margin-top: 15px;">
-                    <ul>
-                        ${invoiceTransactions.length > 0 ? invoiceTransactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => this.renderTransactionItem(t, true)).join('') : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma despesa nesta fatura.</p>'}
-                    </ul>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">
+                        Fatura Atual 
+                        <span style="font-size: 0.9rem; color: var(--text-muted-color); font-weight: 400;">
+                            (Fecha em ${currentInvoice ? this.formatDate(currentInvoice.closingDate) : 'N/A'})
+                        </span>
+                    </h3>
+                    <div class="transaction-list-container" style="margin-top: 15px; max-height: 250px;">
+                        <ul>
+                            ${currentInvoiceTransactions.length > 0 
+                                ? currentInvoiceTransactions.map(t => this.renderTransactionItem(t, true)).join('') 
+                                : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma despesa na fatura atual.</p>'}
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                     <h3 style="border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px;">
+                        Próxima Fatura
+                        <span style="font-size: 0.9rem; color: var(--text-muted-color); font-weight: 400;">
+                            (Valor parcial: ${this.formatCurrency(nextInvoice ? nextInvoice.amount : 0)})
+                        </span>
+                    </h3>
+                    <div class="transaction-list-container" style="margin-top: 15px; max-height: 250px;">
+                        <ul>
+                            ${nextInvoiceTransactions.length > 0 
+                                ? nextInvoiceTransactions.map(t => this.renderTransactionItem(t, true)).join('') 
+                                : '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhuma despesa lançada na próxima fatura ainda.</p>'}
+                        </ul>
+                    </div>
                 </div>
             `;
         },
+        // ===================================================================
+        // FIM DA FUNÇÃO ALTERADA
+        // ===================================================================
         
         renderCategoriesList() { this.elements.categoriesList.innerHTML = [...this.state.categories].sort((a,b) => a.name.localeCompare(b.name)).map(cat => ` <div class="category-item"> <div class="list-item-header"> <div class="main-info"><h3>${cat.name}</h3></div> <div class="actions"> <button class="edit-btn" data-type="category" data-id="${cat.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="category" data-id="${cat.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> </div> `).join(''); },
         renderBudgetsList() { const now = new Date(); const currentMonth = now.getMonth(); const currentYear = now.getFullYear(); this.elements.budgetsList.innerHTML = this.state.budgets.map(b => { const spent = this.state.transactions .filter(t => t.category === b.category && t.type === 'expense' && (t.isPaid || t.creditCardId) && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear) .reduce((sum, t) => sum + t.amount, 0); const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0; return ` <div class="list-item"> <div class="list-item-header"> <div class="main-info" style="gap:0; display: block;"> <h3>${b.category}</h3> <span>${this.formatCurrency(spent)} / ${this.formatCurrency(b.amount)}</span> </div> <div class="actions"> <button class="edit-btn" data-type="budget" data-id="${b.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="budget" data-id="${b.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </div> <div class="progress-bar-container"><div class="progress-bar ${percentage > 100 ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;">${Math.round(percentage)}%</div></div> </div> `; }).join('') || '<p style="text-align:center;color:var(--text-muted-color);padding:20px;">Nenhum orçamento definido.</p>'; },
@@ -2381,7 +2425,6 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         },
 
-        // === SEÇÃO DE RELATÓRIOS ===
         renderReportsMenu() {
             this.hideReportView();
             const menuEl = this.elements.reportsMenu;
