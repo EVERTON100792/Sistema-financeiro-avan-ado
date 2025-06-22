@@ -2974,7 +2974,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         generateReportPDF(reportId) {
-            if (!window.jspdf || !window.jspdf.jsPDF.autoTable) {
+            if (!window.jspdf || typeof window.jspdf.jsPDF.prototype.autoTable !== 'function') {
                 this.showToast("Erro ao carregar a biblioteca de PDF.", "error");
                 return;
             }
