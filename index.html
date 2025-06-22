@@ -903,7 +903,9 @@ document.addEventListener('DOMContentLoaded', () => {
             cashflow: { title: 'Fluxo de Caixa Mensal', description: 'Compare suas receitas e despesas totais ao longo dos últimos meses.' },
             paymentStatus: { title: 'Status de Pagamentos', description: 'Acompanhe todas as suas despesas e veja o que já foi pago e o que ainda está pendente.' },
             annualSummary: { title: 'Resumo Anual', description: 'Visualize o balanço de receitas e despesas de cada mês do ano selecionado.' },
-            creditCardInvoiceDetail: { title: 'Detalhe de Faturas do Cartão', description: 'Visualize as despesas da sua fatura atual e da próxima, com os totais de cada uma, para um cartão específico.' }
+            // *** MUDANÇA 1: Relatórios de cartão divididos ***
+            currentCardInvoice: { title: 'Relatório da Fatura Atual', description: 'Gere um relatório detalhado com todas as despesas da fatura aberta (atual) de um cartão de crédito.' },
+            nextCardInvoice: { title: 'Relatório da Próxima Fatura', description: 'Veja um relatório com as despesas já lançadas na sua próxima fatura (parcial) de um cartão de crédito.' },
         },
 
         async init() {
@@ -2530,7 +2532,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let y = currentYear; y >= currentYear - 5; y--) { yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`; }
                     return `<div class="form-group"><label for="filter-year">Ano</label><select id="filter-year">${yearOptions}</select></div>`;
                 
-                case 'creditCardInvoiceDetail':
+                // *** MUDANÇA 2: Filtro para os novos relatórios de cartão ***
+                case 'currentCardInvoice':
+                case 'nextCardInvoice':
                     if (this.state.creditCards.length === 0) {
                         return '<p style="color: var(--text-muted-color);">Nenhum cartão de crédito cadastrado.</p>';
                     }
@@ -2552,11 +2556,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'cashflow': this.renderCashflowResults(); break;
                 case 'paymentStatus': this.renderPaymentStatusResults(); break;
                 case 'annualSummary': this.renderAnnualSummaryResults(); break;
-                case 'creditCardInvoiceDetail': this.renderCreditCardInvoiceDetailResults(); break;
+                // *** MUDANÇA 3: Roteamento para a nova função de renderização ***
+                case 'currentCardInvoice': this.renderSingleInvoiceReport('current'); break;
+                case 'nextCardInvoice': this.renderSingleInvoiceReport('next'); break;
             }
         },
-
-        renderCreditCardInvoiceDetailResults() {
+        
+        // *** MUDANÇA 4: Nova função para renderizar um relatório de fatura única ***
+        renderSingleInvoiceReport(invoiceType) {
             const resultsArea = document.getElementById('report-results-area');
             const cardId = document.getElementById('filter-credit-card')?.value;
 
@@ -2569,19 +2576,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(i => i.creditCardId === cardId && i.status === 'open')
                 .sort((a, b) => new Date(a.closingDate) - new Date(b.closingDate));
 
-            const currentInvoice = openInvoices[0];
-            const nextInvoice = openInvoices[1];
+            const targetInvoice = invoiceType === 'current' ? openInvoices[0] : openInvoices[1];
 
-            const currentInvoiceTransactions = currentInvoice
-                ? this.state.transactions.filter(t => t.invoiceId === currentInvoice.id).sort((a, b) => new Date(a.date) - new Date(b.date))
-                : [];
-            
-            const nextInvoiceTransactions = nextInvoice
-                ? this.state.transactions.filter(t => t.invoiceId === nextInvoice.id).sort((a, b) => new Date(a.date) - new Date(b.date))
-                : [];
+            if (!targetInvoice) {
+                const message = invoiceType === 'current'
+                    ? 'Nenhuma fatura atual aberta foi encontrada para este cartão.'
+                    : 'Nenhuma próxima fatura foi encontrada para este cartão.';
+                resultsArea.innerHTML = `<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">${message}</p>`;
+                return;
+            }
+
+            const invoiceTransactions = this.state.transactions
+                .filter(t => t.invoiceId === targetInvoice.id)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
 
             const buildTableRows = (transactions) => {
-                if (transactions.length === 0) return '<tr><td colspan="4" style="text-align:center; color: var(--text-muted-color);">Nenhuma despesa encontrada.</td></tr>';
+                if (transactions.length === 0) return '<tr><td colspan="4" style="text-align:center; color: var(--text-muted-color);">Nenhuma despesa encontrada nesta fatura.</td></tr>';
                 return transactions.map(t => `
                     <tr>
                         <td>${this.formatDate(t.date)}</td>
@@ -2592,98 +2602,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 `).join('');
             };
 
-            const currentInvoiceTotal = currentInvoice ? currentInvoice.amount : 0;
-            const nextInvoiceTotal = nextInvoice ? nextInvoice.amount : 0;
+            const summaryLabel = invoiceType === 'current'
+                ? `Total da Fatura Atual (Vence em ${this.formatDate(targetInvoice.dueDate)})`
+                : `Total Parcial da Próxima Fatura (Fecha em ${this.formatDate(targetInvoice.closingDate)})`;
 
             resultsArea.innerHTML = `
-                <div class="report-section" style="margin-bottom: 30px;">
-                    <div class="report-summary" style="grid-template-columns: 1fr; text-align: left;">
-                        <div class="summary-item">
-                            <div class="label">Total da Fatura Atual (Vence em ${currentInvoice ? this.formatDate(currentInvoice.dueDate) : 'N/A'})</div>
-                            <div class="value negative">${this.formatCurrency(currentInvoiceTotal)}</div>
-                        </div>
-                    </div>
-                    <div class="report-table-wrapper">
-                        <table class="report-table">
-                            <thead><tr><th>Data da Compra</th><th>Descrição</th><th>Categoria</th><th style="text-align: right;">Valor</th></tr></thead>
-                            <tbody>${buildTableRows(currentInvoiceTransactions)}</tbody>
-                        </table>
-                    </div>
-                </div>
-
                 <div class="report-section">
-                    <div class="report-summary" style="grid-template-columns: 1fr; text-align: left;">
+                    <div class="report-summary">
                         <div class="summary-item">
-                            <div class="label">Total Parcial da Próxima Fatura (Fecha em ${nextInvoice ? this.formatDate(nextInvoice.closingDate) : 'N/A'})</div>
-                            <div class="value negative">${this.formatCurrency(nextInvoiceTotal)}</div>
+                            <div class="label">${summaryLabel}</div>
+                            <div class="value negative">${this.formatCurrency(targetInvoice.amount)}</div>
                         </div>
                     </div>
                     <div class="report-table-wrapper">
                         <table class="report-table">
                             <thead><tr><th>Data da Compra</th><th>Descrição</th><th>Categoria</th><th style="text-align: right;">Valor</th></tr></thead>
-                            <tbody>${buildTableRows(nextInvoiceTransactions)}</tbody>
+                            <tbody>${buildTableRows(invoiceTransactions)}</tbody>
                         </table>
                     </div>
                 </div>
             `;
-        },
-
-        generateCreditCardInvoiceDetailPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const cardId = document.getElementById('filter-credit-card')?.value;
-
-            if (!cardId) {
-                this.showToast("Selecione um cartão de crédito primeiro.", "error");
-                return;
-            }
-
-            const selectedCard = this.state.creditCards.find(c => c.id === cardId);
-            if (!selectedCard) return;
-
-            const openInvoices = this.state.invoices.filter(i => i.creditCardId === cardId && i.status === 'open').sort((a,b) => new Date(a.closingDate) - new Date(b.closingDate));
-            const currentInvoice = openInvoices[0];
-            const nextInvoice = openInvoices[1];
-            
-            doc.setFontSize(18);
-            doc.text('Detalhe de Faturas do Cartão', 14, 22);
-            doc.setFontSize(12);
-            doc.text(`Cartão: ${selectedCard.name}`, 14, 30);
-
-            let lastY = 35;
-
-            if (currentInvoice) {
-                const currentTotal = currentInvoice.amount;
-                const head = [['Data', 'Descrição', 'Categoria', 'Valor']];
-                const body = this.state.transactions
-                    .filter(t => t.invoiceId === currentInvoice.id)
-                    .sort((a, b) => new Date(a.date) - new Date(b.date))
-                    .map(t => [this.formatDate(t.date), t.description, t.category, this.formatCurrency(t.amount)]);
-                
-                doc.setFontSize(11);
-                doc.setTextColor(100);
-                doc.text(`Fatura Atual - Total: ${this.formatCurrency(currentTotal)} (Vencimento: ${this.formatDate(currentInvoice.dueDate)})`, 14, lastY + 5);
-                
-                doc.autoTable({ head, body, startY: lastY + 8, theme: 'grid' });
-                lastY = doc.autoTable.previous.finalY;
-            }
-
-            if (nextInvoice) {
-                const nextTotal = nextInvoice.amount;
-                const head = [['Data', 'Descrição', 'Categoria', 'Valor']];
-                const body = this.state.transactions
-                    .filter(t => t.invoiceId === nextInvoice.id)
-                    .sort((a, b) => new Date(a.date) - new Date(b.date))
-                    .map(t => [this.formatDate(t.date), t.description, t.category, this.formatCurrency(t.amount)]);
-                
-                doc.setFontSize(11);
-                doc.setTextColor(100);
-                doc.text(`Próxima Fatura - Total Parcial: ${this.formatCurrency(nextTotal)} (Fechamento: ${this.formatDate(nextInvoice.closingDate)})`, 14, lastY + 15);
-                
-                doc.autoTable({ head, body, startY: lastY + 18, theme: 'grid' });
-            }
-
-            doc.save(`relatorio_faturas_${selectedCard.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
         },
 
         renderAccountStatementResults() {
@@ -2974,15 +2912,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
 
+        // *** MUDANÇA 5: Lógica de geração de PDF atualizada ***
         generateReportPDF(reportId) {
-            // *** CORREÇÃO APLICADA AQUI ***
             if (!window.jspdf || !window.jspdf.jsPDF.API.autoTable) {
                 this.showToast("Erro ao carregar a biblioteca PDF ou o plugin de tabelas.", "error");
                 return;
             }
 
-            if (reportId === 'creditCardInvoiceDetail') {
-                this.generateCreditCardInvoiceDetailPDF();
+            // Roteia para a nova função de PDF de fatura única
+            if (reportId === 'currentCardInvoice' || reportId === 'nextCardInvoice') {
+                this.generateSingleInvoicePDF(reportId === 'currentCardInvoice' ? 'current' : 'next');
                 return;
             }
 
@@ -3116,7 +3055,62 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             doc.save(`${reportId}_${new Date().toISOString().split('T')[0]}.pdf`);
-        }
+        },
+        
+        // *** MUDANÇA 6: Nova função para gerar o PDF de uma fatura única ***
+        generateSingleInvoicePDF(invoiceType) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const cardId = document.getElementById('filter-credit-card')?.value;
+
+            if (!cardId) {
+                this.showToast("Selecione um cartão de crédito primeiro.", "error");
+                return;
+            }
+
+            const selectedCard = this.state.creditCards.find(c => c.id === cardId);
+            if (!selectedCard) return;
+
+            const openInvoices = this.state.invoices
+                .filter(i => i.creditCardId === cardId && i.status === 'open')
+                .sort((a,b) => new Date(a.closingDate) - new Date(b.closingDate));
+            
+            const targetInvoice = invoiceType === 'current' ? openInvoices[0] : openInvoices[1];
+
+            if (!targetInvoice) {
+                this.showToast("Nenhuma fatura correspondente encontrada para gerar o PDF.", "error");
+                return;
+            }
+
+            const reportTitle = invoiceType === 'current' ? 'Relatório da Fatura Atual' : 'Relatório da Próxima Fatura';
+            const summaryLabel = invoiceType === 'current' 
+                ? `Total: ${this.formatCurrency(targetInvoice.amount)} (Vencimento: ${this.formatDate(targetInvoice.dueDate)})`
+                : `Total Parcial: ${this.formatCurrency(targetInvoice.amount)} (Fechamento: ${this.formatDate(targetInvoice.closingDate)})`;
+            
+            doc.setFontSize(18);
+            doc.text(reportTitle, 14, 22);
+            doc.setFontSize(12);
+            doc.text(`Cartão: ${selectedCard.name}`, 14, 30);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text(summaryLabel, 14, 36);
+
+            const head = [['Data da Compra', 'Descrição', 'Categoria', 'Valor']];
+            const body = this.state.transactions
+                .filter(t => t.invoiceId === targetInvoice.id)
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .map(t => [this.formatDate(t.date), t.description, t.category, this.formatCurrency(t.amount)]);
+
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 42,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 33, 62] }
+            });
+
+            doc.save(`relatorio_fatura_${invoiceType}_${selectedCard.name.replace(/\s/g, '_')}.pdf`);
+        },
     };
 
     financeApp.init();
