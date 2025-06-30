@@ -971,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastTabButton.click();
                 }
             } else {
-                 this.handleTransactionTypeChange();
+                   this.handleTransactionTypeChange();
             }
         },
         
@@ -1335,38 +1335,39 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const dbPromises = [];
 
-            if (installments === 1) {
-                const invoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDateStr + 'T00:00:00'));
-                if (!invoice) { this.showToast("Não foi possível processar a fatura.", 'error'); return; }
+            const tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00'); // Use a temporary date for iteration
 
-                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category, isPaid: false };
+            for (let i = 0; i < installments; i++) {
+                const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
+                if (!invoice) { this.showToast(`Não foi possível processar a fatura para parcela ${i + 1}.`, 'error'); return; }
+
+                const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
+                
+                // The due date for a credit card transaction is the due date of its invoice
+                const dueDate = invoice.dueDate; 
+
+                const expense = { 
+                    id: `trans-${Date.now()}-${i}`, // Unique ID for each installment
+                    type: 'expense', 
+                    creditCardId: cardId, 
+                    invoiceId: invoice.id, 
+                    description: `${originalDescription}${installments > 1 ? ` (${i + 1}/${installments})` : ''}`, 
+                    amount: installmentAmount, 
+                    date: purchaseDateStr, 
+                    category, 
+                    isPaid: false,
+                    dueDate: dueDate // Assign the invoice's due date to the transaction
+                };
+                
                 dbPromises.push(db.put('transactions', expense));
                 
-                invoice.amount = parseFloat(((invoice.amount || 0) + totalAmount).toFixed(2));
+                invoice.amount = parseFloat(((invoice.amount || 0) + installmentAmount).toFixed(2));
                 dbPromises.push(db.put('invoices', invoice));
-                
+
                 this.state.transactions.push(expense);
-            } else {
-                const purchaseGroupId = `p-${Date.now()}`;
-                const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
-                let sumOfInstallments = 0;
-                const tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00');
-
-                for (let i = 0; i < installments; i++) {
-                    const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
-                    if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
-
-                    const currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
-                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDateStr, category, isPaid: false };
-                    
-                    dbPromises.push(db.put('transactions', expense));
-                    invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
-                    dbPromises.push(db.put('invoices', invoice));
-
-                    this.state.transactions.push(expense);
-                    sumOfInstallments += currentInstallmentAmount;
-                    tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
-                }
+                
+                // Advance to the next month for the next installment's invoice
+                tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
             }
 
             await Promise.all(dbPromises);
@@ -1523,6 +1524,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const t = this.state.transactions[tIndex];
             
+            // If it's a credit card transaction, update the associated invoice
             if(t.creditCardId) { 
                 const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); 
                 if(invoice) { 
@@ -1605,6 +1607,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let invoiceMonth = purchaseDate.getMonth();
             let invoiceYear = purchaseDate.getFullYear();
 
+            // Determine the invoice month based on the closing day
             if (purchaseDate.getDate() > card.closingDay) {
                 invoiceMonth += 1;
                 if (invoiceMonth > 11) {
@@ -1621,8 +1624,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return invoice;
             }
             
+            // Calculate the due date for the new invoice
             let dueMonth = closingDate.getMonth();
             let dueYear = closingDate.getFullYear();
+            // If the due day is before or on the closing day, the due date is in the next month
             if (card.dueDay <= card.closingDay) {
                 dueMonth += 1;
                 if (dueMonth > 11) {
@@ -2038,13 +2043,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
                     if (impact !== 0) {
-                                  const transactionDate = new Date(t.date + "T00:00:00");
-                                  for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
-                                      const dateStr = d.toISOString().split('T')[0];
-                                      if(dailyData.has(dateStr)) {
-                                          dailyData.set(dateStr, dailyData.get(dateStr) + impact);
-                                      }
-                                  }
+                                    const transactionDate = new Date(t.date + "T00:00:00");
+                                    for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                                        const dateStr = d.toISOString().split('T')[0];
+                                        if(dailyData.has(dateStr)) {
+                                            dailyData.set(dateStr, dailyData.get(dateStr) + impact);
+                                        }
+                                    }
                     }
                 }
             });
@@ -2229,7 +2234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCell.appendChild(eventsContainer);
 
                 const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
-                                                                .sort((a,b) => a.amount - b.amount);
+                                                            .sort((a,b) => a.amount - b.amount);
 
                 dayTransactions.forEach((t, index) => {
                     if(index < MAX_VISIBLE_EVENTS) {
@@ -2376,7 +2381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (form) {
                     form.reset();
-                     if (type === 'transaction') {
+                    if (type === 'transaction') {
                         document.getElementById('date').valueAsDate = new Date();
                     }
                 }
@@ -2461,7 +2466,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
             if (balanceHistory.length === 0) {
-                                 balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+                                balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
             }
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
             this.charts.evolutionChart.data.datasets = [{
@@ -3033,7 +3038,7 @@ document.addEventListener('DOMContentLoaded', () => {
              const statusFilter = document.getElementById('filter-payment-status').value;
              const resultsArea = document.getElementById('report-results-area');
 
-             let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= startDate && t.date <= endDate);
+             let expenses = this.state.transactions.filter(t => t.type === 'expense' && (t.date >= startDate && t.date <= endDate || (t.creditCardId && t.dueDate >= startDate && t.dueDate <= endDate)));
 
              if (statusFilter !== 'all') {
                  expenses = expenses.filter(t => {
@@ -3058,8 +3063,9 @@ document.addEventListener('DOMContentLoaded', () => {
                      statusText = 'Pago'; statusClass = 'positive';
                  } else {
                      const today = new Date(); today.setHours(0,0,0,0);
-                     const dueDate = new Date(t.dueDate + 'T00:00:00');
-                     if(dueDate < today) {
+                     const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+
+                     if (dueDate && dueDate < today) {
                          statusText = 'Atrasado'; statusClass = 'negative';
                      } else {
                          statusText = 'Pendente'; statusClass = 'warning';
@@ -3069,7 +3075,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      <tr>
                          <td>${this.formatDate(t.date)}</td>
                          <td>${t.description}</td>
-                         <td>${this.formatDate(t.dueDate)}</td>
+                         <td>${t.dueDate ? this.formatDate(t.dueDate) : 'N/A'}</td>
                          <td>${this.formatCurrency(t.amount)}</td>
                          <td class="${statusClass}">${statusText}</td>
                      </tr>
@@ -3224,7 +3230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
-                    let expensesStatus = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    let expensesStatus = this.state.transactions.filter(t => t.type === 'expense' && (t.date >= filters.startDate && t.date <= filters.endDate || (t.creditCardId && t.dueDate >= filters.startDate && t.dueDate <= filters.endDate)));
                     if (filters.status && filters.status !== 'all') {
                         expensesStatus = expensesStatus.filter(t => {
                             const isPaid = t.isPaid;
@@ -3241,10 +3247,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 statusText = 'Pago';
                             } else {
                                 const today = new Date(); today.setHours(0,0,0,0);
-                                const dueDate = new Date(t.dueDate + 'T00:00:00');
-                                statusText = dueDate < today ? 'Atrasado' : 'Pendente';
+                                const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+                                statusText = (dueDate && dueDate < today) ? 'Atrasado' : 'Pendente';
                             }
-                            return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
+                            return [this.formatDate(t.date), t.description, t.dueDate ? this.formatDate(t.dueDate) : 'N/A', this.formatCurrency(t.amount), statusText];
                         });
                     break;
 
