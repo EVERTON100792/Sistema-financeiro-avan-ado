@@ -1266,9 +1266,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             this.updateAllRenders();
             this.cancelEditMode();
-            form.reset();
-            document.getElementById('date').valueAsDate = new Date();
-            this.handleTransactionTypeChange();
         },
         
         async handleAccount(e) {
@@ -1752,11 +1749,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             sessionStorage.setItem('lastActiveTab', tabButton.dataset.tab);
             
-            if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } 
-            if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); } 
-            if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } 
-            if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } 
-            if(tabButton.dataset.tab === 'dashboard') { this.handleTransactionTypeChange(); }
+            // Re-render tab content on click to ensure it's always fresh
+            const tabId = tabButton.dataset.tab;
+            if (tabId === 'dashboard') {
+                this.updateAllBalances();
+                this.renderSummary();
+                this.renderTransactionList();
+                this.updateDashboardCharts();
+                this.handleTransactionTypeChange();
+            } else if (tabId === 'calendar') {
+                this.renderCalendar();
+            } else if (tabId === 'reports') {
+                this.renderReportsMenu();
+            } else if (tabId === 'credit-cards') {
+                this.renderCreditCardModule();
+            } else if (tabId === 'accounts') {
+                this.renderAccountsList();
+            }
         },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         
@@ -1882,7 +1891,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderTransactionItem(t, isCardExpense = false) {
             const accountName = t.accountId ? (this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A') : (this.state.creditCards.find(c => c.id === t.creditCardId)?.name || 'N/A');
-            const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
+            const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="edit-btn" data-type="transaction" data-id="${t.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
         },
 
         renderTransactionList() { 
@@ -2274,25 +2283,51 @@ document.addEventListener('DOMContentLoaded', () => {
         
         startEditMode(type, id){ 
             this.cancelEditMode();
-            this.state.editingItem = { type, id };
             const item = this.state[`${type}s`]?.find(i => i.id === id);
+            if (!item) return;
             
+            this.state.editingItem = { type, id, item };
+
+            // For transaction editing, switch to dashboard and scroll to form
+            if (type === 'transaction') {
+                const tabButton = document.querySelector(`.tab-btn[data-tab="dashboard"]`);
+                if(tabButton) tabButton.click();
+                
+                const form = this.elements.transactionForm;
+                form.elements['transaction-type'].value = item.type;
+                form.elements['description'].value = item.description;
+                form.elements['amount'].value = item.amount;
+                this.formatCurrencyInput(form.elements['amount'], true);
+                form.elements['date'].value = item.date;
+                form.elements['account-select'].value = item.accountId;
+                form.elements['category-select'].value = item.category;
+                if (item.type === 'expense') {
+                    form.elements['due-date'].value = item.dueDate || '';
+                }
+                
+                this.handleTransactionTypeChange();
+                
+                document.getElementById('transaction-form-title').textContent = 'Editar Transação';
+                document.getElementById('transaction-form-buttons').innerHTML = `
+                    <button type="submit" class="btn btn-success">Atualizar</button>
+                    <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>
+                `;
+                form.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
             let form;
             let formTitleElement;
             let formButtonsContainer;
 
             if (type === 'account') {
-                const accountItem = this.state.accounts.find(a => a.id === id);
-                if (!accountItem) return;
-                
                 this.openAccountModal();
                 form = document.getElementById('account-form');
-                form.elements['account-name'].value = accountItem.name;
-                form.elements['account-type'].value = accountItem.type;
+                form.elements['account-name'].value = item.name;
+                form.elements['account-type'].value = item.type;
                 
                 formTitleElement = document.getElementById('account-modal-title');
                 formButtonsContainer = document.getElementById('account-form-buttons');
-
                 formTitleElement.textContent = `Editar Conta`;
                 formButtonsContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
                 return;
@@ -2302,7 +2337,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formTitleElement = document.getElementById(`${type}-form-title`);
             formButtonsContainer = document.getElementById(`${type}-form-buttons`);
 
-            if (!form || !item) { this.cancelEditMode(); return; }
+            if (!form) { this.cancelEditMode(); return; }
 
             const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
             const tabButton = document.querySelector(`.tab-btn[data-tab="${tabForType}"]`);
@@ -2341,6 +2376,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (form) {
                     form.reset();
+                     if (type === 'transaction') {
+                        document.getElementById('date').valueAsDate = new Date();
+                    }
                 }
 
                 if (titleEl) {
@@ -2423,7 +2461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
             if (balanceHistory.length === 0) {
-                         balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+                                 balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
             }
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
             this.charts.evolutionChart.data.datasets = [{
