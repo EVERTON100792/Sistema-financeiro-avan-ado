@@ -971,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastTabButton.click();
                 }
             } else {
-                 this.handleTransactionTypeChange();
+                   this.handleTransactionTypeChange();
             }
         },
         
@@ -1266,9 +1266,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             this.updateAllRenders();
             this.cancelEditMode();
-            form.reset();
-            document.getElementById('date').valueAsDate = new Date();
-            this.handleTransactionTypeChange();
         },
         
         async handleAccount(e) {
@@ -1338,38 +1335,45 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const dbPromises = [];
 
-            if (installments === 1) {
-                const invoice = await this.getOrCreateInvoiceForDate(cardId, new Date(purchaseDateStr + 'T00:00:00'));
-                if (!invoice) { this.showToast("Não foi possível processar a fatura.", 'error'); return; }
+            let tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00'); // Use a temporary date for iteration
 
-                const expense = { id: `trans-${Date.now()}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: originalDescription, amount: totalAmount, date: purchaseDateStr, category, isPaid: false };
+            for (let i = 0; i < installments; i++) {
+                // Ensure correct month rollover when setting month directly
+                const currentMonth = tempPurchaseDate.getMonth();
+                const currentYear = tempPurchaseDate.getFullYear();
+                
+                // Get or create the invoice for the current installment's date
+                const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
+                if (!invoice) { this.showToast(`Não foi possível processar a fatura para parcela ${i + 1}.`, 'error'); return; }
+
+                const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
+                
+                // The due date for a credit card transaction is the due date of its invoice
+                const dueDate = invoice.dueDate; 
+
+                const expense = { 
+                    id: `trans-${Date.now()}-${i}`, // Unique ID for each installment
+                    type: 'expense', 
+                    creditCardId: cardId, 
+                    invoiceId: invoice.id, 
+                    description: `${originalDescription}${installments > 1 ? ` (${i + 1}/${installments})` : ''}`, 
+                    amount: installmentAmount, 
+                    date: purchaseDateStr, // Original purchase date for all installments
+                    category, 
+                    isPaid: false,
+                    dueDate: dueDate // Assign the invoice's due date to the transaction
+                };
+                
                 dbPromises.push(db.put('transactions', expense));
                 
-                invoice.amount = parseFloat(((invoice.amount || 0) + totalAmount).toFixed(2));
+                invoice.amount = parseFloat(((invoice.amount || 0) + installmentAmount).toFixed(2));
                 dbPromises.push(db.put('invoices', invoice));
-                
+
+                // Add to local state (important for immediate re-rendering)
                 this.state.transactions.push(expense);
-            } else {
-                const purchaseGroupId = `p-${Date.now()}`;
-                const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
-                let sumOfInstallments = 0;
-                const tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00');
-
-                for (let i = 0; i < installments; i++) {
-                    const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
-                    if (!invoice) { this.showToast(`Erro ao criar fatura para parcela ${i + 1}.`, 'error'); return; }
-
-                    const currentInstallmentAmount = (i === installments - 1) ? parseFloat((totalAmount - sumOfInstallments).toFixed(2)) : installmentAmount;
-                    const expense = { id: `${purchaseGroupId}-${i}`, type: 'expense', creditCardId: cardId, invoiceId: invoice.id, description: `${originalDescription} (${i + 1}/${installments})`, amount: currentInstallmentAmount, date: purchaseDateStr, category, isPaid: false };
-                    
-                    dbPromises.push(db.put('transactions', expense));
-                    invoice.amount = parseFloat(((invoice.amount || 0) + currentInstallmentAmount).toFixed(2));
-                    dbPromises.push(db.put('invoices', invoice));
-
-                    this.state.transactions.push(expense);
-                    sumOfInstallments += currentInstallmentAmount;
-                    tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
-                }
+                
+                // Advance to the next month for the next installment's invoice date
+                tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
             }
 
             await Promise.all(dbPromises);
@@ -1403,10 +1407,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 db.put('invoices', invoice)
             ]);
 
-            this.state.transactions.push(expenseTransaction);
+            // Update local state for invoice status
             const invIndex = this.state.invoices.findIndex(i => i.id === invoice.id);
             if(invIndex > -1) this.state.invoices[invIndex].status = 'paid';
+            // Add the payment transaction to local state
+            this.state.transactions.push(expenseTransaction);
 
+            // Re-evaluate and potentially create next invoice immediately
             await this.getOrCreateInvoiceForDate(cardId, new Date());
             
             this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
@@ -1526,6 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const t = this.state.transactions[tIndex];
             
+            // If it's a credit card transaction, update the associated invoice
             if(t.creditCardId) { 
                 const invoice = this.state.invoices.find(i=>i.id===t.invoiceId); 
                 if(invoice) { 
@@ -1608,6 +1616,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let invoiceMonth = purchaseDate.getMonth();
             let invoiceYear = purchaseDate.getFullYear();
 
+            // Determine the invoice month based on the closing day
+            // If purchase date is after closing day, it belongs to next month's invoice
             if (purchaseDate.getDate() > card.closingDay) {
                 invoiceMonth += 1;
                 if (invoiceMonth > 11) {
@@ -1624,8 +1634,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return invoice;
             }
             
+            // Calculate the due date for the new invoice
             let dueMonth = closingDate.getMonth();
             let dueYear = closingDate.getFullYear();
+            // If the due day is before or on the closing day, the due date is in the next month relative to closing month
             if (card.dueDay <= card.closingDay) {
                 dueMonth += 1;
                 if (dueMonth > 11) {
@@ -1691,14 +1703,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
         
-        handleAccountSelectChange(e) { 
-            if (e.target.value === 'add_new_account') { 
-                const selectId = e.target.id; 
-                e.target.value = ''; 
-                this.openAccountModal(selectId); 
-            } 
-        },
-        
         updateAllRenders() { 
             try { 
                 this.updateAllBalances(); 
@@ -1752,11 +1756,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             sessionStorage.setItem('lastActiveTab', tabButton.dataset.tab);
             
-            if(tabButton.dataset.tab === 'calendar') { this.renderCalendar(); } 
-            if(tabButton.dataset.tab === 'reports') { this.renderReportsMenu(); } 
-            if(tabButton.dataset.tab === 'credit-cards') { this.renderCreditCardModule(); } 
-            if(tabButton.dataset.tab === 'accounts') { this.renderAccountsList(); } 
-            if(tabButton.dataset.tab === 'dashboard') { this.handleTransactionTypeChange(); }
+            // Re-render tab content on click to ensure it's always fresh
+            const tabId = tabButton.dataset.tab;
+            if (tabId === 'dashboard') {
+                this.updateAllBalances();
+                this.renderSummary();
+                this.renderTransactionList();
+                this.updateDashboardCharts();
+                this.handleTransactionTypeChange();
+            } else if (tabId === 'calendar') {
+                this.renderCalendar();
+            } else if (tabId === 'reports') {
+                this.renderReportsMenu();
+            } else if (tabId === 'credit-cards') {
+                this.renderCreditCardModule();
+            } else if (tabId === 'accounts') {
+                this.renderAccountsList();
+            }
         },
         handleTransactionTypeChange() { const type = this.elements.transactionType.value; const isExpense = type === 'expense'; this.elements.dueDateGroup.style.display = isExpense ? 'block' : 'none'; this.elements.dueDate.required = isExpense; this.elements.makeRecurringGroup.style.display = isExpense && !this.state.editingItem ? 'block' : 'none'; },
         
@@ -1882,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderTransactionItem(t, isCardExpense = false) {
             const accountName = t.accountId ? (this.state.accounts.find(a => a.id === t.accountId)?.name || 'N/A') : (this.state.creditCards.find(c => c.id === t.creditCardId)?.name || 'N/A');
-            const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
+            const today = new Date(); today.setHours(0, 0, 0, 0); const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null; let itemClass = `transaction-item ${t.type}`; let dueDateText = ''; if (t.type === 'expense' && !t.isPaid && dueDate) { const diffTime = dueDate - today; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); const isOverdue = diffDays < 0; if (isOverdue) { itemClass += ' overdue'; dueDateText = `Vencido em ${this.formatDate(t.dueDate)}`; } else { if (diffDays === 0) { dueDateText = 'Vence hoje'; } else if (diffDays === 1) { dueDateText = 'Vence amanhã'; } else if (diffDays <= 3) { dueDateText = `Vence em ${diffDays} dias`; } else { dueDateText = `Vence em ${this.formatDate(t.dueDate)}`; } if (diffDays <= 3) { itemClass += ' due-soon'; } } } else if (t.isPaid) { itemClass += ' paid'; } if (t.category === 'Transferência') { itemClass += ' transfer'; } const amountClass = `amount ${t.type}`; return ` <li class="${itemClass}" data-id="${t.id}"> <div class="info"> <span class="description">${t.description}</span> <div class="details"> <span class="details-tag">${this.formatDate(t.date)}</span> <span class="details-tag">${t.category}</span> ${isCardExpense ? '' : `<span class="details-tag">${accountName}</span>`} ${dueDateText ? `<span class="details-tag due-date-tag">${dueDateText}</span>` : ''} ${t.isPaid ? `<span class="details-tag paid-tag">${t.type === 'income' ? 'RECEBIDO' : 'PAGO'}</span>` : ''} </div> </div> <div class="actions"> <span class="${amountClass}">${t.type === 'expense' ? '-' : '+'} ${this.formatCurrency(t.amount)}</span> ${t.type === 'expense' && !t.isPaid && !isCardExpense ? `<button class="btn btn-success pay-btn" data-id="${t.id}" title="Marcar como Pago">Pagar</button>` : ''} <button class="edit-btn" data-type="transaction" data-id="${t.id}" title="Editar">${this.getEditIconSVG()}</button> <button class="delete-button" data-type="transaction" data-id="${t.id}" title="Deletar">${this.getDeleteIconSVG()}</button> </div> </li> `;
         },
 
         renderTransactionList() { 
@@ -2029,13 +2045,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (t.type === 'expense' && t.isPaid) impact = -t.amount;
                     
                     if (impact !== 0) {
-                                  const transactionDate = new Date(t.date + "T00:00:00");
-                                  for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
-                                      const dateStr = d.toISOString().split('T')[0];
-                                      if(dailyData.has(dateStr)) {
-                                          dailyData.set(dateStr, dailyData.get(dateStr) + impact);
-                                      }
-                                  }
+                                    const transactionDate = new Date(t.date + "T00:00:00");
+                                    for (let d = transactionDate; d <= new Date(); d.setDate(d.getDate() + 1)) {
+                                        const dateStr = d.toISOString().split('T')[0];
+                                        if(dailyData.has(dateStr)) {
+                                            dailyData.set(dateStr, dailyData.get(dateStr) + impact);
+                                        }
+                                    }
                     }
                 }
             });
@@ -2045,7 +2061,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.charts.accountCharts[account.id] = new Chart(canvas, {
                 type: 'line',
                 data: { datasets: [{ data: chartData, borderColor: account.currentBalance >= balance30DaysAgo ? 'var(--success-color)' : 'var(--error-color)', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
             });
         },
         
@@ -2220,7 +2237,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayCell.appendChild(eventsContainer);
 
                 const dayTransactions = transactionsThisMonth.filter(t => new Date(t.date + 'T00:00:00').getDate() === day)
-                                                                .sort((a,b) => a.amount - b.amount);
+                                                            .sort((a,b) => a.amount - b.amount);
 
                 dayTransactions.forEach((t, index) => {
                     if(index < MAX_VISIBLE_EVENTS) {
@@ -2239,8 +2256,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (t.isPaid) {
                                 eventMarker.classList.add('expense-paid');
                             } else {
-                                const dueDate = new Date(t.dueDate + 'T00:00:00');
-                                if (dueDate < today) {
+                                const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+                                if (dueDate && dueDate < today) {
                                     eventMarker.classList.add('expense-overdue');
                                 } else {
                                     eventMarker.classList.add('expense-due');
@@ -2274,25 +2291,51 @@ document.addEventListener('DOMContentLoaded', () => {
         
         startEditMode(type, id){ 
             this.cancelEditMode();
-            this.state.editingItem = { type, id };
             const item = this.state[`${type}s`]?.find(i => i.id === id);
+            if (!item) return;
             
+            this.state.editingItem = { type, id, item };
+
+            // For transaction editing, switch to dashboard and scroll to form
+            if (type === 'transaction') {
+                const tabButton = document.querySelector(`.tab-btn[data-tab="dashboard"]`);
+                if(tabButton) tabButton.click();
+                
+                const form = this.elements.transactionForm;
+                form.elements['transaction-type'].value = item.type;
+                form.elements['description'].value = item.description;
+                form.elements['amount'].value = item.amount;
+                this.formatCurrencyInput(form.elements['amount'], true);
+                form.elements['date'].value = item.date;
+                form.elements['account-select'].value = item.accountId;
+                form.elements['category-select'].value = item.category;
+                if (item.type === 'expense') {
+                    form.elements['due-date'].value = item.dueDate || '';
+                }
+                
+                this.handleTransactionTypeChange();
+                
+                document.getElementById('transaction-form-title').textContent = 'Editar Transação';
+                document.getElementById('transaction-form-buttons').innerHTML = `
+                    <button type="submit" class="btn btn-success">Atualizar</button>
+                    <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>
+                `;
+                form.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
             let form;
             let formTitleElement;
             let formButtonsContainer;
 
             if (type === 'account') {
-                const accountItem = this.state.accounts.find(a => a.id === id);
-                if (!accountItem) return;
-                
                 this.openAccountModal();
                 form = document.getElementById('account-form');
-                form.elements['account-name'].value = accountItem.name;
-                form.elements['account-type'].value = accountItem.type;
+                form.elements['account-name'].value = item.name;
+                form.elements['account-type'].value = item.type;
                 
                 formTitleElement = document.getElementById('account-modal-title');
                 formButtonsContainer = document.getElementById('account-form-buttons');
-
                 formTitleElement.textContent = `Editar Conta`;
                 formButtonsContainer.innerHTML = `<button type="submit" class="btn btn-success">Atualizar Conta</button> <button type="button" class="btn btn-secondary" onclick="financeApp.cancelEditMode()">Cancelar</button>`;
                 return;
@@ -2302,7 +2345,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formTitleElement = document.getElementById(`${type}-form-title`);
             formButtonsContainer = document.getElementById(`${type}-form-buttons`);
 
-            if (!form || !item) { this.cancelEditMode(); return; }
+            if (!form) { this.cancelEditMode(); return; }
 
             const tabForType = type === 'creditCard' ? 'credit-cards' : `${type}s`;
             const tabButton = document.querySelector(`.tab-btn[data-tab="${tabForType}"]`);
@@ -2341,6 +2384,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (form) {
                     form.reset();
+                    if (type === 'transaction') {
+                        document.getElementById('date').valueAsDate = new Date();
+                    }
                 }
 
                 if (titleEl) {
@@ -2423,7 +2469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const balanceHistory = Array.from(dailyNetWorth.entries()).map(([date, value]) => ({ x: date, y: value })).sort((a, b) => new Date(a.x) - new Date(b.x));
             if (balanceHistory.length === 0) {
-                         balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
+                                balanceHistory.push({ x: new Date().toISOString().split('T')[0], y: 0 });
             }
             this.charts.evolutionChart.data.labels = balanceHistory.map(p => p.x);
             this.charts.evolutionChart.data.datasets = [{
@@ -2995,8 +3041,24 @@ document.addEventListener('DOMContentLoaded', () => {
              const statusFilter = document.getElementById('filter-payment-status').value;
              const resultsArea = document.getElementById('report-results-area');
 
-             let expenses = this.state.transactions.filter(t => t.type === 'expense' && t.date >= startDate && t.date <= endDate);
+             // Filter transactions based on date range and type. Include credit card transactions here.
+             let expenses = this.state.transactions.filter(t => {
+                 if (t.type !== 'expense') return false; // Only consider expenses
 
+                 // Check if transaction date or due date falls within the range
+                 const transactionDate = new Date(t.date + 'T00:00:00');
+                 const isWithinTransactionDateRange = transactionDate >= new Date(startDate + 'T00:00:00') && transactionDate <= new Date(endDate + 'T00:00:00');
+
+                 let isWithinDueDateRange = false;
+                 if (t.dueDate) {
+                     const dueDate = new Date(t.dueDate + 'T00:00:00');
+                     isWithinDueDateRange = dueDate >= new Date(startDate + 'T00:00:00') && dueDate <= new Date(endDate + 'T00:00:00');
+                 }
+                 
+                 return isWithinTransactionDateRange || isWithinDueDateRange;
+             });
+
+             // Apply status filter
              if (statusFilter !== 'all') {
                  expenses = expenses.filter(t => {
                      const isPaid = t.isPaid;
@@ -3006,7 +3068,12 @@ document.addEventListener('DOMContentLoaded', () => {
                  });
              }
              
-             expenses.sort((a, b) => new Date(a.date) - new Date(b.date));
+             // Sort by date, or due date if available, for consistency
+             expenses.sort((a, b) => {
+                 const dateA = a.dueDate ? new Date(a.dueDate) : new Date(a.date);
+                 const dateB = b.dueDate ? new Date(b.dueDate) : new Date(b.date);
+                 return dateA - dateB;
+             });
              
              if (expenses.length === 0) {
                  resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma despesa encontrada para os filtros selecionados.</p>';
@@ -3020,8 +3087,9 @@ document.addEventListener('DOMContentLoaded', () => {
                      statusText = 'Pago'; statusClass = 'positive';
                  } else {
                      const today = new Date(); today.setHours(0,0,0,0);
-                     const dueDate = new Date(t.dueDate + 'T00:00:00');
-                     if(dueDate < today) {
+                     const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+
+                     if (dueDate && dueDate < today) {
                          statusText = 'Atrasado'; statusClass = 'negative';
                      } else {
                          statusText = 'Pendente'; statusClass = 'warning';
@@ -3031,7 +3099,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      <tr>
                          <td>${this.formatDate(t.date)}</td>
                          <td>${t.description}</td>
-                         <td>${this.formatDate(t.dueDate)}</td>
+                         <td>${t.dueDate ? this.formatDate(t.dueDate) : 'N/A'}</td>
                          <td>${this.formatCurrency(t.amount)}</td>
                          <td class="${statusClass}">${statusText}</td>
                      </tr>
@@ -3058,11 +3126,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.state.transactions.forEach(t => {
-                if(t.date.startsWith(year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
+                if(t.date.startsWith(year) && (t.accountId || t.creditCardId) && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
                     const month = parseInt(t.date.substring(5, 7), 10) - 1;
                     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
                     if(t.type === 'income') monthlyData[monthKey].income += t.amount;
-                    if(t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
+                    // For annual summary, it's about total expenses incurred, whether paid via account or credit card
+                    if(t.type === 'expense' && (t.isPaid || t.creditCardId)) monthlyData[monthKey].expense += t.amount;
                 }
             });
 
@@ -3161,9 +3230,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'cashflow':
                     head = [['Mês', 'Receitas', 'Despesas', 'Saldo']];
-                    const cashflowMonthlyData = {};
                     const cashflowStartDate = new Date(filters.startDate + 'T00:00:00');
                     const cashflowEndDate = new Date(filters.endDate + 'T00:00:00');
+                    const cashflowMonthlyData = {};
 
                     this.state.transactions.forEach(t => {
                         const tDate = new Date(t.date + 'T00:00:00');
@@ -3186,7 +3255,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'paymentStatus':
                     head = [['Data', 'Descrição', 'Vencimento', 'Valor', 'Status']];
-                    let expensesStatus = this.state.transactions.filter(t => t.type === 'expense' && t.date >= filters.startDate && t.date <= filters.endDate);
+                    let expensesStatus = this.state.transactions.filter(t => t.type === 'expense' && (t.date >= filters.startDate && t.date <= filters.endDate || (t.creditCardId && t.dueDate >= filters.startDate && t.dueDate <= filters.endDate)));
                     if (filters.status && filters.status !== 'all') {
                         expensesStatus = expensesStatus.filter(t => {
                             const isPaid = t.isPaid;
@@ -3196,17 +3265,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
                     body = expensesStatus
-                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .sort((a, b) => {
+                            const dateA = a.dueDate ? new Date(a.dueDate) : new Date(a.date);
+                            const dateB = b.dueDate ? new Date(b.dueDate) : new Date(b.date);
+                            return dateA - dateB;
+                        })
                         .map(t => {
                             let statusText = '';
                             if (t.isPaid) {
                                 statusText = 'Pago';
                             } else {
                                 const today = new Date(); today.setHours(0,0,0,0);
-                                const dueDate = new Date(t.dueDate + 'T00:00:00');
-                                statusText = dueDate < today ? 'Atrasado' : 'Pendente';
+                                const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+                                statusText = (dueDate && dueDate < today) ? 'Atrasado' : 'Pendente';
                             }
-                            return [this.formatDate(t.date), t.description, this.formatDate(t.dueDate), this.formatCurrency(t.amount), statusText];
+                            return [this.formatDate(t.date), t.description, t.dueDate ? this.formatDate(t.dueDate) : 'N/A', this.formatCurrency(t.amount), statusText];
                         });
                     break;
 
@@ -3218,11 +3291,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         annualMonthlyData[monthKey] = { income: 0, expense: 0, balance: 0 };
                     }
                     this.state.transactions.forEach(t => {
-                        if(t.date.startsWith(filters.year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
+                        if(t.date.startsWith(filters.year) && (t.accountId || t.creditCardId) && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
                             const month = parseInt(t.date.substring(5, 7), 10) - 1;
                             const monthKey = `${filters.year}-${String(month + 1).padStart(2, '0')}`;
                             if(t.type === 'income') annualMonthlyData[monthKey].income += t.amount;
-                            if(t.type === 'expense' && t.isPaid) annualMonthlyData[monthKey].expense += t.amount;
+                            if(t.type === 'expense' && (t.isPaid || t.creditCardId)) annualMonthlyData[monthKey].expense += t.amount;
                         }
                     });
                     body = Object.keys(annualMonthlyData).map(monthKey => {
