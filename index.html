@@ -1335,9 +1335,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const dbPromises = [];
 
-            const tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00'); // Use a temporary date for iteration
+            let tempPurchaseDate = new Date(purchaseDateStr + 'T00:00:00'); // Use a temporary date for iteration
 
             for (let i = 0; i < installments; i++) {
+                // Ensure correct month rollover when setting month directly
+                const currentMonth = tempPurchaseDate.getMonth();
+                const currentYear = tempPurchaseDate.getFullYear();
+                
+                // Get or create the invoice for the current installment's date
                 const invoice = await this.getOrCreateInvoiceForDate(cardId, tempPurchaseDate);
                 if (!invoice) { this.showToast(`Não foi possível processar a fatura para parcela ${i + 1}.`, 'error'); return; }
 
@@ -1353,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     invoiceId: invoice.id, 
                     description: `${originalDescription}${installments > 1 ? ` (${i + 1}/${installments})` : ''}`, 
                     amount: installmentAmount, 
-                    date: purchaseDateStr, 
+                    date: purchaseDateStr, // Original purchase date for all installments
                     category, 
                     isPaid: false,
                     dueDate: dueDate // Assign the invoice's due date to the transaction
@@ -1364,9 +1369,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 invoice.amount = parseFloat(((invoice.amount || 0) + installmentAmount).toFixed(2));
                 dbPromises.push(db.put('invoices', invoice));
 
+                // Add to local state (important for immediate re-rendering)
                 this.state.transactions.push(expense);
                 
-                // Advance to the next month for the next installment's invoice
+                // Advance to the next month for the next installment's invoice date
                 tempPurchaseDate.setMonth(tempPurchaseDate.getMonth() + 1);
             }
 
@@ -1401,10 +1407,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 db.put('invoices', invoice)
             ]);
 
-            this.state.transactions.push(expenseTransaction);
+            // Update local state for invoice status
             const invIndex = this.state.invoices.findIndex(i => i.id === invoice.id);
             if(invIndex > -1) this.state.invoices[invIndex].status = 'paid';
+            // Add the payment transaction to local state
+            this.state.transactions.push(expenseTransaction);
 
+            // Re-evaluate and potentially create next invoice immediately
             await this.getOrCreateInvoiceForDate(cardId, new Date());
             
             this.showToast("Pagamento da fatura registrado com sucesso!", 'success');
@@ -1608,6 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let invoiceYear = purchaseDate.getFullYear();
 
             // Determine the invoice month based on the closing day
+            // If purchase date is after closing day, it belongs to next month's invoice
             if (purchaseDate.getDate() > card.closingDay) {
                 invoiceMonth += 1;
                 if (invoiceMonth > 11) {
@@ -1627,7 +1637,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Calculate the due date for the new invoice
             let dueMonth = closingDate.getMonth();
             let dueYear = closingDate.getFullYear();
-            // If the due day is before or on the closing day, the due date is in the next month
+            // If the due day is before or on the closing day, the due date is in the next month relative to closing month
             if (card.dueDay <= card.closingDay) {
                 dueMonth += 1;
                 if (dueMonth > 11) {
@@ -1692,14 +1702,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         closeCreditCardExpenseModal() { this.elements.creditCardExpenseModal.classList.remove('visible'); this.elements.creditCardExpenseForm.reset(); },
-        
-        handleAccountSelectChange(e) { 
-            if (e.target.value === 'add_new_account') { 
-                const selectId = e.target.id; 
-                e.target.value = ''; 
-                this.openAccountModal(selectId); 
-            } 
-        },
         
         updateAllRenders() { 
             try { 
@@ -2059,7 +2061,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.charts.accountCharts[account.id] = new Chart(canvas, {
                 type: 'line',
                 data: { datasets: [{ data: chartData, borderColor: account.currentBalance >= balance30DaysAgo ? 'var(--success-color)' : 'var(--error-color)', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
             });
         },
         
@@ -2253,8 +2256,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (t.isPaid) {
                                 eventMarker.classList.add('expense-paid');
                             } else {
-                                const dueDate = new Date(t.dueDate + 'T00:00:00');
-                                if (dueDate < today) {
+                                const dueDate = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+                                if (dueDate && dueDate < today) {
                                     eventMarker.classList.add('expense-overdue');
                                 } else {
                                     eventMarker.classList.add('expense-due');
@@ -3038,8 +3041,24 @@ document.addEventListener('DOMContentLoaded', () => {
              const statusFilter = document.getElementById('filter-payment-status').value;
              const resultsArea = document.getElementById('report-results-area');
 
-             let expenses = this.state.transactions.filter(t => t.type === 'expense' && (t.date >= startDate && t.date <= endDate || (t.creditCardId && t.dueDate >= startDate && t.dueDate <= endDate)));
+             // Filter transactions based on date range and type. Include credit card transactions here.
+             let expenses = this.state.transactions.filter(t => {
+                 if (t.type !== 'expense') return false; // Only consider expenses
 
+                 // Check if transaction date or due date falls within the range
+                 const transactionDate = new Date(t.date + 'T00:00:00');
+                 const isWithinTransactionDateRange = transactionDate >= new Date(startDate + 'T00:00:00') && transactionDate <= new Date(endDate + 'T00:00:00');
+
+                 let isWithinDueDateRange = false;
+                 if (t.dueDate) {
+                     const dueDate = new Date(t.dueDate + 'T00:00:00');
+                     isWithinDueDateRange = dueDate >= new Date(startDate + 'T00:00:00') && dueDate <= new Date(endDate + 'T00:00:00');
+                 }
+                 
+                 return isWithinTransactionDateRange || isWithinDueDateRange;
+             });
+
+             // Apply status filter
              if (statusFilter !== 'all') {
                  expenses = expenses.filter(t => {
                      const isPaid = t.isPaid;
@@ -3049,7 +3068,12 @@ document.addEventListener('DOMContentLoaded', () => {
                  });
              }
              
-             expenses.sort((a, b) => new Date(a.date) - new Date(b.date));
+             // Sort by date, or due date if available, for consistency
+             expenses.sort((a, b) => {
+                 const dateA = a.dueDate ? new Date(a.dueDate) : new Date(a.date);
+                 const dateB = b.dueDate ? new Date(b.dueDate) : new Date(b.date);
+                 return dateA - dateB;
+             });
              
              if (expenses.length === 0) {
                  resultsArea.innerHTML = '<p style="text-align:center; color: var(--text-muted-color); padding: 20px;">Nenhuma despesa encontrada para os filtros selecionados.</p>';
@@ -3102,11 +3126,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             this.state.transactions.forEach(t => {
-                if(t.date.startsWith(year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
+                if(t.date.startsWith(year) && (t.accountId || t.creditCardId) && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
                     const month = parseInt(t.date.substring(5, 7), 10) - 1;
                     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
                     if(t.type === 'income') monthlyData[monthKey].income += t.amount;
-                    if(t.type === 'expense' && t.isPaid) monthlyData[monthKey].expense += t.amount;
+                    // For annual summary, it's about total expenses incurred, whether paid via account or credit card
+                    if(t.type === 'expense' && (t.isPaid || t.creditCardId)) monthlyData[monthKey].expense += t.amount;
                 }
             });
 
@@ -3205,9 +3230,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'cashflow':
                     head = [['Mês', 'Receitas', 'Despesas', 'Saldo']];
-                    const cashflowMonthlyData = {};
                     const cashflowStartDate = new Date(filters.startDate + 'T00:00:00');
                     const cashflowEndDate = new Date(filters.endDate + 'T00:00:00');
+                    const cashflowMonthlyData = {};
 
                     this.state.transactions.forEach(t => {
                         const tDate = new Date(t.date + 'T00:00:00');
@@ -3240,7 +3265,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
                     body = expensesStatus
-                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .sort((a, b) => {
+                            const dateA = a.dueDate ? new Date(a.dueDate) : new Date(a.date);
+                            const dateB = b.dueDate ? new Date(b.dueDate) : new Date(b.date);
+                            return dateA - dateB;
+                        })
                         .map(t => {
                             let statusText = '';
                             if (t.isPaid) {
@@ -3262,11 +3291,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         annualMonthlyData[monthKey] = { income: 0, expense: 0, balance: 0 };
                     }
                     this.state.transactions.forEach(t => {
-                        if(t.date.startsWith(filters.year) && t.accountId && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
+                        if(t.date.startsWith(filters.year) && (t.accountId || t.creditCardId) && t.category !== 'Transferência' && t.category !== 'Saldo Inicial'){
                             const month = parseInt(t.date.substring(5, 7), 10) - 1;
                             const monthKey = `${filters.year}-${String(month + 1).padStart(2, '0')}`;
                             if(t.type === 'income') annualMonthlyData[monthKey].income += t.amount;
-                            if(t.type === 'expense' && t.isPaid) annualMonthlyData[monthKey].expense += t.amount;
+                            if(t.type === 'expense' && (t.isPaid || t.creditCardId)) annualMonthlyData[monthKey].expense += t.amount;
                         }
                     });
                     body = Object.keys(annualMonthlyData).map(monthKey => {
