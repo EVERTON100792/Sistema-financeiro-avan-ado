@@ -68,12 +68,29 @@
         .dashboard-layout { display: grid; grid-template-columns: 1fr; gap: 30px; }
         @media (min-width: 992px) { .dashboard-layout { grid-template-columns: 380px 1fr; } }
         #main-overview-chart-container, #evolution-chart-container { min-height: 400px; position: relative; }
-        /* *** MUDANÇA: Estilos para o alternador de gráficos *** */
         #dashboard-chart-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--secondary-color); padding-bottom: 10px; margin-bottom: 20px;}
         #dashboard-chart-header h2 { margin-bottom: 0; border: none; }
         .chart-toggle-buttons { display: flex; gap: 10px; }
         .chart-toggle-buttons .btn { padding: 8px 15px; font-size: 0.85rem; background-color: var(--primary-color); }
         .chart-toggle-buttons .btn.active { background-color: var(--accent-color); color: white; font-weight: 600; }
+
+        #reminders-container {
+            display: none;
+            background-color: color-mix(in srgb, var(--warning-color) 15%, var(--card-bg-color) 85%);
+            border-left: 5px solid var(--warning-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            animation: fadeIn 0.3s;
+        }
+        body.light-mode #reminders-container { background-color: #fffbe6; }
+        #reminders-container h3 { margin-top: 0; margin-bottom: 10px; color: var(--warning-color); }
+        #reminders-list { list-style: none; padding-left: 5px; max-height: 150px; overflow-y: auto; }
+        #reminders-list li { margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+        #reminders-list li .description { flex-grow: 1; }
+        #reminders-list li .details { flex-shrink: 0; }
+        #reminder-close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted-color); }
 
         .transaction-list-container { max-height: 400px; overflow-y: auto; padding-right: 10px; }
         .list-item, .category-item, .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: var(--primary-color); border-radius: var(--border-radius); margin-bottom: 10px; flex-wrap: wrap; gap: 10px; transition: opacity 0.3s, background-color 0.3s; }
@@ -117,7 +134,6 @@
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
         .settings-actions { display: flex; flex-direction: column; gap: 15px; }
         
-        /* === ESTILOS PARA O MENU LATERAL === */
         #menu-toggle { display: none; font-size: 1.5rem; padding: 5px 12px; }
         .app-layout { display: flex; gap: 20px; align-items: flex-start; }
         .sidebar-nav { width: 240px; flex-shrink: 0; transition: transform 0.3s ease-in-out; }
@@ -125,7 +141,6 @@
         #menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; backdrop-filter: blur(2px); }
         #menu-overlay.visible { opacity: 1; visibility: visible; }
         
-        /* === MELHORIAS VISUAIS PARA SIDEBAR === */
         .sidebar-nav {
             padding: 15px;
             display: flex;
@@ -264,7 +279,6 @@
             color: var(--error-color);
         }
 
-        /* === ESTILOS DO CALENDÁRIO === */
         #tab-calendar .card { background-color: var(--primary-color); padding: 0; overflow: hidden; }
         #calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--secondary-color); gap: 15px; flex-wrap: wrap; }
         #month-year-display { border-bottom: none; margin-bottom: 0; text-transform: capitalize; font-size: 1.5rem; font-weight: 600; flex-grow: 1; text-align: center; }
@@ -289,7 +303,6 @@
         .calendar-day.weekend { background-color: color-mix(in srgb, var(--primary-color) 95%, #808080 5%); }
         body.light-mode .calendar-day.weekend { background-color: #f8f9fa; }
 
-        /* === ESTILOS PARA MODAIS === */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1050; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(4px); }
         .modal-overlay.visible { display: flex; opacity: 1; }
         .modal-content { background-color: var(--card-bg-color); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
@@ -298,7 +311,6 @@
         .modal-header h2 { margin-bottom: 0; border-bottom: none; }
         .modal-close-btn { background: none; border: none; font-size: 1.8rem; color: var(--text-muted-color); cursor: pointer; }
 
-        /* === ESTILOS PARA ABA CONTAS === */
         .account-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
         .account-details { display: grid; grid-template-columns: 1fr 140px; gap: 20px; align-items: center; margin-top: 15px; }
         .account-main-balance { font-size: 2rem; font-weight: 700; }
@@ -307,7 +319,6 @@
         .account-monthly-summary .expense { color: var(--error-color); }
         .account-chart-container { height: 80px; position: relative; }
         
-        /* === MÓDULO CARTÃO DE CRÉDITO === */
         .credit-card-module-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: flex-start; }
         #credit-card-selector-list .list-item { flex-direction: row; cursor: pointer; border-left: 4px solid transparent; }
         #credit-card-selector-list .list-item.selected { border-left-color: var(--accent-color); background-color: var(--primary-color); }
@@ -318,7 +329,6 @@
         .credit-card-actions { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
         .credit-card-actions .btn { flex-grow: 1; }
         
-        /* === TELA DE LOGIN === */
         #login-container { display: block; height: auto; min-height: 100vh; }
         .login-wrapper { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; background-color: var(--card-bg-color); }
         .login-showcase { display: flex; flex-direction: column; justify-content: center; text-align: left; padding: 50px; background: linear-gradient(-45deg, var(--bg-color), var(--primary-color), var(--secondary-color), var(--accent-color)); background-size: 400% 400%; animation: animated-gradient 15s ease infinite; color: white; }
@@ -335,7 +345,6 @@
         #login-btn.loading::after { content: ''; position: absolute; left: 50%; top: 50%; margin-left: -10px; margin-top: -10px; width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.5); border-top-color: white; border-radius: 50%; animation: btn-spin 0.8s linear infinite; }
         @keyframes btn-spin { to { transform: rotate(360deg); } }
         
-        /* === MÓDULO DE RELATÓRIOS (ESTILOS MELHORADOS) === */
         #reports-menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
         .report-menu-item { background-color: var(--primary-color); padding: 20px; border-radius: var(--border-radius); text-align: center; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; }
         .report-menu-item h3 { margin-bottom: 10px; border-bottom: none; }
@@ -388,7 +397,6 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* === NOTIFICAÇÃO TOAST === */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { padding: 15px 20px; border-radius: var(--border-radius); color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateX(120%); opacity: 0; animation: slideIn 0.5s forwards, slideOut 0.5s 4.5s forwards; }
         .toast.success { background-color: var(--success-color); }
@@ -396,7 +404,6 @@
         @keyframes slideIn { to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
 
-        /* === MELHORIAS DE RESPONSIVIDADE PARA CELULAR === */
         @media (max-width: 768px) {
             body { 
                 line-height: 1.5; 
@@ -418,7 +425,7 @@
             .sidebar-nav { position: fixed; left: 0; top: 0; bottom: 0; height: 100vh; z-index: 1000; background-color: var(--card-bg-color); transform: translateX(-100%); border-radius: 0 var(--border-radius) var(--border-radius) 0; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
             .sidebar-nav.visible { transform: translateX(0); }
 
-            .summary-section, .grid-layout, .dashboard-layout, .account-card-grid, .account-details, .credit-card-module-layout, .report-filters {
+            .summary-section, .grid-layout, .dashboard-layout, .account-card-grid, .account-details, .credit-card-module-layout, .report-filters, #dashboard-chart-header {
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
@@ -527,6 +534,8 @@
 
             <main>
                 <div id="tab-dashboard" class="tab-content active">
+                    <div id="reminders-container"></div>
+                    
                     <section class="summary-section">
                         <div class="summary-card card">
                             <h3>Patrimônio Líquido</h3>
@@ -893,6 +902,18 @@
 
 
 <script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+                console.log('PWA: Service Worker registrado com sucesso:', registration);
+            })
+            .catch(error => {
+                console.log('PWA: Falha ao registrar o Service Worker:', error);
+            });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const db = {
@@ -908,8 +929,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const financeApp = {
         elements: {},
-        charts: { mainOverviewChart: null, evolutionChart: null, reportChart: null, accountCharts: {}, forecastChart: null }, // *** MUDANÇA: Adicionado forecastChart ***
-        state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null, activeDashboardView: 'forecast' }, // *** MUDANÇA: Adicionado activeDashboardView ***
+        charts: { mainOverviewChart: null, evolutionChart: null, reportChart: null, accountCharts: {}, forecastChart: null },
+        state: { user: null, transactions: [], accounts: [], creditCards: [], invoices: [], budgets: [], goals: [], recurrences: [], categories: [], editingItem: null, currentCalendarDate: new Date(), selectToUpdateAfterAccountCreation: null, selectedCardId: null, activeDashboardView: 'forecast' },
         
         reports: {
             accountStatement: { title: 'Extrato de Conta', description: 'Veja todas as transações de uma conta específica em um período.' },
@@ -940,6 +961,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
             this.initCharts();
             this.updateAllRenders();
+
+            this.checkAndDisplayReminders();
 
             const lastTabId = sessionStorage.getItem('lastActiveTab');
             if (lastTabId) {
@@ -993,7 +1016,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.elements.addAccountBtnTab.addEventListener('click', () => this.openAccountModal());
             this.elements.addAccountBtnForm.addEventListener('click', () => this.openAccountModal('account-select'));
             
-            // *** MUDANÇA: Event listener para o novo alternador de gráficos ***
             this.elements.dashboardChartHeader?.addEventListener('click', (e) => {
                 const button = e.target.closest('button[data-view]');
                 if (button) {
@@ -1713,7 +1735,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleLogout() {
             if (confirm('Tem certeza que deseja sair? Seus dados permanecerão salvos no navegador.')) {
                 localStorage.removeItem('financeAppUser');
-                sessionStorage.removeItem('lastActiveTab'); // *** MUDANÇA: Limpa a aba salva ao sair ***
+                sessionStorage.removeItem('lastActiveTab');
                 window.location.reload();
             }
         },
@@ -2306,27 +2328,51 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('cancel-edit-btn').addEventListener('click', () => this.cancelEditMode());
         },
 
-        cancelEditMode(){ 
-            if(!this.state.editingItem) return;
+        cancelEditMode() {
+            if (!this.state.editingItem) return;
             const type = this.state.editingItem.type;
 
             if (type === 'account') {
                 this.closeAccountModal();
             } else {
                 const form = document.getElementById(`${type}-form`);
-                if(form) form.reset();
                 const titleEl = document.getElementById(`${type}-form-title`);
-                if (titleEl) {
-                    const titleText = (type === 'creditCard') ? 'Adicionar Cartão de Crédito' : `Adicionar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                    titleEl.textContent = titleText;
-                }
                 const buttonContainer = document.getElementById(`${type}-form-buttons`);
-                if(buttonContainer) {
-                        const btnText = (type === 'creditCard') ? 'Salvar Cartão' : `Salvar ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                        buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${btnText}</button>`;
+
+                if (form) {
+                    form.reset();
+                }
+
+                if (titleEl) {
+                    const titleTextMap = {
+                        transaction: 'Nova Transação',
+                        creditCard: 'Adicionar Cartão de Crédito',
+                        category: 'Adicionar Categoria',
+                        budget: 'Definir Orçamento',
+                        goal: 'Criar Nova Meta',
+                        recurrence: 'Adicionar Lançamento Recorrente'
+                    };
+                    titleEl.textContent = titleTextMap[type] || `Adicionar ${type}`;
+                }
+
+                if (buttonContainer) {
+                    const buttonTextMap = {
+                        transaction: 'Adicionar Transação',
+                        creditCard: 'Salvar Cartão',
+                        category: 'Adicionar Categoria',
+                        budget: 'Salvar Orçamento',
+                        goal: 'Criar Meta',
+                        recurrence: 'Salvar Recorrência'
+                    };
+                    buttonContainer.innerHTML = `<button type="submit" class="btn btn-primary">${buttonTextMap[type] || `Salvar`}</button>`;
                 }
             }
+            
             this.state.editingItem = null;
+
+            if (type === 'transaction') {
+                this.handleTransactionTypeChange();
+            }
         },
         
         async exportBackup() { try { const data = {}; for (const storeName of db.STORES) { data[storeName] = await db.getAll(storeName); } data.lastBackup = new Date().toISOString(); const json = JSON.stringify(data, null, 2); const blob = new Blob([json], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; const date = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`; link.download = `financeApp_backup_${this.state.user}_${date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); this.showToast('Backup exportado com sucesso!', 'success'); } catch (error) { console.error("Erro ao exportar:", error); this.showToast("Erro ao exportar dados.", 'error'); } },
@@ -2334,17 +2380,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         initCharts() { 
             const commonOptions = this.getChartOptions(); 
-            // Gráfico de Orçamento/Despesas
             if (this.charts.mainOverviewChart) this.charts.mainOverviewChart.destroy(); 
             const mainCtx = document.getElementById('main-overview-chart').getContext('2d'); 
             this.charts.mainOverviewChart = new Chart(mainCtx, { type: 'bar', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } } }); 
             
-            // *** MUDANÇA: Inicializa o novo gráfico de previsão ***
             if (this.charts.forecastChart) this.charts.forecastChart.destroy();
             const forecastCtx = document.getElementById('forecast-chart').getContext('2d');
             this.charts.forecastChart = new Chart(forecastCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy' } }, y: { ...commonOptions.scales.y } } } });
 
-            // Gráfico de Evolução do Patrimônio
             if (this.charts.evolutionChart) this.charts.evolutionChart.destroy(); 
             const evoCtx = document.getElementById('evolution-chart').getContext('2d'); 
             this.charts.evolutionChart = new Chart(evoCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { ...commonOptions, responsive: true, maintainAspectRatio: false, scales: { x: { ...commonOptions.scales.x, type: 'time', time: { unit: 'month', tooltipFormat: 'MMM/yyyy' } }, y: { ...commonOptions.scales.y } } } }); 
@@ -2356,10 +2399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboardCharts() {
             if (!this.charts.mainOverviewChart || !this.charts.evolutionChart || !this.charts.forecastChart) return;
             
-            // *** MUDANÇA: Chama a função que renderiza o gráfico ativo (previsão ou orçamento) ***
             this.renderActiveDashboardChart();
 
-            // Lógica do gráfico de evolução do patrimônio (sem alteração)
             const commonOptions = this.getChartOptions();
             const accountTransactions = this.state.transactions.filter(t => t.accountId);
             const sortedDates = [...new Set(accountTransactions.map(t => t.date))].sort();
@@ -2397,7 +2438,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.charts.evolutionChart.update();
         },
         
-        // *** MUDANÇA: Nova função para decidir qual gráfico do painel renderizar ***
         renderActiveDashboardChart() {
             if (this.state.activeDashboardView === 'forecast') {
                 this.renderForecastChart();
@@ -2406,7 +2446,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // *** MUDANÇA: Nova função para calcular a previsão ***
         calculateFutureBalance() {
             const FORECAST_DAYS = 90;
             const currentNetWorth = this.state.accounts.reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
@@ -2417,7 +2456,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const forecastEndDate = new Date(today);
             forecastEndDate.setDate(today.getDate() + FORECAST_DAYS);
 
-            // 1. Projeta recorrências
             this.state.recurrences.forEach(r => {
                 let nextDate = new Date(r.nextDueDate + 'T00:00:00');
                 while (nextDate <= forecastEndDate) {
@@ -2432,7 +2470,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // 2. Adiciona contas a pagar futuras e não pagas
             this.state.transactions.forEach(t => {
                 if (t.type === 'expense' && !t.isPaid && t.dueDate) {
                     const dueDate = new Date(t.dueDate + 'T00:00:00');
@@ -2442,7 +2479,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // 3. Calcula o saldo diário
             const balanceProjection = [];
             let runningBalance = currentNetWorth;
             const dailyChanges = futureEvents.reduce((acc, event) => {
@@ -2455,7 +2491,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loopDate.setDate(today.getDate() + i);
                 const dateStr = loopDate.toISOString().split('T')[0];
                 
-                if (dailyChanges[dateStr]) {
+                if (i > 0 && dailyChanges[dateStr]) {
                     runningBalance += dailyChanges[dateStr];
                 }
                 balanceProjection.push({ x: dateStr, y: runningBalance });
@@ -2464,7 +2500,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return balanceProjection;
         },
 
-        // *** MUDANÇA: Nova função para renderizar o gráfico de previsão ***
         renderForecastChart() {
             document.getElementById('forecast-chart').style.display = 'block';
             document.getElementById('main-overview-chart').style.display = 'none';
@@ -2476,11 +2511,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = this.calculateFutureBalance();
             const chart = this.charts.forecastChart;
 
-            if (!chart) return;
+            if (!chart || data.length === 0) return;
             const commonOptions = this.getChartOptions();
             
-            const startBalance = data.length > 0 ? data[0].y : 0;
-            const endBalance = data.length > 0 ? data[data.length - 1].y : 0;
+            const startBalance = data[0].y;
+            const endBalance = data[data.length - 1].y;
             const trendColor = endBalance >= startBalance ? 'var(--success-color)' : 'var(--error-color)';
 
             chart.data.labels = data.map(d => d.x);
@@ -2496,7 +2531,6 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         },
 
-        // *** MUDANÇA: Função de orçamento renomeada e ajustada para gerenciar visibilidade ***
         renderBudgetChart() {
             document.getElementById('forecast-chart').style.display = 'none';
             
@@ -3271,6 +3305,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
             doc.save(`relatorio_fatura_${invoiceType}_${selectedCard.name.replace(/\s/g, '_')}.pdf`);
         },
+
+        checkAndDisplayReminders() {
+            const REMINDER_DAYS = 5;
+            const remindersContainer = document.getElementById('reminders-container');
+            if (!remindersContainer) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const reminderLimitDate = new Date(today);
+            reminderLimitDate.setDate(today.getDate() + REMINDER_DAYS);
+
+            const upcomingBills = this.state.transactions.filter(t => {
+                if (t.type !== 'expense' || t.isPaid || !t.dueDate) return false;
+                const dueDate = new Date(t.dueDate + 'T00:00:00');
+                return dueDate >= today && dueDate <= reminderLimitDate;
+            }).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            const overdueBills = this.state.transactions.filter(t => {
+                if (t.type !== 'expense' || t.isPaid || !t.dueDate) return false;
+                const dueDate = new Date(t.dueDate + 'T00:00:00');
+                return dueDate < today;
+            }).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            const allReminders = [...overdueBills, ...upcomingBills];
+
+            if (allReminders.length === 0) {
+                remindersContainer.style.display = 'none';
+                return;
+            }
+
+            const listItems = allReminders.map(bill => {
+                const isOverdue = new Date(bill.dueDate + 'T00:00:00') < today;
+                return `
+                    <li>
+                        <span class="description">${bill.description}</span>
+                        <span class="details">
+                            <strong class="${isOverdue ? 'negative' : 'warning'}">
+                                ${this.formatCurrency(bill.amount)} em ${this.formatDate(bill.dueDate)}
+                            </strong>
+                        </span>
+                    </li>
+                `;
+            }).join('');
+            
+            const title = `Você tem ${allReminders.length} conta${allReminders.length > 1 ? 's' : ''} precisando de atenção!`;
+
+            remindersContainer.innerHTML = `
+                <h3><i class="fa-solid fa-bell"></i> Lembretes</h3>
+                <p>${title}</p>
+                <ul id="reminders-list" style="margin-top: 15px;">${listItems}</ul>
+                <button id="reminder-close-btn">&times;</button>
+            `;
+            remindersContainer.style.display = 'block';
+
+            document.getElementById('reminder-close-btn').addEventListener('click', () => {
+                remindersContainer.style.display = 'none';
+            });
+        }
     };
 
     financeApp.init();
